@@ -32,7 +32,6 @@ class RadwareCC:
                 self.log.error(f"Login failed: {data}")
             raise Exception("Login failed")
 
-
     def _request(self, method, url, retries=3, delay=1, data=None, json=None):
         for attempt in range(1, retries + 1):
             try:
@@ -42,18 +41,11 @@ class RadwareCC:
                 if resp.status_code == 403:
                     if self.log:
                         self.log.info(f"[{method.upper()}] Attempt {attempt}: 403 Forbidden. Reauthenticating…")
-                    # Re-login and retry
-                    # NOTE: assumes credentials persist in session headers/cookies
-                    # If you need username/password again, store them in __init__
-                    # or pass a reauth callback.
-                    # For simplicity, we just raise here if we cannot reauth
-                    # In a fuller SDK, you would keep creds and call self.login(...)
                     raise requests.exceptions.HTTPError("403 Forbidden", response=resp)
 
                 resp.raise_for_status()
                 return resp
             except requests.exceptions.HTTPError as err:
-                # Only retry 403; others (e.g., 500) bubble up
                 if err.response is not None and err.response.status_code == 403 and attempt < retries:
                     sleep_time = delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
                     time.sleep(sleep_time)
@@ -62,7 +54,6 @@ class RadwareCC:
             except (requests.exceptions.ConnectionError,
                     requests.exceptions.SSLError,
                     requests.exceptions.Timeout) as err:
-                # transient errors
                 if attempt < retries:
                     sleep_time = delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
                     time.sleep(sleep_time)
@@ -80,7 +71,6 @@ class RadwareCC:
 
     def _delete(self, url):
         return self._request("delete", url)
-
 
     # -------- Convenience wrappers --------
 
@@ -102,16 +92,55 @@ class RadwareCC:
             "rsBWMNetworkMode": "1"
         }
         resp = self._post(url, json=body)
-
-        # parse JSON (even on 4xx/5xx _request would have raised already)
         try:
             data = resp.json()
         except ValueError:
             raise Exception(f"Invalid JSON response: {resp.text}")
-
         if data.get("status") == "ok":
             return data
         if data.get("status") == "error":
-            # surface controller message (e.g., duplicate key)
             raise Exception(data.get("message", "API error"))
         raise Exception(f"Unexpected response: {data}")
+
+    def create_bdos_profile(self, device_ip, profile_name, profile_payload):
+        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsNetFloodProfileTable/{profile_name}/"
+        resp = self._post(url, json=profile_payload)
+        try:
+            data = resp.json()
+        except ValueError:
+            raise Exception(f"Invalid JSON response: {resp.text}")
+        if data.get("status") == "ok":
+            return data
+        if data.get("status") == "error":
+            raise Exception(data.get("message", "API error"))
+        return data
+
+    def create_oos_profile(self, device_ip, profile_name, profile_payload):
+        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsStatefulProfileTable/{profile_name}/"
+        resp = self._post(url, json=profile_payload)
+        try:
+            data = resp.json()
+        except ValueError:
+            raise Exception(f"Invalid JSON response: {resp.text}")
+        if data.get("status") == "ok":
+            return data
+        if data.get("status") == "error":
+            raise Exception(data.get("message", "API error"))
+        return data
+
+    def create_http_profile(self, device_ip, profile_name, profile_payload):
+        """
+        Create or update an HTTP/S flood profile on DefensePro via Radware CC API.
+        URL: /mgmt/device/byip/<device_ip>/config/rsHttpsFloodProfileTable/<profile_name>/
+        """
+        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsHttpsFloodProfileTable/{profile_name}/"
+        resp = self._post(url, json=profile_payload)
+        try:
+            data = resp.json()
+        except ValueError:
+            raise Exception(f"Invalid JSON response: {resp.text}")
+        if data.get("status") == "ok":
+            return data
+        if data.get("status") == "error":
+            raise Exception(data.get("message", "API error"))
+        return data
