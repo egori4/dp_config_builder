@@ -1,0 +1,37 @@
+---
+- name: Create OOS profile only
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+  vars:
+    device_ip: "10.105.192.33"
+    oos_profile:
+      name: "Test1"
+      settings:
+        rsSTATFULProfileName: "Test1"
+        rsSTATFULProfileactThreshold: "5000"
+        rsSTATFULProfiletermThreshold: "4000"
+        rsSTATFULProfilesynAckAllow: "1"
+        rsSTATFULProfilePacketTraceStatus: "1"
+        rsSTATFULProfilePacketReportStatus: "1"
+        rsSTATFULProfileRisk: "2"
+        rsSTATFULProfileAction: "1"
+
+  tasks:
+    - name: Lock device
+      dp_lock:
+        provider: "{{ cc }}"
+        device_ip: "{{ device_ip }}"
+
+    - name: Create OOS profile {{ oos_profile.name }}
+      dp_oos_profile:
+        provider: "{{ cc }}"
+        device_ip: "{{ device_ip }}"
+        profile_name: "{{ oos_profile.name }}"
+        profile: "{{ oos_profile.settings }}"
+
+    - name: Unlock device
+      dp_unlock:
+        provider: "{{ cc }}"
+        device_ip: "{{ device_ip }}"
