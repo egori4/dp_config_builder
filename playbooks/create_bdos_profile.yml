@@ -1,0 +1,72 @@
+---
+- name: Create BDoS profile only
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+  vars:
+    device_ip: "10.105.192.33"
+    bdos_profile:
+      rsNetFloodProfileName: "PP-Xoom-BDoS"
+      rsNetFloodProfileTcpStatus: "2"
+      rsNetFloodProfileTcpSynStatus: "2"
+      rsNetFloodProfileUdpStatus: "1"
+      rsNetFloodProfileIgmpStatus: "1"
+      rsNetFloodProfileIcmpStatus: "1"
+      rsNetFloodProfileTcpFinAckStatus: "2"
+      rsNetFloodProfileTcpRstStatus: "2"
+      rsNetFloodProfileTcpPshAckStatus: "2"
+      rsNetFloodProfileTcpSynAckStatus: "1"
+      rsNetFloodProfileTcpFragStatus: "1"
+      rsNetFloodProfileBandwidthIn: "40000"
+      rsNetFloodProfileBandwidthOut: "40000"
+      rsNetFloodProfileTcpInQuota: "75"
+      rsNetFloodProfileUdpInQuota: "80"
+      rsNetFloodProfileIcmpInQuota: "3"
+      rsNetFloodProfileIgmpInQuota: "3"
+      rsNetFloodProfileTcpOutQuota: "75"
+      rsNetFloodProfileUdpOutQuota: "80"
+      rsNetFloodProfileIcmpOutQuota: "3"
+      rsNetFloodProfileIgmpOutQuota: "3"
+      rsNetFloodProfileTransparentOptimization: "2"
+      rsNetFloodProfileAction: "1"
+      rsNetFloodProfileLevelOfReuglarzation: "2"
+      rsNetFloodProfileBurstEnabled: "2"
+      rsNetFloodProfileNoBurstTimeout: "30"
+      rsNetFloodProfileBurstAttackThreshold: "5"
+      rsNetFloodProfileBurstAttackPeriod: "12"
+      rsNetFloodProfileOverMitigationStatus: "2"
+      rsNetFloodProfileOverMitigationThreshold: "25"
+      rsNetFloodProfileLearningSuppressionThreshold: "50"
+      rsNetFloodProfileFootprintStrictness: "1"
+      rsNetFloodProfileRateLimit: "0"
+      rsNetFloodProfileUserDefinedRateLimit: "0"
+      rsNetFloodProfileUserDefinedRateLimitUnit: "0"
+      rsNetFloodProfileAdvUdpDetection: "2"
+      rsNetFloodProfileUdpExcludedPorts: "None"
+      rsNetFloodProfileAdvUdpLearningPeriod: "2"
+      rsNetFloodProfileAdvUdpAttackHighEdgeOverride: "0.0"
+      rsNetFloodProfileAdvUdpAttackLowEdgeOverride: "0.0"
+      rsNetFloodProfilePacketReportStatus: "1"
+      rsNetFloodProfilePacketTraceStatus: "2"
+      rsNetFloodProfileUdpFragStatus: "2"
+      rsNetFloodProfileUdpFragInQuota: "25"
+      rsNetFloodProfileUdpFragOutQuota: "25"
+
+  tasks:
+    - name: Lock device
+      dp_lock:
+        provider: "{{ cc }}"
+        device_ip: "{{ device_ip }}"
+
+    - name: Create BDoS profile {{ bdos_profile.rsNetFloodProfileName }}
+      dp_bdos_profile:
+        provider: "{{ cc }}"
+        device_ip: "{{ device_ip }}"
+        profile_name: "{{ bdos_profile.rsNetFloodProfileName }}"
+        profile: "{{ bdos_profile }}"
+
+    - name: Unlock device
+      dp_unlock:
+        provider: "{{ cc }}"
+        device_ip: "{{ device_ip }}"
