@@ -1,0 +1,52 @@
+---
+- name: Create DNS Protection profiles on all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    # DNS Protection profile parameters
+    dns_defaults:
+      rsDnsProtProfileExpectedQps: "4000"
+      rsDnsProtProfileAction: "1"
+      rsDnsProtProfileMaxAllowQps: "4500"
+      rsDnsProtProfileManualTriggerStatus: "2"
+      rsDnsProtProfileFootprintStrictness: "1"
+      rsDnsProtProfilePacketReportStatus: "1"
+      rsDnsProtProfileLearningSuppressionThreshold: "50"
+
+    dns_profiles:
+      - name: "DNS_Demo2"
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Create DNS Protection profile on each device
+          vars:
+            profile_matrix: "{{ dp_ip | product(dns_profiles) | list }}"
+          loop: "{{ profile_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}"
+          dp_dns_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            name: "{{ item.1.name }}"
+            params: "{{ dns_defaults }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
