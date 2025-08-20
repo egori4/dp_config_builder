@@ -1,0 +1,45 @@
+---
+- name: Create IDS Connection Limit profiles on all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    ids_connection_limit_defaults:
+      rsIDSConnectionLimitAttackProtocol: "3"
+      rsIDSConnectionLimitAttackThreshold: "50"
+      rsIDSConnectionLimitAttackTrackingType: "2"
+      rsIDSConnectionLimitAttackReportMode: "10"
+      rsIDSConnectionLimitAttackPacketReport: "2"
+      rsIDSConnectionLimitAttackRisk: "3"
+      rsIDSConnectionLimitAttackType: "1"
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Create IDS Connection Limit profile on each device
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "{{ item }} / Test_CL2"
+          dp_cl_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            name: "Test_CL2"
+            params: "{{ ids_connection_limit_defaults }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
