@@ -1,0 +1,40 @@
+---
+- name: Delete OOS (Stateful) profiles on all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    # List of OOS profiles to delete
+    delete_oos_profiles:
+      - "Test1"
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete each OOS profile on all devices
+          loop: "{{ dp_ip | product(delete_oos_profiles) | list }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1 }}"
+          dp_delete_oos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            name: "{{ item.1 }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
