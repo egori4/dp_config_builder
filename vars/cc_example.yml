@@ -3,3 +3,5 @@ cc:
   username: "user"
   password: "password"
   verify_ssl: false
+  log_level: "debug"  # Set to "info", "debug", or "disabled"
+  session_lifetime: 600  # Session cookie lifetime in seconds (default 600 = 10 min)
