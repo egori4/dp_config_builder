@@ -1,0 +1,70 @@
+---
+- name: Create BDOS profiles only
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    # BDOS Flood profile parameters
+    bdos_defaults:
+      rsNetFloodProfileTcpStatus: "2"
+      rsNetFloodProfileTcpSynStatus: "2"
+      rsNetFloodProfileUdpStatus: "1"
+      rsNetFloodProfileIgmpStatus: "1"
+      rsNetFloodProfileIcmpStatus: "1"
+      rsNetFloodProfileTcpFinAckStatus: "2"
+      rsNetFloodProfileTcpRstStatus: "2"
+      rsNetFloodProfileTcpPshAckStatus: "2"
+      rsNetFloodProfileTcpSynAckStatus: "1"
+      rsNetFloodProfileTcpFragStatus: "1"
+      rsNetFloodProfileBandwidthIn: "40000"
+      rsNetFloodProfileBandwidthOut: "40000"
+      rsNetFloodProfileTcpInQuota: "75"
+      rsNetFloodProfileUdpInQuota: "80"
+      rsNetFloodProfileIcmpInQuota: "3"
+      rsNetFloodProfileIgmpInQuota: "3"
+      rsNetFloodProfileTcpOutQuota: "75"
+      rsNetFloodProfileUdpOutQuota: "80"
+      rsNetFloodProfileIcmpOutQuota: "3"
+      rsNetFloodProfileIgmpOutQuota: "3"
+      rsNetFloodProfileTransparentOptimization: "2"
+      rsNetFloodProfileAction: "1"
+      rsNetFloodProfileBurstEnabled: "2"
+      rsNetFloodProfileLearningSuppressionThreshold: "50"
+      rsNetFloodProfileFootprintStrictness: "1"
+      rsNetFloodProfileRateLimit: "0"
+      rsNetFloodProfilePacketReportStatus: "1"
+      rsNetFloodProfilePacketTraceStatus: "2"
+      rsNetFloodProfileUdpFragStatus: "2"
+      rsNetFloodProfileUdpFragInQuota: "25"
+      rsNetFloodProfileUdpFragOutQuota: "25"
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Create BDOS Flood profile on each device
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "{{ item }} / PP-Xoom-BDoS"
+          dp_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            name: "PP-Xoom-BDoS"
+            params: "{{ bdos_defaults }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
