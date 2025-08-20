@@ -1,23 +1,82 @@
 # module_utils/radware_cc.py
+
 import requests
 import time
 import random
+import os
+import tempfile
+import pickle
+import hashlib
 from ansible.module_utils.logger import Logger
 
+
 class RadwareCC:
-    def __init__(self, cc_ip, username, password, verify_ssl=False, logger=None, timeout=30):
+    def __init__(self, cc_ip, username, password, verify_ssl=False, logger=None, log_level="disabled", session_lifetime=600, timeout=30):
         self.cc_ip = cc_ip
         self.verify_ssl = verify_ssl
         self.timeout = timeout
         self.session = requests.Session()
+        self._username = username  # Store for re-login
+        self._password = password  # Store for re-login
+        self.session_lifetime = session_lifetime
         if not self.verify_ssl:
             try:
                 import urllib3
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
             except Exception:
                 pass
-        self.log = logger
-        self.login(username, password)
+        if logger is None:
+            self.log = Logger(verbosity=log_level)
+        else:
+            self.log = logger
+        self._load_or_login()
+
+    def _get_session_file(self):
+        key = f"{self.cc_ip}_{self._username}"
+        key_hash = hashlib.md5(key.encode()).hexdigest()
+        # Try to use ./tmp/radware_cc_sessions under the current working directory
+        try:
+            cwd = os.getcwd()
+            session_dir = os.path.join(cwd, "tmp", "radware_cc_sessions")
+            os.makedirs(session_dir, exist_ok=True)
+        except Exception:
+            # Fallback to system temp dir if creation fails
+            session_dir = os.path.join(tempfile.gettempdir(), "radware_cc_sessions")
+            os.makedirs(session_dir, exist_ok=True)
+        session_file = os.path.join(session_dir, f"session_{key_hash}.pkl")
+        session_time_file = os.path.join(session_dir, f"session_{key_hash}.time")
+        return session_file, session_time_file
+
+    def _load_or_login(self):
+        session_file, session_time_file = self._get_session_file()
+        # Add separator at the start of a new run
+        self.log.info("======================================================")
+        reuse_session = False
+        if os.path.exists(session_file) and os.path.exists(session_time_file):
+            try:
+                with open(session_time_file, "r") as tf:
+                    created_time = float(tf.read().strip())
+                age = time.time() - created_time
+                self.log.debug(f"Session file age: {age:.2f} seconds (lifetime: {self.session_lifetime}s)")
+                if age < self.session_lifetime:
+                    with open(session_file, "rb") as f:
+                        cookies = pickle.load(f)
+                    self.session.cookies.update(cookies)
+                    self.log.info(f"Reusing session for {self.cc_ip} as {self._username} (age: {age:.2f}s < {self.session_lifetime}s)")
+                    return
+                else:
+                    self.log.info(f"Session expired for {self.cc_ip} as {self._username} (age: {age:.2f}s >= {self.session_lifetime}s), re-logging in")
+            except Exception as e:
+                self.log.error(f"Failed to load session: {e}")
+        self.log.info(f"Logging in to Radware CC at {self.cc_ip} as {self._username}")
+        self.login(self._username, self._password)
+        # Save session after login
+        with open(session_file, "wb") as f:
+            pickle.dump(self.session.cookies, f)
+        with open(session_time_file, "w") as tf:
+            tf.write(str(time.time()))
+        # Log where the session is stored after first login
+        self.log.info(f"Session stored at: {session_file}")
 
     def login(self, username, password):
         url = f"https://{self.cc_ip}/mgmt/system/user/login"
@@ -32,25 +91,41 @@ class RadwareCC:
                 self.log.error(f"Login failed: {data}")
             raise Exception("Login failed")
 
+
     def _request(self, method, url, retries=3, delay=1, data=None, json=None):
+        relogin_attempted = False
         for attempt in range(1, retries + 1):
             try:
                 resp = self.session.request(method=method, url=url,
                                             data=data, json=json,
                                             verify=self.verify_ssl, timeout=self.timeout)
-                if resp.status_code == 403:
-                    if self.log:
-                        self.log.info(f"[{method.upper()}] Attempt {attempt}: 403 Forbidden. Reauthenticating…")
-                    raise requests.exceptions.HTTPError("403 Forbidden", response=resp)
-
                 resp.raise_for_status()
                 return resp
             except requests.exceptions.HTTPError as err:
-                if err.response is not None and err.response.status_code == 403 and attempt < retries:
-                    sleep_time = delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
-                    time.sleep(sleep_time)
-                    continue
-                raise
+                # On 403, re-login once and retry
+                if err.response is not None and err.response.status_code == 403 and not relogin_attempted:
+                    if self.log:
+                        self.log.info(f"[{method.upper()}] 403 Forbidden. Reauthenticating and retrying once…")
+                    try:
+                        self._load_or_login()
+                        relogin_attempted = True
+                        continue
+                    except Exception as login_err:
+                        err_msg = f"403 Forbidden. Re-login failed: {login_err}"
+                        raise requests.exceptions.HTTPError(err_msg, response=err.response)
+                # Enhance error message with response body if available
+                err_msg = str(err)
+                if err.response is not None:
+                    try:
+                        content_type = err.response.headers.get('Content-Type', '')
+                        if 'application/json' in content_type:
+                            err_body = err.response.json()
+                        else:
+                            err_body = err.response.text
+                        err_msg += f"\nResponse body: {err_body}"
+                    except Exception:
+                        pass
+                raise requests.exceptions.HTTPError(err_msg, response=err.response)
             except (requests.exceptions.ConnectionError,
                     requests.exceptions.SSLError,
                     requests.exceptions.Timeout) as err:
@@ -71,76 +146,3 @@ class RadwareCC:
 
     def _delete(self, url):
         return self._request("delete", url)
-
-    # -------- Convenience wrappers --------
-
-    def lock_device(self, ip):
-        r = self._post(f"https://{self.cc_ip}/mgmt/system/config/tree/device/byip/{ip}/lock")
-        return r.json()
-
-    def unlock_device(self, ip):
-        r = self._post(f"https://{self.cc_ip}/mgmt/system/config/tree/device/byip/{ip}/unlock")
-        return r.json()
-
-    def create_network_group(self, device_ip, class_name, address, mask, index):
-        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsBWMNetworkTable/{class_name}/{index}"
-        body = {
-            "rsBWMNetworkName": class_name,
-            "rsBWMNetworkSubIndex": index,
-            "rsBWMNetworkAddress": address,
-            "rsBWMNetworkMask": mask,
-            "rsBWMNetworkMode": "1"
-        }
-        resp = self._post(url, json=body)
-        try:
-            data = resp.json()
-        except ValueError:
-            raise Exception(f"Invalid JSON response: {resp.text}")
-        if data.get("status") == "ok":
-            return data
-        if data.get("status") == "error":
-            raise Exception(data.get("message", "API error"))
-        raise Exception(f"Unexpected response: {data}")
-
-    def create_bdos_profile(self, device_ip, profile_name, profile_payload):
-        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsNetFloodProfileTable/{profile_name}/"
-        resp = self._post(url, json=profile_payload)
-        try:
-            data = resp.json()
-        except ValueError:
-            raise Exception(f"Invalid JSON response: {resp.text}")
-        if data.get("status") == "ok":
-            return data
-        if data.get("status") == "error":
-            raise Exception(data.get("message", "API error"))
-        return data
-
-    def create_oos_profile(self, device_ip, profile_name, profile_payload):
-        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsStatefulProfileTable/{profile_name}/"
-        resp = self._post(url, json=profile_payload)
-        try:
-            data = resp.json()
-        except ValueError:
-            raise Exception(f"Invalid JSON response: {resp.text}")
-        if data.get("status") == "ok":
-            return data
-        if data.get("status") == "error":
-            raise Exception(data.get("message", "API error"))
-        return data
-
-    def create_http_profile(self, device_ip, profile_name, profile_payload):
-        """
-        Create or update an HTTP/S flood profile on DefensePro via Radware CC API.
-        URL: /mgmt/device/byip/<device_ip>/config/rsHttpsFloodProfileTable/<profile_name>/
-        """
-        url = f"https://{self.cc_ip}/mgmt/device/byip/{device_ip}/config/rsHttpsFloodProfileTable/{profile_name}/"
-        resp = self._post(url, json=profile_payload)
-        try:
-            data = resp.json()
-        except ValueError:
-            raise Exception(f"Invalid JSON response: {resp.text}")
-        if data.get("status") == "ok":
-            return data
-        if data.get("status") == "error":
-            raise Exception(data.get("message", "API error"))
-        return data
