@@ -1,0 +1,45 @@
+- name: Create IDS SYN Profiles on all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    syn_profile_params:
+      Profile Name: "Test1"
+      Service Name: "TEST"
+      Service Id: "500001"
+
+
+    syn_protection:
+      - name: "TEST"
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Create IDS SYN profile on each device
+          vars:
+            profile_matrix: "{{ dp_ip | product(syn_protection) | list }}"
+          loop: "{{ profile_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}"
+          create_syn_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            params: "{{ syn_profile_params }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
