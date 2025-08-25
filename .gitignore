@@ -3,3 +3,4 @@ inventory.ini
 ansible.cfg
 playbooks/log
 tmp/
+.vscode/
