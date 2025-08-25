@@ -1,0 +1,55 @@
+---
+- name: Create Protected SSL Objects on Devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    ssl_objects:
+      - ssl_object_name: "server1"
+        params:
+          ssl_object_profile: "enable"
+          IP_Address: "155.1.102.7"
+          Port: 443
+
+      - ssl_object_name: "server2"
+        params:
+          ssl_object_profile: "disable"  # enable / disable
+          IP_Address: "155.1.102.8"
+          Port: 443   # 0-65535 - App port
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Create SSL Objects
+          vars:
+            object_matrix: "{{ dp_ip | product(ssl_objects) | list }}"
+          loop: "{{ object_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.ssl_object_name }}"
+          create_ssl_object:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            ssl_object_name: "{{ item.1.ssl_object_name }}"
+            params: "{{ item.1.params }}"
+          register: ssl_results
+          failed_when: >
+            ssl_results is failed and
+            ('already exists' not in (ssl_results.msg | default('')))
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
