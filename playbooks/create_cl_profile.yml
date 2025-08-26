@@ -11,18 +11,53 @@
       - "10.105.192.33"
 
     cl_mappings:
-      - cl_profile_name: "Test_profile"
-        protection_name: "Test_prot"
+      - cl_profile_name: "Test_profile_1"
+        protection_name: "Prot_TCP"
         params:
-          protocol: tcp    # tcp/udp
-          report_mode: drop  # report-only / drop
+          protocol: tcp              # tcp / udp
+          action: drop               # drop / report-only
           threshold: 50
-          tracking: ncps # sourcecount =ncps /destinationcount =ncpd/ src & Dest =ncpsd
-          attack_type: concurrentconnection # cps / concurrentconnection
-          packet_report: disable # enable / disable
-          risk: medium # low / medium / high
-          suspend_action: none # none / sip
+          tracking: src_count        # src_count / dst_count / src_dst_count / count_by_dst_ip_and_port
+          protection_type: concurrent_connection
+          packet_report: disable     # disable / enable
+          risk: medium               # info /low /medium /high
+          suspend_action: none
 
+      - cl_profile_name: "Test_profile_1"
+        protection_name: "Prot_UDP"
+        params:
+          protocol: udp
+          action: drop
+          threshold: 100
+          tracking: src_count
+          protection_type: connection_per_second
+          packet_report: enable
+          risk: high
+          suspend_action: none
+
+      - cl_profile_name: "Test_profile_2"
+        protection_name: "Prot_Mixed"
+        params:
+          protocol: tcp
+          action: drop
+          threshold: 200
+          tracking: src_count  
+          protection_type: connection_per_second
+          packet_report: disable
+          risk: low
+          suspend_action: none
+
+      - cl_profile_name: "Test_profile_2"
+        protection_name: "Prot_Mixed"
+        params:
+          protocol: udp
+          action: drop
+          threshold: 200
+          tracking: src_count
+          protection_type: connection_per_second
+          packet_report: disable
+          risk: low
+          suspend_action: none
   tasks:
     - block:
         - name: Lock device(s)
