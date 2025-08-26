@@ -1,36 +1,36 @@
-# plugins/modules/dp_ids_syn_profile.py
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
+# plugins/modules/create_syn_profile.py
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+from ansible.module_utils.radware_cc import RadwareCC  # type: ignore
 
 DOCUMENTATION = r'''
 ---
-module: dp_ids_syn_profile
-short_description: Create or manage DefensePro IDS SYN Profiles
+module: create_syn_profile
+short_description: Create or manage DefensePro SYN Profiles
 description:
-  - Creates or updates an IDS SYN Profile on Radware DefensePro via Radware CC API.
+  - Creates a SYN profile and attaches SYN protection in DefensePro via Radware CC API.
 options:
   provider:
-    description:
-      - Dictionary with connection parameters.
+    description: Radware CC connection details
     type: dict
     required: true
     suboptions:
-      server:
-        description: CC IP address
-        type: str
-        required: true
-      username:
-        type: str
-        required: true
-      password:
-        type: str
-        required: true
+      server: str
+      username: str
+      password: str
   dp_ip:
+    description: DefensePro device IP
+    type: str
+    required: true
+  profile_name:
+    description: Name of the SYN profile
+    type: str
+    required: true
+  protection_name:
+    description: Name of the SYN protection to attach
     type: str
     required: true
   params:
-    description:
-      - Dictionary of IDS SYN Profile attributes (human-friendly keys allowed).
+    description: Dictionary of profile parameters
     type: dict
     required: true
 author:
@@ -38,84 +38,82 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create IDS SYN Profile
-  dp_ids_syn_profile:
+- name: Create SYN Profile and Attach Protection
+  create_syn_profile:
     provider:
       server: 10.105.193.3
       username: radware
       password: mypass
     dp_ip: 10.105.192.33
+    profile_name: "Test1"
+    protection_name: "TEST"
     params:
-      Profile Name: "Test1"
-      Service Name: "TEST"
-      Service Id: "500001"
-      Profile Type: "4"
-      Profile Action: "1953068832"
+      profile_type: syn_protection
 '''
 
 RETURN = r'''
 response:
-  description: API response from Radware CC
+  description: API response
   type: dict
 '''
 
-# Human-readable → API mapping
 FIELD_MAP = {
-    "Profile Name": "rsIDSSynProfilesName",
-    "Service Name": "rsIDSSynProfileServiceName",
-    "Service Id": "rsIDSSynProfileServiceId",
-    "Profile Type": "rsIDSSynProfileType",
-    "Profile Action": "rsIDSSynProfileAction"
+    "profile_type": "rsIDSSynProfileType",
+}
+
+VALUE_MAP = {
+    "profile_type": {
+        "syn_protection": 4,  # numeric mapping
+    },
 }
 
 def translate_params(params):
     translated = {}
     for k, v in params.items():
-        translated[FIELD_MAP.get(k, k)] = v
+        api_key = FIELD_MAP.get(k, k)
+        if k in VALUE_MAP and isinstance(v, str):
+            translated[api_key] = VALUE_MAP[k].get(v.lower(), v)
+        else:
+            translated[api_key] = v
     return translated
 
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+        profile_name=dict(type='str', required=True),
+        protection_name=dict(type='str', required=True),
+        params=dict(type='dict', required=True),
     )
-
     result = dict(changed=False, response={})
     debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
     provider = module.params['provider']
     log_level = provider.get('log_level', 'disabled')
-
-    from ansible.module_utils.logger import Logger
+    from ansible.module_utils.logger import Logger  # type: ignore
     logger = Logger(verbosity=log_level)
 
     try:
         cc = RadwareCC(provider['server'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
 
-        params = translate_params(module.params['params'])
-        profile_name = params["rsIDSSynProfilesName"]
-        service_name = params["rsIDSSynProfileServiceName"]
-
-        path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsIDSSynProfilesTable/{profile_name}/{service_name}"
-        url = f"https://{provider['server']}{path}"
-
         if not module.check_mode:
-            debug_info = {
-                'method': 'POST',
-                'url': url,
-                'body': params
+            path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsIDSSynProfilesTable/{module.params['profile_name']}/{module.params['protection_name']}"
+            body = {
+                "rsIDSSynProfilesName": module.params['profile_name'],
+                "rsIDSSynProfileServiceName": module.params['protection_name'],
             }
-            logger.info(f"Creating IDS SYN Profile {profile_name}/{service_name} on device {module.params['dp_ip']}")
+            body.update(translate_params(module.params['params']))
+            url = f"https://{provider['server']}{path}"
+
+            debug_info = {'method': 'POST', 'url': url, 'body': body}
+            logger.info(f"Creating SYN profile '{module.params['profile_name']}' on {module.params['dp_ip']}")
             logger.debug(f"Request: {debug_info}")
 
-            resp = cc._post(url, json=params)
-            logger.debug(f"Response status: {resp.status_code}")
-
+            resp = cc._post(url, json=body)
             try:
                 data = resp.json()
-                logger.debug(f"Response JSON: {data}")
             except ValueError:
                 raise Exception(f"Invalid JSON response: {resp.text}")
 
@@ -125,7 +123,6 @@ def run_module():
             debug_info['response_json'] = data
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
         module.fail_json(msg=str(e), debug_info=debug_info, **result)
 
     result['debug_info'] = debug_info

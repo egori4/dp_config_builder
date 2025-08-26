@@ -1,38 +1,33 @@
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
+# plugins/modules/create_syn_protection.py
+from ansible.module_utils.basic import AnsibleModule  # type: ignore
+from ansible.module_utils.radware_cc import RadwareCC  # type: ignore
 
 DOCUMENTATION = r'''
 ---
-module: dp_ids_syn_attack
-short_description: Create or manage DefensePro IDS SYN Attack profiles
+module: create_syn_protection
+short_description: Create or manage DefensePro IDS SYN Flood protection
 description:
-  - Creates an IDS SYN Attack profile on Radware DefensePro via Radware CC API.
+  - Creates a SYN Flood protection on Radware DefensePro via Radware CC API.
+  - Supports human-readable keys/values mapped to numeric API codes.
 options:
   provider:
-    description:
-      - Dictionary with connection parameters
+    description: Radware CC connection details
     type: dict
     required: true
     suboptions:
-      server:
-        description: CC IP address
-        type: str
-        required: true
-      username:
-        type: str
-        required: true
-      password:
-        type: str
-        required: true
+      server: str
+      username: str
+      password: str
   dp_ip:
+    description: DefensePro device IP
     type: str
     required: true
   name:
+    description: Name of the SYN protection
     type: str
     required: true
   params:
-    description:
-      - Dictionary of IDS SYN profile attributes
+    description: Dictionary of SYN protection parameters (human-readable keys)
     type: dict
     required: true
 author:
@@ -40,8 +35,8 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create IDS SYN Attack profile
-  dp_ids_syn_attack:
+- name: Create SYN Protection
+  create_syn_protection:
     provider:
       server: 155.1.1.6
       username: radware
@@ -49,33 +44,53 @@ EXAMPLES = r'''
     dp_ip: 155.1.1.7
     name: "TEST"
     params:
-      rsIDSSYNDestinationAppPortGroup: "http"
-      rsIDSSYNAttackActivationThreshold: "2500"
-      rsIDSSYNAttackTerminationThreshold: "1500"
-      rsIDSSYNAttackPacketReport: "1"
+      app_port_group: http
+      activation_threshold: 2500
+      termination_threshold: 1500
+      packet_report: enable
 '''
 
 RETURN = r'''
 response:
-  description: API response from Radware CC
+  description: API response
   type: dict
 '''
+
+FIELD_MAP = {
+    "app_port_group": "rsIDSSYNDestinationAppPortGroup",
+    "activation_threshold": "rsIDSSYNAttackActivationThreshold",
+    "termination_threshold": "rsIDSSYNAttackTerminationThreshold",
+    "packet_report": "rsIDSSYNAttackPacketReport",
+}
+
+VALUE_MAP = {
+    "packet_report": {"enable": 1, "disable": 2},
+}
+
+def translate_params(params):
+    translated = {}
+    for k, v in params.items():
+        api_key = FIELD_MAP.get(k, k)
+        if k in VALUE_MAP and isinstance(v, str):
+            translated[api_key] = VALUE_MAP[k].get(v.lower(), v)
+        else:
+            translated[api_key] = v
+    return translated
 
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
         name=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+        params=dict(type='dict', required=True),
     )
-
     result = dict(changed=False, response={})
     debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
     provider = module.params['provider']
     log_level = provider.get('log_level', 'disabled')
-
-    from ansible.module_utils.logger import Logger
+    from ansible.module_utils.logger import Logger  # type: ignore
     logger = Logger(verbosity=log_level)
 
     try:
@@ -85,25 +100,17 @@ def run_module():
         if not module.check_mode:
             path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsIDSSYNAttackTable/0"
             body = {"rsIDSSYNAttackName": module.params['name']}
-            body.update(module.params['params'])
-
+            body.update(translate_params(module.params['params']))
             url = f"https://{provider['server']}{path}"
-            debug_info = {
-                'method': 'POST',
-                'url': url,
-                'body': body
-            }
-            logger.info(f"Creating IDS SYN Attack profile {module.params['name']} on device {module.params['dp_ip']}")
+
+            debug_info = {'method': 'POST', 'url': url, 'body': body}
+            logger.info(f"Creating SYN protection '{module.params['name']}' on {module.params['dp_ip']}")
             logger.debug(f"Request: {debug_info}")
 
             resp = cc._post(url, json=body)
-            logger.debug(f"Response status: {resp.status_code}")
-
             try:
                 data = resp.json()
-                logger.debug(f"Response JSON: {data}")
             except ValueError:
-                logger.error(f"Invalid JSON response: {resp.text}")
                 raise Exception(f"Invalid JSON response: {resp.text}")
 
             result['response'] = data
@@ -112,16 +119,13 @@ def run_module():
             debug_info['response_json'] = data
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
         module.fail_json(msg=str(e), debug_info=debug_info, **result)
 
     result['debug_info'] = debug_info
     module.exit_json(**result)
-
 
 def main():
     run_module()
 
 if __name__ == '__main__':
     main()
-
