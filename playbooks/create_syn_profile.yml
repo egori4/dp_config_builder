@@ -1,4 +1,5 @@
-- name: Create IDS SYN Profiles on all devices
+---
+- name: Create and Attach SYN Protections to Profiles
   hosts: cc
   gather_facts: no
   vars_files:
@@ -6,17 +7,39 @@
 
   vars:
     dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
+      - "10.105.192.32"  # DefensePro device 1
+      - "10.105.192.33"  # DefensePro device 2
 
-    syn_profile_params:
-      Profile Name: "Test1"
-      Service Name: "TEST"
-      Service Id: "500001"
+    syn_mappings:
+      - profile_name: "Test_10"  # Name of the SYN profile
+        protection_name: "TEST_10"  # Name of the SYN protection
+        protection_params:
+          app_port_group: http             # Destination application port group
+          activation_threshold: 2500      # Threshold to activate the protection
+          termination_threshold: 1500     # Threshold to terminate the protection
+          packet_report: enable           # Per-attack packet report (enable/disable)
+        profile_params:
+          profile_type: syn_protection     # Type of profile
 
+      - profile_name: "Test_20"  
+        protection_name: "TEST_20"
+        protection_params:
+          app_port_group: https
+          activation_threshold: 5000
+          termination_threshold: 3000
+          packet_report: disable
+        profile_params:
+          profile_type: syn_protection
 
-    syn_protection:
-      - name: "TEST"
+      - profile_name: "Test_30"
+        protection_name: "TEST_30"
+        protection_params:
+          app_port_group: ftp
+          activation_threshold: 1000
+          termination_threshold: 800
+          packet_report: enable
+        profile_params:
+          profile_type: syn_protection
 
   tasks:
     - block:
@@ -26,16 +49,39 @@
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Create IDS SYN profile on each device
+        - name: Create SYN Protections
           vars:
-            profile_matrix: "{{ dp_ip | product(syn_protection) | list }}"
+            protection_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
+          loop: "{{ protection_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.protection_name }}"
+          create_syn_protection:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            name: "{{ item.1.protection_name }}"           # Protection name
+            params: "{{ item.1.protection_params }}"      # Protection parameters dictionary
+          register: protection_results
+          failed_when: >
+            protection_results is failed and
+            ('already exist' not in (protection_results.msg | default('')))
+
+        - name: Attach Protections to SYN Profiles
+          vars:
+            profile_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
+            label: "{{ item.0 }}/{{ item.1.profile_name }}/{{ item.1.protection_name }}"
           create_syn_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
-            params: "{{ syn_profile_params }}"
+            profile_name: "{{ item.1.profile_name }}"          # Profile name to create
+            protection_name: "{{ item.1.protection_name }}"    # Protection to attach to profile
+            params: "{{ item.1.profile_params }}"             # Profile parameters dictionary
+          register: profile_results
+          failed_when: >
+            profile_results is failed and
+            ('already exists' not in (profile_results.msg | default('')) and
+             'same key already exists' not in (profile_results.msg | default('')))
 
       always:
         - name: Unlock device(s)
