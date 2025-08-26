@@ -1,6 +1,6 @@
 # plugins/modules/create_cl_protection.py
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
+from ansible.module_utils.basic import AnsibleModule # type: ignore
+from ansible.module_utils.radware_cc import RadwareCC # type: ignore
 
 DOCUMENTATION = r'''
 ---
@@ -45,7 +45,7 @@ EXAMPLES = r'''
     name: "Test_Prot"
     params:
       protocol: tcp
-      report_mode: drop
+      action: drop
       threshold: 50
       tracking: ncps
       attack_type: concurrentconnection
@@ -62,10 +62,10 @@ response:
 
 FIELD_MAP = {
     "protocol": "rsIDSConnectionLimitAttackProtocol",
-    "report_mode": "rsIDSConnectionLimitAttackReportMode",
+    "action": "rsIDSConnectionLimitAttackReportMode",
     "threshold": "rsIDSConnectionLimitAttackThreshold",
     "tracking": "rsIDSConnectionLimitAttackTrackingType",
-    "attack_type": "rsIDSConnectionLimitAttackType",
+    "protection_type": "rsIDSConnectionLimitAttackType",
     "packet_report": "rsIDSConnectionLimitAttackPacketReport",
     "risk": "rsIDSConnectionLimitAttackRisk",
     "suspend_action": "rsIDSConnectionLimitAttackSuspendAction",
@@ -73,9 +73,9 @@ FIELD_MAP = {
 
 VALUE_MAP = {
     "protocol": {"tcp": 2, "udp": 3},
-    "report_mode": {"report-only": 0, "drop": 10},
-    "tracking": {"ncps": 2, "ncpd": 3, "ncpsd": 4, "ncpdanddstport": 5},
-    "attack_type": {"cps": 1, "concurrentconnection": 2},
+    "action": {"report-only": 0, "drop": 10},
+    "tracking": {"src_count": 2, "dst_count": 3, "src_dst_count": 4, "count_by_dst_ip_and_port": 5},
+    "protection_type": {"connection_per_second": 1, "concurrent_connection": 2},
     "packet_report": {"enable": 1, "disable": 2},
     "risk": {"info": 1, "low": 2, "medium": 3, "high": 4},
     "suspend_action": {"none": 0, "sip": 1, "sipdip": 2, "sipdipdprt": 3, "sipdprt": 4},
@@ -105,7 +105,7 @@ def run_module():
     provider = module.params['provider']
     log_level = provider.get('log_level', 'disabled')
 
-    from ansible.module_utils.logger import Logger
+    from ansible.module_utils.logger import Logger  # type: ignore
     logger = Logger(verbosity=log_level)
 
     try:
