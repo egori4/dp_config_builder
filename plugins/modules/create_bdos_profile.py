@@ -1,6 +1,6 @@
 # plugins/modules/dp_bdos_profile.py
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
+from ansible.module_utils.basic import AnsibleModule # type: ignore
+from ansible.module_utils.radware_cc import RadwareCC # type: ignore
 
 DOCUMENTATION = r'''
 ---
@@ -154,7 +154,7 @@ def run_module():
     provider = module.params['provider']
     log_level = provider.get('log_level', 'disabled')
 
-    from ansible.module_utils.logger import Logger
+    from ansible.module_utils.logger import Logger # type: ignore
     logger = Logger(verbosity=log_level)
 
     try:
