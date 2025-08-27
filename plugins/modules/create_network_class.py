@@ -15,7 +15,7 @@ options:
     type: dict
     required: true
     suboptions:
-      server:
+      cc_ip:
         description: CC IP address
         type: str
         required: true
@@ -46,7 +46,7 @@ EXAMPLES = r'''
 - name: Create a network class
   dp_network_class:
     provider:
-      server: 10.105.193.3
+      cc_ip: 10.105.193.3
       username: radware
       password: mypass
     device_ip: 10.105.192.32
@@ -81,7 +81,7 @@ def run_module():
   logger = Logger(verbosity=log_level)
 
   try:
-    cc = RadwareCC(provider['server'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
     if not module.check_mode:
       path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsBWMNetworkTable/{module.params['class_name']}/{module.params['index']}"
       body = {
@@ -91,7 +91,7 @@ def run_module():
         "rsBWMNetworkMask": module.params['mask'],
         "rsBWMNetworkMode": "1"
       }
-      url = f"https://{provider['server']}{path}"
+      url = f"https://{provider['cc_ip']}{path}"
       debug_info = {
         'method': 'POST',
         'url': url,

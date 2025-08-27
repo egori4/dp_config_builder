@@ -1,6 +1,11 @@
 # dp_config_builder
 This is an ansible automation script that can create/modify/delete Radware DefensePro policies and/or profiles
 
+# Prerequisites
+
+1. Create inventory.ini and ansible.cfg files (see inventory_example.ini and ansible_example.cfg examples from the git repository)
+2. Create vars/cc.yml (see example vars/cc_example.yml )
+
 # How to run
 
 create /vars/cc.yml (see cc_exmple.yml for a reference)
@@ -25,6 +30,9 @@ V0.1.0 8/19/2025
 - Added delete, get network classes playbooks and modules
 - Added session reuse management
 - Added logging
+
+V0.1.0.1
+- Cosmetics- changed "server" variable to "cc_ip" under vars/cc.yml and all dependencies
 
 V0.1.1 (booked for Rahul)
 
