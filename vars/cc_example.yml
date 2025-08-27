@@ -1,5 +1,5 @@
 cc:
-  server: "192.168.1.1"
+  cc_ip: "192.168.1.1"
   username: "user"
   password: "password"
   verify_ssl: false
