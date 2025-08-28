@@ -1,0 +1,38 @@
+---
+# create_vars.yml.example - Template for creating network class variables
+# Copy this file to create_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# Define network classes to create with their network groups
+netclasses:
+  # Example: Create a network class named "egor_test_net" with 4 network groups
+  - name: "egor_test_net"
+    groups:
+      - { address: "10.10.10.0", mask: "255.255.255.0" }
+      - { address: "10.10.11.0", mask: "255.255.255.0" }
+      - { address: "10.10.12.0", mask: "255.255.255.0" }
+      - { address: "10.10.13.0", mask: "255.255.255.0" }
+  
+  # Example: Create another network class  
+  # - name: "web_servers"
+  #   groups:
+  #     - { address: "192.168.1.0", mask: "255.255.255.0" }
+  #     - { address: "192.168.2.0", mask: "255.255.255.0" }
+  
+  # Example: Create with CIDR notation
+  # - name: "database_servers"  
+  #   groups:
+  #     - { address: "10.20.1.0", mask: "24" }
+  #     - { address: "10.20.2.0", mask: "24" }
+
+# Notes:
+# - name: Must be unique network class name
+# - address: Network address for each group within the class
+# - mask: Can be CIDR notation (e.g., "24") or dotted decimal (e.g., "255.255.255.0")  
+# - Groups are automatically assigned indices starting from 0
+# - The playbook will create all combinations of dp_ip × netclasses × groups

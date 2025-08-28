@@ -1,10 +1,10 @@
 ---
-- name: Delete network class on all devices
+- name: Edit network class groups on all devices
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/delete_vars.yml
+    - ../vars/edit_vars.yml
 
   tasks:
     - block:
@@ -14,17 +14,19 @@
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Delete each network group on all devices
+        - name: Edit each network group on all devices
           vars:
-            network_device_matrix: "{{ dp_ip | product(delete_networks) | list }}"
+            network_device_matrix: "{{ dp_ip | product(edit_networks) | list }}"
           loop: "{{ network_device_matrix }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.class_name }}/{{ item.1.index }}"
-          delete_network_class:
+            label: "{{ item.0 }}/{{ item.1.class_name }}/{{ item.1.index }} -> {{ item.1.address }}/{{ item.1.mask }}"
+          edit_network_class:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             class_name: "{{ item.1.class_name }}"
             index: "{{ item.1.index }}"
+            address: "{{ item.1.address }}"
+            mask: "{{ item.1.mask }}"
       always:
         - name: Unlock device(s)
           dp_unlock:

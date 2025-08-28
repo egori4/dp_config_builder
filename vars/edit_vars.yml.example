@@ -1,0 +1,34 @@
+---
+# edit_vars.yml.example - Template for editing network class variables
+# Copy this file to edit_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# Define the network class groups to edit
+# Each entry specifies which class_name, index, and new values to apply
+# To get the current network class structure and indices, use the get_network_class module first
+edit_networks:
+  # Example: Edit index 2 of "egor_test_net" to have address 100.1.117.0/27
+  - {class_name: "egor_test_net", index: 2, address: "100.1.117.0", mask: "27"}
+  
+  # Example: Edit index 1 of "egor_test_net" to have address 100.16.10.0/24  
+  - {class_name: "egor_test_net", index: 1, address: "100.16.10.0", mask: "24"}
+  
+  # Example: Edit index 0 with subnet mask in dotted decimal notation
+  # - {class_name: "egor_test_net", index: 0, address: "192.168.100.0", mask: "255.255.255.0"}
+  
+  # Example: Edit different network class
+  # - {class_name: "another_net_class", index: 0, address: "10.0.0.0", mask: "255.255.255.0"}
+  
+  # Add more entries as needed - the playbook will process all combinations of dp_ip × edit_networks
+
+# Notes:
+# - class_name: Must be an existing network class name
+# - index: The sub-index of the network group within the class (starting from 0)
+# - address: The new network address to assign
+# - mask: Can be CIDR notation (e.g., "24") or dotted decimal (e.g., "255.255.255.0")
+# - Use get_network_class module to discover existing classes and their current indices
