@@ -83,7 +83,7 @@ PARAMS_MAP = {
 
 # Human-readable values → integer API mapping
 NUMERIC_MAPPING = {
-    "Profile Action": {"report-only": 0, "block-and-report": 1},
+    "Profile Action": {"report": 0, "block & report": 1},
     "Selective Challenge": {"enable": 1, "disable": 2},
     "Collective Challenge": {"enable": 1, "disable": 2},
     "Challenge Method": {"httpRedirect": 1, "javaScript": 2},

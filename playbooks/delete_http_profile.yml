@@ -1,0 +1,45 @@
+---
+- name: Delete HTTP Profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+      - "10.105.192.33"
+
+    http_mappings:
+      - http_profile_name: "HTTP_Profile1"
+      - http_profile_name: "HTTP_Profile2"
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete HTTP Profiles
+          vars:
+            profile_matrix: "{{ dp_ip | product(http_mappings) | list }}"
+          loop: "{{ profile_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.http_profile_name }}"
+          delete_http_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            http_profile_name: "{{ item.1.http_profile_name }}"
+          register: http_profile_delete_results
+          failed_when: >
+            http_profile_delete_results is failed and
+            ('not found' not in (http_profile_delete_results.msg | default('')))
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
