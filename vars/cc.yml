@@ -1,0 +1,209 @@
+cc:
+  cc_ip: "10.105.193.3"
+  username: "radware"
+  password: "radware"
+  verify_ssl: false
+
+dp_ip:
+  - "10.105.192.32"
+  - "10.105.192.33"
+
+
+bdos_mapping:
+  - name: "BDOS_Profile_4"
+    params:
+       TCP Status: "inactive"
+       TCP SYN Status: "inactive"
+       UDP Status: "active"
+       IGMP Status: "active"
+       ICMP Status: "active"
+       TCP FIN/ACK Status: "inactive"
+       TCP RST Status: "inactive"
+       TCP PSH/ACK Status: "inactive"
+       TCP SYN/ACK Status: "active"
+       TCP Frag Status: "active"
+       Bandwidth In: "40000"
+       Bandwidth Out: "40000"
+       Transparent Optimization: "yes"
+       Action: "block & report"
+       Burst Enabled: "enable"
+       Learning Suppression Threshold: "50"
+       Footprint Strictness: "medium"
+       Rate Limit: "disable"
+       Packet Report Status: "enable"
+       Packet Trace Status: "enable"
+       UDP Frag Status: "inactive"
+
+  - name: "BDOS_Profile_5"
+    params:
+      TCP Status: "inactive"
+      TCP SYN Status: "inactive"
+      UDP Status: "active"
+      IGMP Status: "active"
+      ICMP Status: "active"
+      TCP FIN/ACK Status: "inactive"
+      TCP RST Status: "inactive"
+      TCP PSH/ACK Status: "inactive"
+      TCP SYN/ACK Status: "active"
+      TCP Frag Status: "active"
+      Bandwidth In: "40000"
+      Bandwidth Out: "40000"
+      Transparent Optimization: "yes"
+      Action: "block & report"
+      Burst Enabled: "enable"
+      Footprint Strictness: "medium"
+      Rate Limit: "disable"
+      Packet Report Status: "enable"
+      Packet Trace Status: "enable"
+
+
+http_mapping:
+  - name: "HTTPS_Profile_1"
+    params:
+      Profile Action: "block & report"        # report / block & report
+      Rate Limit: "100000"                    # Max packets per second
+      Selective Challenge: "enable"
+      Collective Challenge: "enable"
+      Challenge Method: "httpRedirect"        # javaScript / httpRedirect
+      Rate Limit Status: "disable"
+      Full Session Decryption: "disable"
+
+  - name: "HTTPS_Profile_2"
+    params:
+      Profile Action: "report"
+      Rate Limit: "50000"
+      Selective Challenge: "disable"
+      Collective Challenge: "enable"
+      Challenge Method: "javaScript"
+      Rate Limit Status: "enable"
+      Full Session Decryption: "enable"
+
+  - name: "HTTPS_Profile_3"
+    params:
+      Profile Action: "block & report"
+      Rate Limit: "75000"
+      Selective Challenge: "enable"
+      Collective Challenge: "disable"
+      Challenge Method: "httpRedirect"
+      Rate Limit Status: "enable"
+      Full Session Decryption: "disable"
+
+oos_mapping:
+  - name: "OOS_Profile1"
+    params:
+      Act Threshold: "5000"
+      Term Threshold: "4000"
+      Syn-Ack Allow: "enable"             # enable/disable
+      Packet Trace Status: "enable"       # enable/disable
+      Packet Report Status: "enable"      # enable/disable
+      Risk Level: "medium"                # low/medium/high
+      Profile Action: "block"             # block/allow
+
+  - name: "OOS_Profile2"
+    params:
+      Act Threshold: "8000"
+      Term Threshold: "7000"
+      Syn-Ack Allow: "disable"
+      Packet Trace Status: "disable"
+      Packet Report Status: "enable"
+      Risk Level: "high"
+      Profile Action: "block"
+
+  - name: "OOS_Profile3"
+    params:
+      Act Threshold: "3000"
+      Term Threshold: "2500"
+      Syn-Ack Allow: "enable"
+      Packet Trace Status: "enable"
+      Packet Report Status: "disable"
+      Risk Level: "low"
+      Profile Action: "allow"
+
+syn_mappings:
+  - profile_name: "Test_10"
+    protection_name: "TEST_10"
+    protection_params:
+      app_port_group: http
+      activation_threshold: 2500
+      termination_threshold: 1500
+      packet_report: enable
+    profile_params:
+      profile_type: syn_protection
+
+  - profile_name: "Test_20"
+    protection_name: "TEST_20"
+    protection_params:
+      app_port_group: https
+      activation_threshold: 5000
+      termination_threshold: 3000
+      packet_report: disable
+    profile_params:
+      profile_type: syn_protection
+
+  - profile_name: "Test_30"
+    protection_name: "TEST_30"
+    protection_params:
+      app_port_group: ftp
+      activation_threshold: 1000
+      termination_threshold: 800
+      packet_report: enable
+    profile_params:
+      profile_type: syn_protection
+
+# DNS Protection profiles
+dns_mapping:
+  - name: "DNS_Profile_1"
+    params:
+      expected_qps: "4000"          # expected query per second
+      action: "block & report"      # block & report / report
+      max_allow_qps: "4500"         # maximum allowed QPS
+      footprint_strictness: "medium"    # low / medium / high
+      packet_report: "enable"    # enable / disable
+      learning_suppression_threshold: "50"
+
+  - name: "DNS_Profile_2"
+    params:
+      expected_qps: "5000"          
+      action: "block & report"      # block & report / report
+      max_allow_qps: "5500"         
+      footprint_strictness: "medium"    
+      packet_report: "enable"    # enable / disable
+      learning_suppression_threshold: "50"
+
+  - name: "DNS_Profile_3"
+    params:
+      expected_qps: "6000"          
+      action: "block & report"      # block & report / report
+      max_allow_qps: "7500"         
+      footprint_strictness: "medium"    
+      packet_report: "enable"    
+      learning_suppression_threshold: "50"
+
+ssl_objects:
+  - ssl_object_name: "server1"
+    params:
+      ssl_object_profile: "enable"   # enable / disable
+      IP_Address: "155.1.102.7"      # Protected server IP
+      Port: 443                      # Application port (0–65535)
+
+  - ssl_object_name: "server2"
+    params:
+      ssl_object_profile: "disable"
+      IP_Address: "155.1.102.8"
+      Port: 443
+
+#Delete protection profiles
+
+bdos_profiles:
+  - name: "BDOS_Profile_4"         # Example BDOS profile to delete
+  - name: "BDOS_Profile_5"  # Add more here if needed
+
+
+
+
+
+
+
+
+
+
