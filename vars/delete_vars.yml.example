@@ -1,0 +1,29 @@
+---
+# delete_vars.yml.example - Template for deleting network class variables
+# Copy this file to delete_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# Define the network class groups to delete
+# To get the list of network classes to delete and their indices, use the get_network_class module first
+delete_networks:
+  # Example: Delete specific network groups from "egor_test_net"
+  - {class_name: "egor_test_net", index: 0}
+  - {class_name: "egor_test_net", index: 1}  
+  - {class_name: "egor_test_net", index: 2}
+  - {class_name: "egor_test_net", index: 3}
+  
+  # Example: Delete from different network classes
+  # - {class_name: "web_servers", index: 0}
+  # - {class_name: "database_servers", index: 0}
+
+# Notes:
+# - class_name: The name of the network class containing the group to delete
+# - index: The sub-index of the network group within the class (as integer)
+# - Use get_network_class module to discover existing classes and their current indices
+# - The playbook will delete all combinations of dp_ip × delete_networks
+# - Deletion is permanent - ensure you have backups if needed
