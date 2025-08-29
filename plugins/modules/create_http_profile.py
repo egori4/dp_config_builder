@@ -2,6 +2,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
+from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
@@ -16,7 +17,7 @@ options:
     type: dict
     required: true
     suboptions:
-      server:
+      cc_ip:
         description: CC IP address
         type: str
         required: true
@@ -47,9 +48,9 @@ author:
 
 EXAMPLES = r'''
 - name: Create HTTPS Flood profile
-  dp_https_profile:
+  create_https_profile:
     provider:
-      server: 155.1.1.6
+      cc_ip: 155.1.1.6
       username: radware
       password: mypass
     dp_ip: 155.1.1.7
@@ -91,36 +92,40 @@ NUMERIC_MAPPING = {
     "Full Session Decryption": {"enable": 1, "disable": 2},
 }
 
+
 def translate_params(params):
+    """Translate friendly param keys/values to CC API format."""
     translated = {}
     for k, v in params.items():
         api_key = PARAMS_MAP.get(k, k)
         if k in NUMERIC_MAPPING:
-            translated[api_key] = NUMERIC_MAPPING[k][str(v)]
+            mapped_val = NUMERIC_MAPPING[k].get(str(v), v)
+            translated[api_key] = mapped_val
         else:
             translated[api_key] = int(v) if str(v).isdigit() else v
     return translated
 
+
 def run_module():
-    module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+    module = AnsibleModule(
+        argument_spec=dict(
+            provider=dict(type='dict', required=True),
+            dp_ip=dict(type='str', required=True),
+            name=dict(type='str', required=True),
+            params=dict(type='dict', required=True),
+        ),
+        supports_check_mode=True
     )
 
-    result = dict(changed=False, response={})
+    result = {"changed": False, "response": {}}
     debug_info = {}
 
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     provider = module.params['provider']
     log_level = provider.get('log_level', 'disabled')
-
-    from ansible.module_utils.logger import Logger
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(provider['server'], provider['username'], provider['password'],
+        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
 
         if not module.check_mode:
@@ -128,40 +133,34 @@ def run_module():
             body.update(translate_params(module.params['params']))
 
             path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsHttpsFloodProfileTable/{module.params['name']}"
-            url = f"https://{provider['server']}{path}"
+            url = f"https://{provider['cc_ip']}{path}"
 
-            debug_info = {
-                'method': 'POST',
-                'url': url,
-                'body': body
-            }
+            debug_info.update({"method": "POST", "url": url, "body": body})
             logger.info(f"Creating/Updating HTTPS Flood profile {module.params['name']} on {module.params['dp_ip']}")
             logger.debug(f"Request: {debug_info}")
 
             resp = cc._post(url, json=body)
-            logger.debug(f"Response status: {resp.status_code}")
+            debug_info["response_status"] = resp.status_code
 
-            try:
+            if resp.headers.get("Content-Type") == "application/json":
                 data = resp.json()
-                logger.debug(f"Response JSON: {data}")
-            except ValueError:
-                logger.error(f"Invalid JSON response: {resp.text}")
-                raise Exception(f"Invalid JSON response: {resp.text}")
+            else:
+                data = {"raw": resp.text}
 
-            result['response'] = data
-            result['changed'] = True
-            debug_info['response_status'] = resp.status_code
-            debug_info['response_json'] = data
+            result.update({"response": data, "changed": True})
+            debug_info["response_json"] = data
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
+        logger.error(f"Exception: {e}")
         module.fail_json(msg=str(e), debug_info=debug_info, **result)
 
-    result['debug_info'] = debug_info
+    result["debug_info"] = debug_info
     module.exit_json(**result)
+
 
 def main():
     run_module()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
