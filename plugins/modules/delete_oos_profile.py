@@ -5,7 +5,7 @@ from ansible.module_utils.logger import Logger
 DOCUMENTATION = r'''
 ---
 module: dp_delete_oos_profile
-short_description: Delete a Stateful/OOS profile on Radware DefensePro
+short_description: Delete OOS profile on Radware DefensePro
 options:
   provider:
     type: dict
@@ -34,10 +34,10 @@ def run_module():
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(provider['server'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
         if not module.check_mode:
             path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsStatefulProfileTable/{module.params['name']}"
-            url = f"https://{provider['server']}{path}"
+            url = f"https://{provider['cc_ip']}{path}"
             debug_info = {
                 'method': 'DELETE',
                 'url': url,

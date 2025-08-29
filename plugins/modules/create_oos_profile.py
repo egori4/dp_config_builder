@@ -2,6 +2,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
+from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
@@ -9,7 +10,6 @@ module: dp_oos_profile
 short_description: Create or manage DefensePro OOS (Stateful) profiles
 description:
   - Creates an OOS / Stateful profile on Radware DefensePro via Radware CC API.
-  - Accepts human-readable parameters and converts them to API integer values.
 options:
   provider:
     description:
@@ -17,7 +17,7 @@ options:
     type: dict
     required: true
     suboptions:
-      server:
+      cc_ip:
         description: CC IP address
         type: str
         required: true
@@ -35,7 +35,7 @@ options:
     required: true
   params:
     description:
-      - Dictionary of Stateful profile attributes (human-readable keys allowed)
+      - Dictionary of Stateful profile attributes
     type: dict
     required: true
 author:
@@ -43,10 +43,10 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create OOS Stateful profile
+- name: Create OOS profile
   dp_oos_profile:
     provider:
-      server: 10.105.193.3
+      cc_ip: 10.105.193.3
       username: radware
       password: radware
     dp_ip: 10.105.192.32
@@ -54,11 +54,11 @@ EXAMPLES = r'''
     params:
       Act Threshold: "5000"
       Term Threshold: "4000"
-      Syn-Ack Allow: "enable"          # maps to 1
-      Packet Trace Status: "enable"    # maps to 1
-      Packet Report Status: "enable"   # maps to 1
-      Risk Level: "medium"             # maps to 2
-      Profile Action: "block"          # maps to 1
+      Syn-Ack Allow: "enable"
+      Packet Trace Status: "enable"
+      Packet Report Status: "enable"
+      Risk Level: "medium"
+      Profile Action: "block"
 '''
 
 RETURN = r'''
@@ -67,7 +67,7 @@ response:
   type: dict
 '''
 
-# Mapping human-readable → API integer values
+# Mapping user-friendly → API integer values (do not change)
 PARAM_MAP = {
     "Syn-Ack Allow": {"enable": 1, "disable": 2},
     "Packet Trace Status": {"enable": 1, "disable": 2},
@@ -76,7 +76,7 @@ PARAM_MAP = {
     "Profile Action": {"allow": 0, "block": 1},
 }
 
-# Mapping human-readable keys → API field names
+# Mapping user-friendly keys → API field names (do not change)
 FIELD_MAP = {
     "Act Threshold": "rsSTATFULProfileactThreshold",
     "Term Threshold": "rsSTATFULProfiletermThreshold",
@@ -88,73 +88,78 @@ FIELD_MAP = {
 }
 
 def translate_params(params):
-    """Convert human-readable params to API-ready integer fields."""
-    translated = {}
-    for k, v in params.items():
-        api_key = FIELD_MAP.get(k, k)
-        if k in PARAM_MAP:
-            translated[api_key] = PARAM_MAP[k].get(v, v)
-        else:
-            translated[api_key] = v
-    return translated
+    """Convert user-friendly params to API-ready integer fields."""
+    return {
+        FIELD_MAP.get(k, k): (PARAM_MAP[k].get(v, v) if k in PARAM_MAP else v)
+        for k, v in params.items()
+    }
 
 def run_module():
-    module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+    module = AnsibleModule(
+        argument_spec=dict(
+            provider=dict(type='dict', required=True),
+            dp_ip=dict(type='str', required=True),
+            name=dict(type='str', required=True),
+            params=dict(type='dict', required=True),
+        ),
+        supports_check_mode=True,
     )
+
+    provider = module.params['provider']
+    dp_ip = module.params['dp_ip']
+    name = module.params['name']
+    params = module.params['params']
+
+    logger = Logger(verbosity=provider.get('log_level', 'disabled'))
 
     result = dict(changed=False, response={})
     debug_info = {}
 
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    provider = module.params['provider']
-    log_level = provider.get('log_level', 'disabled')
-
-    from ansible.module_utils.logger import Logger
-    logger = Logger(verbosity=log_level)
-
     try:
-        cc = RadwareCC(provider['server'], provider['username'], provider['password'],
-                       log_level=log_level, logger=logger)
+        cc = RadwareCC(
+            provider['cc_ip'],
+            provider['username'],
+            provider['password'],
+            log_level=provider.get('log_level', 'disabled'),
+            logger=logger,
+        )
 
         if not module.check_mode:
-            path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsStatefulProfileTable/{module.params['name']}"
-            body = {"rsSTATFULProfileName": module.params['name']}
-            # Translate human-readable params → API fields
-            body.update(translate_params(module.params['params']))
+            path = f"/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{name}"
+            url = f"https://{provider['cc_ip']}{path}"
+            body = {"rsSTATFULProfileName": name, **translate_params(params)}
 
-            url = f"https://{provider['server']}{path}"
-            debug_info = {
-                'method': 'POST',
-                'url': url,
-                'body': body
-            }
-            logger.info(f"Creating OOS Stateful profile {module.params['name']} on device {module.params['dp_ip']}")
+            debug_info.update(method="POST", url=url, body=body)
+            logger.info(f"Creating OOS Stateful profile '{name}' on device {dp_ip}")
             logger.debug(f"Request: {debug_info}")
 
             resp = cc._post(url, json=body)
-            logger.debug(f"Response status: {resp.status_code}")
+            debug_info["response_status"] = resp.status_code
 
-            try:
+            # Treat non-2xx as errors with context
+            if resp.status_code not in (200, 201):
+                payload = resp.text
+                try:
+                    payload = resp.json()
+                except Exception:
+                    pass
+                debug_info["response_error"] = payload
+                raise Exception(f"API error {resp.status_code}: {payload}")
+
+            # Safe JSON parse with fallback
+            if resp.headers.get("Content-Type", "").lower().startswith("application/json"):
                 data = resp.json()
-                logger.debug(f"Response JSON: {data}")
-            except ValueError:
-                logger.error(f"Invalid JSON response: {resp.text}")
-                raise Exception(f"Invalid JSON response: {resp.text}")
+            else:
+                data = {"raw": resp.text}
 
-            result['response'] = data
-            result['changed'] = True
-            debug_info['response_status'] = resp.status_code
-            debug_info['response_json'] = data
+            debug_info["response_json"] = data
+            result.update(changed=True, response=data)
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
+        logger.error(f"Exception: {e}")
         module.fail_json(msg=str(e), debug_info=debug_info, **result)
 
-    result['debug_info'] = debug_info
+    result["debug_info"] = debug_info
     module.exit_json(**result)
 
 def main():
