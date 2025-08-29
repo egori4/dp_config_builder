@@ -1,5 +1,0 @@
-cc:
-  cc_ip: "10.105.193.3"
-  username: "radware"
-  password: "radware"
-  verify_ssl: false
