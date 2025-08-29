@@ -1,57 +1,45 @@
 ---
-- name: Create HTTPS Flood profiles on all devices
+- name: Create HTTP Profiles on Radware Devices
   hosts: cc
-  gather_facts: no  # No need to gather system facts for CC API tasks
+  gather_facts: no
   vars_files:
-    - ../vars/cc.yml  # Contains connection details (server, username, password)
+    - ../vars/cc.yml   # Provider/device login details
 
   vars:
-    # List of DefensePro device IPs to configure
     dp_ip:
       - "10.105.192.32"
       - "10.105.192.33"
 
-    # HTTPS Flood profile parameters (human-friendly names)
-    https_setting:
-      Profile Action: "block-and-report"           # Profile action type
-      Rate Limit: "100000"                         # Max packets per second
-      Selective Challenge: "enable"                # Enable selective challenge
-      Collective Challenge: "enable"               # Enable collective challenge
-      Challenge Method: "httpRedirect"             # Challenge method type
-      Rate Limit Status: "disable"                 # Enable/disable rate limit
-      Full Session Decryption: "disable"           # Enable/disable full session decryption
-
-    # List of HTTPS Flood profile names to create
-    https_profiles:
-      - name: "HTTPS_Demo1"
+    http_profiles:
+      - name: "HTTP_Profile1"
+        max_connections: 1000
+        timeout: 30
+      - name: "HTTP_Profile2"
+        max_connections: 500
+        timeout: 20
 
   tasks:
-    - block:
-        # Lock devices before making configuration changes
-        - name: Lock device(s)
-          dp_lock:
-            provider: "{{ cc }}"    # CC connection info
-            dp_ip: "{{ item }}"     # Device IP from dp_ip list
-          loop: "{{ dp_ip }}"
 
-        # Create HTTPS Flood profiles on each device
-        - name: Create HTTPS Flood profile on each device
-          vars:
-            # Create matrix of all device IPs x profiles
-            profile_matrix: "{{ dp_ip | product(https_profiles) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"  # Shows device/profile in output
-          create_http_profile:
-            provider: "{{ cc }}"         # CC connection info
-            dp_ip: "{{ item.0 }}"        # Device IP
-            name: "{{ item.1.name }}"    # Profile name
-            params: "{{ https_setting }}" # Profile parameters (friendly keys)
+    - name: Lock device(s)
+      dp_lock:
+        host: "{{ item }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+      loop: "{{ dp_ip }}"
 
-      always:
-        # Ensure devices are unlocked even if tasks fail
-        - name: Unlock device(s)
-          dp_unlock:
-            provider: "{{ cc }}"        # CC connection info
-            dp_ip: "{{ item }}"         # Device IP
-          loop: "{{ dp_ip }}"
+    - name: Create HTTP profiles on devices
+      dp_http_profile:
+        host: "{{ item.0 }}"
+        name: "{{ item.1.name }}"
+        max_connections: "{{ item.1.max_connections }}"
+        timeout: "{{ item.1.timeout }}"
+      loop: "{{ dp_ip | product(http_profiles) | list }}"
+      loop_control:
+        label: "{{ item.1.name }} on {{ item.0 }}"
+
+    - name: Unlock device(s)
+      dp_unlock:
+        host: "{{ item }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+      loop: "{{ dp_ip }}"
