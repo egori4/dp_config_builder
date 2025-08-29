@@ -3,83 +3,76 @@
   hosts: cc
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml
+    - ../vars/cc.yml   # provider details
 
   vars:
     dp_ip:
       - "10.105.192.32"
       - "10.105.192.33"
 
-    # Define multiple BDOS Flood profiles with their own parameters
     bdos_profiles:
       - name: "BDOS_Profile_3"
         params:
-           TCP Status: "inactive"                  # Protocol TCP: active/inactive
-           TCP SYN Status: "inactive"              # Protocol TCP SYN: active/inactive
-           UDP Status: "active"                    # Protocol UDP: active/inactive
-           IGMP Status: "active"                   # Protocol IGMP: active/inactive
-           ICMP Status: "active"                   # Protocol ICMP: active/inactive
-           TCP FIN/ACK Status: "inactive"          # Protocol TCP FIN/ACK: active/inactive
-           TCP RST Status: "inactive"              # Protocol TCP RST: active/inactive
-           TCP PSH/ACK Status: "inactive"          # Protocol TCP PSH/ACK: active/inactive
-           TCP SYN/ACK Status: "active"            # Protocol TCP SYN/ACK: active/inactive
-           TCP Frag Status: "active"               # TCP Fragment: active/inactive
-           Bandwidth In: "40000"                   # Max incoming bandwidth (Mbps)
-           Bandwidth Out: "40000"                  # Max outgoing bandwidth (Mbps)
-           Transparent Optimization: "yes"         # Transparent optimization: yes/no
-           Action: "block & report"                # Action: report/block & report
-           Burst Enabled: "enable"                 # Burst mode: enable/disable
-           Learning Suppression Threshold: "50"    # Learning suppression threshold (percentage)
-           Footprint Strictness: "medium"          # Footprint strictness: low/medium/high
-           Rate Limit: "disable"                   # Rate limit: disable/normalEdge/suspectEdge/userDefined
-           Packet Report Status: "enable"          # Packet reporting: enable/disable
-           Packet Trace Status: "enable"           # Packet tracing: enable/disable
-           UDP Frag Status: "inactive"             # UDP Fragment detection: active/inactive
+          tcp_status: "inactive"
+          udp_status: "active"
+          icmp_status: "active"
+          tcp_syn_ack_status: "active"
+          tcp_frag_status: "active"
+          bandwidth_in: "40000"
+          bandwidth_out: "40000"
+          transparent_optimization: "yes"
+          action: "block & report"
+          burst_enabled: "enable"
+          learning_suppression_threshold: "50"
+          footprint_strictness: "medium"
+          rate_limit: "disable"
+          packet_report_status: "enable"
+          packet_trace_status: "enable"
 
       - name: "BDOS_Profile_4"
         params:
-          TCP Status: "inactive"
-          TCP SYN Status: "inactive"
-          UDP Status: "active"
-          IGMP Status: "active"
-          ICMP Status: "active"
-          TCP FIN/ACK Status: "inactive"
-          TCP RST Status: "inactive"
-          TCP PSH/ACK Status: "inactive"
-          TCP SYN/ACK Status: "active"
-          TCP Frag Status: "active"
-          Bandwidth In: "40000"
-          Bandwidth Out: "40000"
-          Transparent Optimization: "yes"
-          Action: "block & report"      
-          Burst Enabled: "enable"
-          Footprint Strictness: "medium"
-          Rate Limit: "disable"
-          Packet Report Status: "enable"
-          Packet Trace Status: "enable"
+          tcp_status: "inactive"
+          udp_status: "active"
+          icmp_status: "active"
+          tcp_syn_ack_status: "active"
+          tcp_frag_status: "active"
+          bandwidth_in: "40000"
+          bandwidth_out: "40000"
+          transparent_optimization: "yes"
+          action: "block & report"
+          burst_enabled: "enable"
+          learning_suppression_threshold: "50"
+          footprint_strictness: "medium"
+          rate_limit: "disable"
+          packet_report_status: "enable"
+          packet_trace_status: "enable"
 
   tasks:
     - block:
-        - name: Lock device(s)
+        - name: 🔒 Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Create BDOS Flood profiles on each device
+        - name: 🚀 Create BDOS profiles on each device
           vars:
             profile_matrix: "{{ dp_ip | product(bdos_profiles) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
-          create_bdos_profile:
+          dp_bdos_profile:   # 👈 use dp_bdos_profile, not create_bdos_profile
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             name: "{{ item.1.name }}"
             params: "{{ item.1.params }}"
 
+      rescue:
+        - debug:
+            msg: "⚠️ Failed creating BDOS profiles on {{ item.0 }}"
+
       always:
-        - name: Unlock device(s)
+        - name: 🔓 Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"

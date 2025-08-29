@@ -5,6 +5,8 @@
   vars_files:
     - ../vars/cc.yml
 
+<<<<<<< HEAD
+=======
   vars:
     dp_ip:
       - "10.105.192.32"
@@ -13,6 +15,7 @@
     bdos_profiles:
       - name: "BDOS_Test"  # Add more if needed
 
+>>>>>>> 4271b7cd945da49a7ffd0f7d7638ac14534c558c
   tasks:
     - block:
         - name: Lock device(s)
