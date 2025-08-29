@@ -1,47 +1,9 @@
 ---
 - name: Create OOS Stateful profiles on all devices
-  hosts: cc
+  hosts: localhost
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml   # Contains the 'cc' provider dictionary
-
-  vars:
-    # DefensePro device IPs
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-    # Multiple OOS Stateful profiles with unique parameters
-    stateful_profiles:
-      - name: "OOS_Profile1"
-        params:
-          Act Threshold: "5000"
-          Term Threshold: "4000"
-          Syn-Ack Allow: "enable"             # enable/disable
-          Packet Trace Status: "enable"       # enable/disable
-          Packet Report Status: "enable"      # enable/disable
-          Risk Level: "medium"                # low/medium/high
-          Profile Action: "block"             # block/allow
-
-      - name: "OOS_Profile2"
-        params:
-          Act Threshold: "8000"
-          Term Threshold: "7000"
-          Syn-Ack Allow: "disable"
-          Packet Trace Status: "disable"
-          Packet Report Status: "enable"
-          Risk Level: "high"
-          Profile Action: "block"
-
-      - name: "OOS_Profile3"
-        params:
-          Act Threshold: "3000"
-          Term Threshold: "2500"
-          Syn-Ack Allow: "enable"
-          Packet Trace Status: "enable"
-          Packet Report Status: "disable"
-          Risk Level: "low"
-          Profile Action: "allow"
+    - ../vars/cc.yml   # CC connection details + profiles
 
   tasks:
     - block:
@@ -53,7 +15,7 @@
 
         - name: Create OOS Stateful profiles on each device
           vars:
-            profile_matrix: "{{ dp_ip | product(stateful_profiles) | list }}"
+            profile_matrix: "{{ dp_ip | product(oos_mapping) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
