@@ -95,14 +95,24 @@ log_level: "info"  # info, debug, or disabled
 
 ### Creating BdoS profile
 ```yaml
-create_bdos:
-  - name: "BDOS_Profile1"
-    action: 1
-    rate_limit: 1000
-    rate_limit_status: 1
-    challenge_method: 2
-    selective_challenge: 2
-    collective_challenge: 2
+bdos_profiles:
+  - name: "BDOS_Profile_1"
+    params:
+      TCP Status: "inactive"                 
+      UDP Status: "active"                   
+      ICMP Status: "active"                  
+      TCP SYN/ACK Status: "active"           
+      TCP Frag Status: "active"              
+      Bandwidth In: "40000"                  
+      Bandwidth Out: "40000"                 
+      Transparent Optimization: "yes"        
+      Action: "block & report"               
+      Burst Enabled: "enable"                
+      Learning Suppression Threshold: "50"   
+      Footprint Strictness: "medium"         
+      Rate Limit: "disable"                  
+      Packet Report Status: "enable"         
+      Packet Trace Status: "enable"          
 ```
 
 ### Editing BDoS Profile  
