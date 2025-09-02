@@ -3,49 +3,8 @@
   hosts: cc
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml   # provider details
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-    bdos_profiles:
-      - name: "BDOS_Profile_3"
-        params:
-          tcp_status: "inactive"
-          udp_status: "active"
-          icmp_status: "active"
-          tcp_syn_ack_status: "active"
-          tcp_frag_status: "active"
-          bandwidth_in: "40000"
-          bandwidth_out: "40000"
-          transparent_optimization: "yes"
-          action: "block & report"
-          burst_enabled: "enable"
-          learning_suppression_threshold: "50"
-          footprint_strictness: "medium"
-          rate_limit: "disable"
-          packet_report_status: "enable"
-          packet_trace_status: "enable"
-
-      - name: "BDOS_Profile_4"
-        params:
-          tcp_status: "inactive"
-          udp_status: "active"
-          icmp_status: "active"
-          tcp_syn_ack_status: "active"
-          tcp_frag_status: "active"
-          bandwidth_in: "40000"
-          bandwidth_out: "40000"
-          transparent_optimization: "yes"
-          action: "block & report"
-          burst_enabled: "enable"
-          learning_suppression_threshold: "50"
-          footprint_strictness: "medium"
-          rate_limit: "disable"
-          packet_report_status: "enable"
-          packet_trace_status: "enable"
+    - ../vars/cc.yml             # provider details
+    - ../vars/create_bdos_vars.yml  # bdOS profiles + dp_ip
 
   tasks:
     - block:
@@ -57,17 +16,17 @@
 
         - name: 🚀 Create BDOS profiles on each device
           vars:
-            profile_matrix: "{{ dp_ip | product(bdos_profiles) | list }}"
+            profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
-          dp_bdos_profile:   # 👈 use dp_bdos_profile, not create_bdos_profile
+          create_bdos_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             name: "{{ item.1.name }}"
             params: "{{ item.1.params }}"
 
-      rescue:
+    rescue:
         - debug:
             msg: "⚠️ Failed creating BDOS profiles on {{ item.0 }}"
 
