@@ -1,0 +1,65 @@
+---
+- name: Create connection limit profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        # Step 1: Create connection limit protections (only if create_new_protections is true)
+        - name: Build device/protection combinations for new protections
+          set_fact:
+            new_protection_pairs: >-
+              {{
+                dp_ip
+                | product(cl_protections | selectattr('create_new', 'equalto', true) | list)
+                | map('list')
+                | list
+              }}
+          when: cl_protections is defined and (cl_protections | selectattr('create_new', 'equalto', true) | list | length > 0)
+
+        # Step 1: Create connection limit protections with state refresh
+        - name: "Create protections"
+          include_tasks: ../tasks/cl_profile_tasks/create_protection_task.yml
+          loop: "{{ new_protection_pairs | default([]) }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}"
+            extended: true
+          when: new_protection_pairs is defined
+
+        # Step 2: Create connection limit profiles and attach protections
+        - name: Build device/profile/protection combinations
+          set_fact:
+            profile_protection_pairs: >-
+              {{
+                dp_ip
+                | product(cl_profiles | subelements('protections'))
+                | map('flatten')
+                | map('flatten') 
+                | list
+              }}
+
+        - name: Create connection limit profiles with attached protections on all devices
+          loop: "{{ profile_protection_pairs }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}/{{ item.2 }}"
+          create_cl_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            profile_name: "{{ item.1.name }}"
+            protection_name: "{{ item.2 }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"

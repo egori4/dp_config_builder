@@ -31,6 +31,10 @@ dp_config_builder/
    - CRUD operations for DefensePro network classes
    - Consistent parameter validation and error handling
 
+4. **Connection Limit Profile Modules** (`plugins/modules/`)
+   - Creation of connection limit protection subprofiles
+   - Profile creation and protection attachment
+
 ## API Endpoints
 
 ### Network Class Management
@@ -46,6 +50,12 @@ dp_config_builder/
 |-----------|--------|----------|
 | **Lock** | POST | `/mgmt/device/byip/{dp_ip}/config/lock` |
 | **Unlock** | POST | `/mgmt/device/byip/{dp_ip}/config/unlock` |
+
+### Connection Limit Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Protection** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{index}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}` |
 
 ## Module Development Pattern
 
@@ -113,6 +123,32 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
     "rsBWMNetworkName": "web_servers",
     "rsBWMNetworkAddress": "10.1.1.0",
     "rsBWMNetworkMask": "24"
+}
+```
+
+### Create Connection Limit Protection
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/0
+
+{
+    "rsIDSConnectionLimitAttackName": "cl_prot_tcp_limit",
+    "rsIDSConnectionLimitAttackProtocol": "6",
+    "rsIDSConnectionLimitAttackThreshold": "100",
+    "rsIDSConnectionLimitAttackTrackingType": "1",
+    "rsIDSConnectionLimitAttackReportMode": "10",
+    "rsIDSConnectionLimitAttackPacketReport": "2",
+    "rsIDSConnectionLimitAttackRisk": "3",
+    "rsIDSConnectionLimitAttackType": "1"
+}
+```
+
+### Create Connection Limit Profile
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitProfileTable/web_limits/cl_prot_tcp_limit
+
+{
+    "rsIDSConnectionLimitProfileName": "web_limits",
+    "rsIDSConnectionLimitProfileAttackName": "cl_prot_tcp_limit"
 }
 ```
 

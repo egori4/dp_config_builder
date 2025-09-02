@@ -36,3 +36,36 @@ netclasses:
 # - mask: Can be CIDR notation (e.g., "24") or dotted decimal (e.g., "255.255.255.0")  
 # - Groups are automatically assigned indices starting from 0
 # - The playbook will create all combinations of dp_ip × netclasses × groups
+
+# Connection Limit Protection Subprofiles (optional - only if you want to create new ones)
+cl_protections:
+  - name: "cl_prot_egor_test10"
+    create_new: true
+    protocol: "3"           # Protocol type (3 = All, 6 = TCP, 17 = UDP)
+    threshold: "50"         # Connection limit threshold
+    tracking_type: "2"      # Tracking type (1 = Source IP, 2 = Destination IP, 3 = Both)
+    report_mode: "10"       # Report mode
+    packet_report: "2"      # Packet report
+    risk: "3"              # Risk level (2 = Medium, 3 = High) - API requires range [2...3]
+    attack_type: "1"       # Attack type
+  - name: "cl_prot_egor_test11"
+    create_new: true
+    protocol: "6"
+    threshold: "100"
+    tracking_type: "1"
+    report_mode: "10"
+    packet_report: "2"
+    risk: "3"              # Risk level (2 = Medium, 3 = High) - API requires range [2...3]
+    attack_type: "1"
+  # - name: "existing_cl_protection"
+  #   create_new: false      # Use existing protection, don't create new one
+
+# Connection Limit Profiles (attach protections to profiles)
+cl_profiles:
+  - name: "cl_prof_egor_test10"
+    protections:
+      - "cl_prot_egor_test10"
+      - "cl_prot_egor_test11"
+  # - name: "cl_prof_egor_test11" 
+  #   protections:
+  #     - "existing_cl_protection"    # Can reference existing protections

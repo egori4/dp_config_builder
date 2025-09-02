@@ -4,7 +4,7 @@
 
 ## What This Does
 
-Automate creation, editing, and deletion of DefensePro network classes across multiple devices using Ansible.
+Automate creation, editing, and deletion of DefensePro profiles and policies across multiple devices using Ansible.
 
 ## Quick Start (5 minutes)
 
@@ -32,6 +32,9 @@ ansible-playbook playbooks/edit_network_class.yml
 
 # Delete network classes
 ansible-playbook playbooks/delete_network_class.yml
+
+# Create connection limit profiles
+ansible-playbook playbooks/create_cl_profiles.yml
 ```
 
 ## Common Workflows
@@ -78,6 +81,21 @@ ansible-playbook --check playbooks/delete_network_class.yml
 ansible-playbook playbooks/delete_network_class.yml
 ```
 
+### Workflow 4: Create Connection Limit Profiles
+```bash
+# 1. Configure protections and profiles
+nano vars/create_vars.yml
+
+# 2. Test first (dry run)
+ansible-playbook --check playbooks/create_cl_profiles.yml
+
+# 3. Apply configuration
+ansible-playbook playbooks/create_cl_profiles.yml
+
+# Alternative: Use standalone example
+ansible-playbook playbooks/create_cl_profiles_example.yml --check
+```
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, etc.)
@@ -118,6 +136,24 @@ edit_networks:
 delete_networks:
   - {class_name: "web_servers", index: 0}
   - {class_name: "old_servers", index: 1}
+```
+
+### Connection Limit Profiles
+```yaml
+# Protection subprofiles (create new or reference existing)
+cl_protections:
+  - name: "cl_prot_tcp_limit"
+    create_new: true
+    protocol: "6"           # TCP
+    threshold: "100"        # Connection limit
+    tracking_type: "1"      # Source IP tracking
+    risk: "3"              # High risk
+
+# Profiles (attach protections)
+cl_profiles:
+  - name: "web_server_limits"
+    protections:
+      - "cl_prot_tcp_limit"
 ```
 
 ## Troubleshooting

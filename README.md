@@ -26,6 +26,13 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
 | `get_network_class.yml` | Query current state | [USER_GUIDE.md](USER_GUIDE.md#common-workflows) |
 
+### Connection Limit Profiles (Available Now)
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_cl_profiles.yml` | Create connection limit profiles and protections | *See create_vars.yml for configuration* |
+
+
 
 ## Repository Structure
 
@@ -57,19 +64,21 @@ dp_config_builder/
 ## Super Quick Example
 
 ```bash
-# 1. Setup (one time)
+# Network Classes Example
 cd vars/
 cp create_vars.yml.example create_vars.yml
 # Edit create_vars.yml with your networks and devices
-
-# 2. Create network classes (example with current functionality)
 ansible-playbook playbooks/create_network_class.yml
+
+# Connection Limit Profiles Example  
+ansible-playbook playbooks/create_cl_profiles_example.yml --check
 ```
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
 | v0.1.3 |       | Rerved for Rahul(BDOS)|
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
