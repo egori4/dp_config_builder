@@ -1,0 +1,40 @@
+---
+- name: Edit SYN Protections on DefensePro devices
+  hosts: cc
+  gather_facts: no
+
+  vars_files:
+    - ../vars/cc.yml            # CC credentials (cc_ip, username, password, verify_ssl, log_level)
+    - ../vars/edit_syn_vars.yml # Contains dp_ip list and syn_protections to edit
+
+  tasks:
+    - block:
+        - name: 🔒 Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: ✏️ Edit SYN Protections
+          vars:
+            syn_matrix: "{{ dp_ip | product(syn_protections) | list }}"
+          loop: "{{ syn_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.protection_id }}"
+          edit_syn_protection:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            protection_id: "{{ item.1.protection_id }}"
+            params: "{{ item.1.params }}"
+          register: syn_edit_results
+
+        - name: 📄 Show SYN edit results
+          debug:
+            var: syn_edit_results
+
+      always:
+        - name: 🔓 Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
