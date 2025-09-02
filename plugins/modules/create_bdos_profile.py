@@ -1,4 +1,4 @@
-# plugins/modules/dp_bdos_profile.py
+# plugins/modules/create_bdos_profile.py
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
@@ -6,7 +6,7 @@ from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: dp_bdos_profile
+module: create_bdos_profile
 short_description: Manage DefensePro BDOS Flood profiles via Radware CC
 description:
   - Creates or updates BDOS Flood profiles on Radware DefensePro devices using Radware CC API.
@@ -52,7 +52,7 @@ author:
 
 EXAMPLES = r'''
 - name: Create BDOS Flood profile
-  dp_bdos_profile:
+  create_bdos_profile:
     provider:
       cc_ip: 155.1.1.6
       username: radware
