@@ -1,10 +1,10 @@
 # DefensePro Configuration Builder - User Guide
 
-**Quick automation for Radware DefensePro network class management**
+**Quick automation for Radware DefensePro BDoS Profile management**
 
 ## What This Does
 
-Automate creation, editing, and deletion of DefensePro network classes across multiple devices using Ansible.
+Automate creation, editing, and deletion of DefensePro BdoS Profile across multiple devices using Ansible.
 
 ## Quick Start (5 minutes)
 
@@ -12,70 +12,66 @@ Automate creation, editing, and deletion of DefensePro network classes across mu
 ```bash
 # Copy configuration templates
 cd vars/
-cp cc_example.yml cc.yml                    # Edit variables as needed
-cp create_vars.yml.example create_vars.yml  # Edit variables as needed
-cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
-cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
-cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp cc_example.yml cc.yml                  # Edit credentials as needed
+cp create_bdos_vars.yml.example create_bdos_vars.yml
+cp edit_bdos_vars.yml.example edit_bdos_vars.yml
+cp delete_bdos_vars.yml.example delete_bdos_vars.yml
+cp get_bdos_vars.yml.example get_bdos_vars.yml
 ```
 
 ### 2. Run Operations
-```bash
-# See what network classes exist
-ansible-playbook playbooks/get_network_class.yml
+# See what BDoS profiles exist
+ansible-playbook playbooks/get_bdos_profile.yml
 
-# Create new network classes
-ansible-playbook playbooks/create_network_class.yml
+# Create new BDoS profiles
+ansible-playbook playbooks/create_bdos_profile.yml
 
-# Edit existing network classes  
-ansible-playbook playbooks/edit_network_class.yml
+# Edit existing BDoS profiles
+ansible-playbook playbooks/edit_bdos_profile.yml
 
-# Delete network classes
-ansible-playbook playbooks/delete_network_class.yml
+# Delete BDoS profiles
+ansible-playbook playbooks/delete_bdos_profile.yml
 ```
 
 ## Common Workflows
 
-### Workflow 1: Create New Network Classes
-```bash
-# 1. Edit your requirements
-nano vars/create_vars.yml
+### Workflow 1: Create New BDoS Profile
+# 1. Define your profiles
+nano vars/create_bdos_vars.yml
 
-# 2. Test first (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+# 2. Dry run first
+ansible-playbook --check playbooks/create_bdos_profile.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_bdos_profile.yml
 ```
 
-### Workflow 2: Modify Existing Networks
-```bash
+### Workflow 2: Modify Existing BDoS profile
 # 1. See current state
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_bdos_profile.yml
 
-# 2. Define your changes
-nano vars/edit_vars.yml
+# 2. Define changes
+nano vars/edit_bdos_vars.yml
 
-# 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_network_class.yml
+# 3. Dry run first
+ansible-playbook --check playbooks/edit_bdos_profile.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_network_class.yml
+ansible-playbook playbooks/edit_bdos_profile.yml
 ```
 
-### Workflow 3: Clean Up Networks
-```bash
-# 1. Identify what to delete
-ansible-playbook playbooks/get_network_class.yml
+### Workflow 3: Clean Up bdos profile
+# 1. Identify profiles to delete
+ansible-playbook playbooks/get_bdos_profile.yml
 
 # 2. Define deletions
-nano vars/delete_vars.yml
+nano vars/delete_bdos_vars.yml
 
-# 3. Test first (dry run)
-ansible-playbook --check playbooks/delete_network_class.yml
+# 3. Dry run first
+ansible-playbook --check playbooks/delete_bdos_profile.yml
 
 # 4. Apply deletions
-ansible-playbook playbooks/delete_network_class.yml
+ansible-playbook playbooks/delete_bdos_profile.yml
 ```
 
 ## Configuration Files
@@ -97,27 +93,32 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating Networks
+### Creating BdoS profile
 ```yaml
-netclasses:
-  - name: "web_servers"
-    groups:
-      - { address: "192.168.1.0", mask: "255.255.255.0" }
-      - { address: "192.168.2.0", mask: "24" }
+create_bdos:
+  - name: "BDOS_Profile1"
+    action: 1
+    rate_limit: 1000
+    rate_limit_status: 1
+    challenge_method: 2
+    selective_challenge: 2
+    collective_challenge: 2
 ```
 
-### Editing Networks  
+### Editing BDoS Profile  
 ```yaml
-edit_networks:
-  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
-  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
+edit_bdos:
+  - name: "BDOS_Profile1"
+    rate_limit: 2000
+    rate_limit_status: 1
+    challenge_method: 3
 ```
 
-### Deleting Networks
+### Deleting BDoS profile
 ```yaml
-delete_networks:
-  - {class_name: "web_servers", index: 0}
-  - {class_name: "old_servers", index: 1}
+delete_bdos:
+  - name: "BDOS_Profile1"
+  - name: "BDOS_Profile2"
 ```
 
 ## Troubleshooting
@@ -146,12 +147,12 @@ cat vars/cc.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_bdos_profile.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_bdos_profile.yml
 ```
 
 ###  **Start with One Device**
@@ -164,15 +165,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_bdos_profile.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
 netclasses:
-  - name: "web_servers_dmz"      # Good: Clear purpose
+  - name: "BDoS_Profilename"      # Good: Clear purpose
     # vs
-  - name: "net1"                 # Bad: Unclear
+  - name: "BDoS"                 # Bad: Unclear
 ```
 
 ## Getting Help
