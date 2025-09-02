@@ -37,10 +37,9 @@ netclasses:
 # - Groups are automatically assigned indices starting from 0
 # - The playbook will create all combinations of dp_ip × netclasses × groups
 
-# Connection Limit Protection Subprofiles (optional - only if you want to create new ones)
+# Connection Limit Protection Subprofiles (only define the ones you want to CREATE)
 cl_protections:
   - name: "cl_prot_egor_test10"
-    create_new: true
     protocol: "3"           # Protocol type (3 = All, 6 = TCP, 17 = UDP)
     threshold: "50"         # Connection limit threshold
     tracking_type: "2"      # Tracking type (1 = Source IP, 2 = Destination IP, 3 = Both)
@@ -49,7 +48,6 @@ cl_protections:
     risk: "3"              # Risk level (2 = Medium, 3 = High) - API requires range [2...3]
     attack_type: "1"       # Attack type
   - name: "cl_prot_egor_test11"
-    create_new: true
     protocol: "6"
     threshold: "100"
     tracking_type: "1"
@@ -57,15 +55,13 @@ cl_protections:
     packet_report: "2"
     risk: "3"              # Risk level (2 = Medium, 3 = High) - API requires range [2...3]
     attack_type: "1"
-  # - name: "existing_cl_protection"
-  #   create_new: false      # Use existing protection, don't create new one
 
-# Connection Limit Profiles (attach protections to profiles)
+# Connection Limit Profiles (can reference any protection names - existing or newly created)
 cl_profiles:
   - name: "cl_prof_egor_test10"
     protections:
-      - "cl_prot_egor_test10"
-      - "cl_prot_egor_test11"
-  # - name: "cl_prof_egor_test11" 
+      - "cl_prot_egor_test10"  # Will be created above
+      - "cl_prot_egor_test11"  # Will be created above
+  # - name: "cl_prof_existing_only"
   #   protections:
-  #     - "existing_cl_protection"    # Can reference existing protections
+  #     - "some_existing_protection"    # Reference existing protections without defining them

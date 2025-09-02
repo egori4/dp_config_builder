@@ -96,6 +96,13 @@ ansible-playbook playbooks/create_cl_profiles.yml
 ansible-playbook playbooks/create_cl_profiles_example.yml --check
 ```
 
+**Note**: The `cl_protections` section is **optional**. You can skip it entirely and define only `cl_profiles` to create profiles using existing protections already configured on your DefensePro devices.
+
+**Usage patterns**:
+- **Create new protections + profiles**: Define both `cl_protections` and `cl_profiles` sections
+- **Use only existing protections**: Skip `cl_protections`, define only `cl_profiles` with existing protection names
+- **Mixed approach**: Create some new protections, reference some existing ones in the same profile
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, etc.)
@@ -140,20 +147,34 @@ delete_networks:
 
 ### Connection Limit Profiles
 ```yaml
-# Protection subprofiles (create new or reference existing)
+# OPTIONAL: Protection subprofiles (only define if creating new ones)
 cl_protections:
   - name: "cl_prot_tcp_limit"
-    create_new: true
     protocol: "6"           # TCP
     threshold: "100"        # Connection limit
     tracking_type: "1"      # Source IP tracking
     risk: "3"              # High risk
 
-# Profiles (attach protections)
+# REQUIRED: Profiles (can reference existing or newly created protections)
 cl_profiles:
   - name: "web_server_limits"
     protections:
-      - "cl_prot_tcp_limit"
+      - "cl_prot_tcp_limit"      # Will be created above
+      - "existing_protection"    # Already exists on DefensePro
+```
+
+**Examples**:
+```yaml
+# Example 1: Create new protections + profiles
+cl_protections: [...]    # Define new protections
+cl_profiles: [...]       # Reference the new protections
+
+# Example 2: Use only existing protections (skip cl_protections entirely)
+cl_profiles:
+  - name: "profile_with_existing"
+    protections:
+      - "protection_already_on_device"
+      - "another_existing_protection"
 ```
 
 ## Troubleshooting

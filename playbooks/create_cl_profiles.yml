@@ -14,28 +14,32 @@
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        # Step 1: Create connection limit protections (only if create_new_protections is true)
-        - name: Build device/protection combinations for new protections
+        # Step 1a: Build device/protection combinations (if any protections to create)
+        # Example result: [["10.105.192.32", {"name": "cl_prot_test1", "protocol": "3", ...}], 
+        #                  ["10.105.192.32", {"name": "cl_prot_test2", "protocol": "6", ...}]]
+        - name: Build device/protection combinations
           set_fact:
             new_protection_pairs: >-
               {{
                 dp_ip
-                | product(cl_protections | selectattr('create_new', 'equalto', true) | list)
+                | product(cl_protections | list)
                 | map('list')
                 | list
               }}
-          when: cl_protections is defined and (cl_protections | selectattr('create_new', 'equalto', true) | list | length > 0)
+          when: cl_protections is defined and cl_protections|length > 0
 
-        # Step 1: Create connection limit protections with state refresh
+        # Step 1b: Create connection limit protections with state refresh
         - name: "Create protections"
           include_tasks: ../tasks/cl_profile_tasks/create_protection_task.yml
           loop: "{{ new_protection_pairs | default([]) }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
             extended: true
-          when: new_protection_pairs is defined
+          when: new_protection_pairs is defined and new_protection_pairs|length > 0
 
-        # Step 2: Create connection limit profiles and attach protections
+        # Step 2a: Build device/profile/protection combinations
+        # Example result: [["10.105.192.32", {"name": "cl_prof_test1", "protections": [...]}, "cl_prot_test1"],
+        #                  ["10.105.192.32", {"name": "cl_prof_test1", "protections": [...]}, "cl_prot_test2"]]
         - name: Build device/profile/protection combinations
           set_fact:
             profile_protection_pairs: >-
@@ -47,6 +51,7 @@
                 | list
               }}
 
+        # Step 2b: Create connection limit profiles and attach protections
         - name: Create connection limit profiles with attached protections on all devices
           loop: "{{ profile_protection_pairs }}"
           loop_control:
