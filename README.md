@@ -70,6 +70,7 @@ ansible-playbook playbooks/create_network_class.yml
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v0.1.4 | 2025-09-02 | Added BDoS functionality for edit and get operation       |
 | v0.1.3 | 2025-08-29 | Added BDoS functionality,create,edit,delete,get operation |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
