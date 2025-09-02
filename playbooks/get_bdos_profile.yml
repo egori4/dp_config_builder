@@ -2,38 +2,33 @@
 - name: Fetch BDOS Flood Profiles from DefensePro devices
   hosts: cc
   gather_facts: no
+
   vars_files:
-    - ../vars/cc.yml             # CC credentials
-    - ../vars/get_bdos_vars.yml  # BDOS profile definitions
+    - ../vars/cc.yml           # Credentials
+    - ../vars/get_bdos_vars.yml  # Contains dp_ip (or create_bdos_vars.yml if needed)
 
   tasks:
     - block:
-        - name: Lock device(s)
+        - name: 🔒 Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Fetch BDOS Flood Profiles
-          vars:
-            bdos_matrix: "{{ dp_ip | product(bdos_profiles) | list }}"
-          loop: "{{ bdos_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
-          get_bdos_profile:
+        - name: 📄 Get BDOS profiles
+          get_bdos_profile:       # Your custom module
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            profile_name: "{{ item.1.name }}"
-          register: bdos_fetch_results
-          ignore_errors: yes
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          register: bdos_profiles
+
+        - name: Show fetched BDOS profiles
+          debug:
+            var: bdos_profiles
 
       always:
-        - name: Unlock device(s)
+        - name: 🔓 Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-
-    - name: Show fetched BDOS profiles
-      debug:
-        var: bdos_fetch_results

@@ -32,7 +32,6 @@ options:
       log_level:
         description: Log verbosity level (enabled/disabled/debug)
         type: str
-        required: false
         default: disabled
   dp_ip:
     description: DefensePro device IP address
@@ -66,7 +65,7 @@ EXAMPLES = r'''
       UDP Status: "inactive"
       Transparent Optimization: "yes"
       Footprint Strictness: "medium"
-      Action: "block"
+      Action: "block & report"
       Burst Enabled: "enable"
       Rate Limit: "normalEdge"
 '''
@@ -130,7 +129,7 @@ NUMERIC_MAPPING = {
     "Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
     "Packet Report Status": {"enable": 1, "disable": 2},
     "Packet Trace Status": {"enable": 1, "disable": 2},
-    "Action": {"report": 0, "block": 1, "block & report": 1},
+    "Action": {"report only": 0, "block & report": 1},
     "Burst Enabled": {"enable": 1, "disable": 2},
     "Rate Limit": {"disable": 0, "normalEdge": 1, "suspectEdge": 2, "userDefined": 3},
     "Simulation Stop At Attack End": {"false": 0, "true": 1},
@@ -151,19 +150,21 @@ def translate_params(params):
     for k, v in params.items():
         api_key = FIELD_MAP.get(k, k)
         mapping = NUMERIC_MAPPING.get(k)
-
-        # normalize strings
         val = v.lower() if isinstance(v, str) else v
 
         if mapping:
             if val not in mapping:
                 raise ValueError(
-                    f"Invalid value '{v}' for parameter '{k}'. Allowed: {list(mapping.keys())}"
+                    f"Invalid value '{v}' for '{k}'. Allowed: {list(mapping.keys())}"
                 )
             translated[api_key] = mapping[val]
         else:
             translated[api_key] = v
     return translated
+
+
+def build_api_path(dp_ip, name):
+    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{name}"
 
 # -------------------------------
 # Main Logic
@@ -177,9 +178,11 @@ def run_module():
     )
 
     result = dict(changed=False, response={}, debug_info={})
-
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
     provider = module.params['provider']
+    dp_ip = module.params['dp_ip']
+    name = module.params['name']
     log_level = provider.get('log_level', 'disabled')
 
     logger = Logger(verbosity=log_level)
@@ -189,20 +192,21 @@ def run_module():
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
 
-        if not module.check_mode:
-            path = (
-                f"/mgmt/device/byip/{module.params['dp_ip']}"
-                f"/config/rsNetFloodProfileTable/{module.params['name']}"
-            )
-            body = {"rsNetFloodProfileName": module.params['name']}
-            body.update(translate_params(module.params['params']))
+        path = build_api_path(dp_ip, name)
+        url = f"https://{provider['cc_ip']}{path}"
 
-            url = f"https://{provider['cc_ip']}{path}"
-            debug_info['request'] = {"method": "POST", "url": url, "body": body}
-            logger.info(f"Creating BDOS Flood profile '{module.params['name']}' on {module.params['dp_ip']}")
+        body = {"rsNetFloodProfileName": name}
+        body.update(translate_params(module.params['params']))
 
-            # Prefer public request method instead of _post
-            resp = cc.post(url, json=body) if hasattr(cc, "post") else cc._post(url, json=body)
+        debug_info['request'] = {"method": "POST", "url": url, "body": body}
+        logger.info(f"Preparing BDOS Flood profile '{name}' on {dp_ip}")
+
+        if module.check_mode:
+            result['changed'] = True
+            result['response'] = {"msg": "Check mode - no changes applied"}
+        else:
+            post_method = getattr(cc, "post", cc._post)
+            resp = post_method(url, json=body)
 
             debug_info['response_status'] = resp.status_code
             try:
@@ -212,7 +216,7 @@ def run_module():
                 raise Exception(f"Invalid JSON response: {resp.text}")
 
             if resp.status_code not in (200, 201):
-                raise Exception(f"Failed to create BDOS profile: {data}")
+                raise Exception(f"Failed to create/update BDOS profile: {data}")
 
             result['changed'] = True
             result['response'] = data
@@ -223,8 +227,10 @@ def run_module():
     result['debug_info'] = debug_info
     module.exit_json(**result)
 
+
 def main():
     run_module()
+
 
 if __name__ == "__main__":
     main()

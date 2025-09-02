@@ -1,42 +1,42 @@
 ---
-- name: Edit DefensePro BDOS Flood Profiles
+- name: Edit BDOS Flood Profiles on DefensePro devices
   hosts: cc
   gather_facts: no
+
+  # Load credential and BDOS edit vars
   vars_files:
-    - ../vars/cc.yml        # Credentials (cc)
-    - ../vars/edit_bdos_vars.yml  # BDOS edit definitions
+    - ../vars/cc.yml
+    - ../vars/edit_bdos_vars.yml
 
   tasks:
     - block:
-        - name: Lock device(s)
+
+        - name: 🔒 Lock DefensePro device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Edit BDOS Flood Profiles
+        - name: ✏️ Edit BDOS Flood Profiles
           vars:
-            bdos_matrix: "{{ dp_ip | product(edit_bdos_profile) | list }}"
-          loop: "{{ bdos_matrix }}"
+            profile_matrix: "{{ dp_ip | product(bdos_edits) | list }}"
+          loop: "{{ profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
-          edit_bdos_profile:          # Your module
+          edit_bdos_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             name: "{{ item.1.name }}"
             params: "{{ item.1.params }}"
-          register: bdos_edit_results
+
+      rescue:
+        - name: ⚠️ BDOS profile edit failed
+          debug:
+            msg: "Task '{{ ansible_failed_task.name }}' failed on device {{ item.0 }} → Reason: {{ ansible_failed_result.msg | default('unknown') }}"
 
       always:
-        - name: Unlock device(s)
+        - name: 🔓 Unlock DefensePro device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-
-# Notes:
-# - dp_ip: List of DefensePro devices to edit
-# - edit_bdos_profiles: List of profile edits defined in vars file
-# - Each edit applies to all combinations of dp_ip × edit_bdos_profiles
-# - Lock/unlock ensures config consistency during changes
-# - Use get_bdos_profile module before editing to verify names & params

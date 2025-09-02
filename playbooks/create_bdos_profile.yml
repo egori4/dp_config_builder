@@ -1,38 +1,38 @@
 ---
-- name: Create BDOS Flood profiles on all devices
+- name: Create BDOS Profiles on DefensePro devices
   hosts: cc
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml             # provider details
-    - ../vars/create_bdos_vars.yml  # BDoS profiles + dp_ip
+    - ../vars/cc.yml
+    - ../vars/create_bdos_vars.yml
 
   tasks:
-    - block:
-        - name: 🔒 Lock device(s)
-          dp_lock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+  - block:
+      - name: 🔒 Lock device(s)
+        dp_lock:
+          provider: "{{ cc }}"
+          dp_ip: "{{ item }}"
+        loop: "{{ dp_ip }}"
 
-        - name: 🚀 Create BDOS profiles on each device
-          vars:
-            profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
-          create_bdos_profile:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
-            params: "{{ item.1.params }}"
+      - name: 🚀 Create BDOS profiles on each device
+        vars:
+          profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
+        loop: "{{ profile_matrix }}"
+        loop_control:
+          label: "{{ item.0 }}/{{ item.1.name }}"
+        create_bdos_profile:
+          provider: "{{ cc }}"
+          dp_ip: "{{ item.0 }}"
+          name: "{{ item.1.name }}"
+          params: "{{ item.1.params }}"
 
     rescue:
-        - debug:
-            msg: "⚠️ Failed creating BDOS profiles on {{ item.0 }}"
+      - debug:
+          msg: "⚠️ BDOS creation failed → Task: {{ ansible_failed_task.name }} / Reason: {{ ansible_failed_result.msg | default('unknown') }}"
 
-      always:
-        - name: 🔓 Unlock device(s)
-          dp_unlock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+    always:
+      - name: 🔓 Unlock device(s)
+        dp_unlock:
+          provider: "{{ cc }}"
+          dp_ip: "{{ item }}"
+        loop: "{{ dp_ip }}"
