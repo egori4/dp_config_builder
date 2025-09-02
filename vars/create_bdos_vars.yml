@@ -1,0 +1,60 @@
+---
+# Copy this file to create_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# bdos_profiles.yml.example - Template for creating BDOS Flood profile variables
+# Copy this file to bdos_profiles.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+
+# Define BDOS profiles to create with their parameters
+bdos_mappings:
+  # Example: Create a BDOS Flood profile named "BDOS_Profile_1"
+  - name: "BDOS_Profile_10"
+    params:
+      TCP Status: "inactive"                 # enable/disable TCP flood detection
+      UDP Status: "active"                   # enable/disable UDP flood detection
+      ICMP Status: "active"                  # enable/disable ICMP flood detection
+      TCP SYN/ACK Status: "active"           # SYN/ACK flood detection
+      TCP Frag Status: "active"              # Fragmented TCP flood detection
+      Bandwidth In: "40000"                  # Max inbound bandwidth (Kbps)
+      Bandwidth Out: "40000"                 # Max outbound bandwidth (Kbps)
+      Transparent Optimization: "yes"        # Optimization mode
+      Action: "block & report"               # Actions: "report only","block & report"
+      Burst Enabled: "enable"                # Enable/disable burst mode
+      Learning Suppression Threshold: "50"   # Suppression threshold %
+      Footprint Strictness: "medium"         # Profile strictness (low, medium, high)
+      Rate Limit: "disable"                  # Enable/disable rate limiting
+      Packet Report Status: "enable"         # Enable/disable packet reporting
+      Packet Trace Status: "enable"          # Enable/disable packet tracing
+
+  # Example: Another profile
+  # - name: "BDOS_Profile_2"
+  #   params:
+  #     TCP Status: "active"
+  #     UDP Status: "active"
+  #     ICMP Status: "inactive"
+  #     TCP SYN/ACK Status: "active"
+  #     TCP Frag Status: "inactive"
+  #     Bandwidth In: "20000"
+  #     Bandwidth Out: "20000"
+  #     Transparent Optimization: "no"
+  #     Action: "report only"
+  #     Burst Enabled: "disable"
+  #     Learning Suppression Threshold: "60"
+  #     Footprint Strictness: "high"
+  #     Rate Limit: "enable"
+  #     Packet Report Status: "disable"
+  #     Packet Trace Status: "disable"
+
+# Notes:
+# - name: Must be unique BDOS profile name per DefensePro
+# - params: Keys must match supported API fields for BDOS
+# - All values are strings (quote them), even numbers
+# - The playbook will create all combinations of dp_ip × bdos_profiles
+# - You can duplicate the "params" block to define multiple profiles

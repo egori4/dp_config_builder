@@ -1,0 +1,24 @@
+---
+# Copy this file to delete_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  - "10.105.192.33"
+  # - "10.105.192.34"
+  
+# delete_bdos_vars.yml.example - Template for deleting BDOS profiles
+
+# Define BDOS profiles to delete
+bdos_profiles:
+  - name: "BDOS_Test"
+  - name: "BDOS_Profile_3"
+  # - name: "BDOS_Profile_4"
+
+# Notes:
+# - name: Must match the exact BDOS profile name configured on the device
+# - dp_ip: Can contain one or more DefensePro IPs, each profile will be deleted on all listed devices
+# - The playbook will delete all combinations of dp_ip × bdos_profiles
+# - Deletion is permanent – once deleted, profiles cannot be recovered
+# - Use caution in production environments and ensure you have backups before deletion
+

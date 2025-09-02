@@ -1,0 +1,56 @@
+---
+# edit_bdos_vars.yml.example - Template for editing BDOS Flood profile variables
+# Copy this file to edit_bdos_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+    - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# Define BDOS profiles to edit with their updated parameters
+bdos_edits:
+  # Example: Edit BDOS profile named "BDOS_Profile_1"
+  - name: "BDOS_Profile_10"
+    params:
+      TCP Status: "active"                   # enable/disable TCP flood detection
+      UDP Status: "inactive"                 # enable/disable UDP flood detection
+      ICMP Status: "active"                  # enable/disable ICMP flood detection
+      TCP SYN/ACK Status: "inactive"         # SYN/ACK flood detection
+      TCP Frag Status: "active"              # Fragmented TCP flood detection
+      Bandwidth In: "80000"                  # Max inbound bandwidth (Kbps)
+      Bandwidth Out: "50000"                 # Max outbound bandwidth (Kbps)
+      Transparent Optimization: "no"         # Optimization mode
+      Action: "report only"                  # Actions: "report only", "block", "block & report"
+      Burst Enabled: "disable"               # Enable/disable burst mode
+      Learning Suppression Threshold: "70"   # Suppression threshold %
+      Footprint Strictness: "low"            # Profile strictness (low, medium, high)
+      Rate Limit: "enable"                   # Enable/disable rate limiting
+      Packet Report Status: "disable"        # Enable/disable packet reporting
+      Packet Trace Status: "disable"         # Enable/disable packet tracing
+
+  # Example: Another profile update
+  # - name: "BDOS_Profile_2"
+  #   params:
+  #     TCP Status: "inactive"
+  #     UDP Status: "active"
+  #     ICMP Status: "active"
+  #     TCP SYN/ACK Status: "active"
+  #     TCP Frag Status: "inactive"
+  #     Bandwidth In: "60000"
+  #     Bandwidth Out: "60000"
+  #     Transparent Optimization: "yes"
+  #     Action: "block & report"
+  #     Burst Enabled: "enable"
+  #     Learning Suppression Threshold: "40"
+  #     Footprint Strictness: "high"
+  #     Rate Limit: "disable"
+  #     Packet Report Status: "enable"
+  #     Packet Trace Status: "enable"
+
+# Notes:
+# - name: Must match an existing BDOS profile on DefensePro
+# - params: Keys must match supported API fields for BDOS
+# - All values are strings (quote them), even numbers
+# - The playbook will edit all combinations of dp_ip × bdos_edits
+# - Use get_bdos_profile module to verify existing profiles before editing
