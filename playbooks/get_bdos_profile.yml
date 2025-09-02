@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 - name: Fetch BDOS Flood Profiles from DefensePro devices
   hosts: cc
@@ -37,3 +38,39 @@
     - name: Show fetched BDOS profiles
       debug:
         var: bdos_fetch_results
+=======
+---
+- name: Fetch BDOS Flood Profiles from DefensePro devices
+  hosts: cc
+  gather_facts: no
+
+  vars_files:
+    - ../vars/cc.yml           # Credentials
+    - ../vars/get_bdos_vars.yml  # Contains dp_ip (or create_bdos_vars.yml if needed)
+
+  tasks:
+    - block:
+        - name: 🔒 Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: 📄 Get BDOS profiles
+          get_bdos_profile:       # Your custom module
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          register: bdos_profiles
+
+        - name: Show fetched BDOS profiles
+          debug:
+            var: bdos_profiles
+
+      always:
+        - name: 🔓 Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+>>>>>>> 9f214946a21afd525cfe87894ad55ac462e03edd

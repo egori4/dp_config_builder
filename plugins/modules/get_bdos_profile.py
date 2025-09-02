@@ -1,4 +1,3 @@
-# plugins/modules/get_bdos_profile.py
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
@@ -48,19 +47,13 @@ author:
 EXAMPLES = r'''
 - name: Fetch all BDOS profiles
   get_bdos_profile:
-    provider:
-      cc_ip: 155.1.1.6
-      username: radware
-      password: mypass
-    dp_ip: 155.1.1.7
+    provider: "{{ cc }}"
+    dp_ip: 10.105.192.32
 
 - name: Fetch a specific BDOS profile
   get_bdos_profile:
-    provider:
-      cc_ip: 155.1.1.6
-      username: radware
-      password: mypass
-    dp_ip: 155.1.1.7
+    provider: "{{ cc }}"
+    dp_ip: 10.105.192.32
     profile_name: "BDOS_Test"
 '''
 
@@ -81,6 +74,8 @@ def run_module():
     )
 
     result = dict(changed=False, response={}, debug_info={})
+    debug_info = {}  # Always initialize
+
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     provider = module.params['provider']
@@ -101,29 +96,27 @@ def run_module():
             path = f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable"
 
         url = f"https://{provider['cc_ip']}{path}"
-        debug_info = {'method': 'GET', 'url': url, 'body': None}
+        debug_info.update({'method': 'GET', 'url': url, 'body': None})
         logger.info(f"Fetching BDOS profile(s) from device {dp_ip}")
         logger.debug(f"GET URL: {url}")
-
-        # Lock device to ensure consistency (optional for GET, can remove if not required)
-        # logger.info(f"Locking device {dp_ip}")
-        # cc._post(f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/lock")
 
         resp = cc._get(url)
         debug_info['response_status'] = resp.status_code
 
+        if resp.status_code != 200:
+            module.fail_json(msg=f"Failed to fetch BDOS profile(s). Status {resp.status_code}",
+                             response_text=resp.text, debug_info=debug_info)
+
         try:
             data = resp.json()
-            result['response'] = data
-            debug_info['response_json'] = data
-            logger.debug(f"Response JSON: {data}")
         except ValueError:
-            logger.error(f"Invalid JSON response: {resp.text}")
             module.fail_json(msg="Invalid JSON response", response_text=resp.text, debug_info=debug_info)
 
-        # Unlock device if locking was used
-        # logger.info(f"Unlocking device {dp_ip}")
-        # cc._post(f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/unlock")
+        result['response'] = {
+            'status': resp.status_code,
+            'json': data
+        }
+        debug_info['response_json'] = data
 
     except Exception as e:
         logger.error(f"Exception: {str(e)}")
