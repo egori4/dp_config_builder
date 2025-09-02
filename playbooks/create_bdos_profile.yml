@@ -4,7 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml             # provider details
-    - ../vars/create_bdos_vars.yml  # bdOS profiles + dp_ip
+    - ../vars/create_bdos_vars.yml  # BDoS profiles + dp_ip
 
   tasks:
     - block:

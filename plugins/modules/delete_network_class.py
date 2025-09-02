@@ -1,9 +1,7 @@
 # plugins/modules/delete_network_class.py
 from ansible.module_utils.basic import AnsibleModule
-
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
-
 
 
 documentation = r'''
