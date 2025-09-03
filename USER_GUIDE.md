@@ -118,15 +118,28 @@ bdos_mappings:
 ### Editing BDoS Profile  
 ```yaml
 bdos_mappings:
-  - name: "BDOS_Profile1"
-    rate_limit: 2000
-    rate_limit_status: 1
-    challenge_method: 3
+  - name: "BDOS_Profile_11"
+    params:
+      TCP Status: "active"
+      UDP Status: "active"
+      ICMP Status: "inactive"
+      TCP SYN/ACK Status: "active"
+      TCP Frag Status: "inactive"
+      Bandwidth In: "50000"
+      Bandwidth Out: "50000"
+      Transparent Optimization: "yes"
+      Action: "block & report"
+      Burst Enabled: "enable"
+      Learning Suppression Threshold: "60"
+      Footprint Strictness: "medium"
+      Rate Limit: "normalEdge"
+      Packet Report Status: "enable"
+      Packet Trace Status: "enable"         
 ```
 
 ### Deleting BDoS profile
 ```yaml
-delete_bdos:
+bdos_mappings:
   - name: "BDOS_Profile1"
   - name: "BDOS_Profile2"
 ```

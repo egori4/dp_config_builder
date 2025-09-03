@@ -12,7 +12,7 @@
         provider: "{{ provider }}"
         dp_ip: "{{ item.0 }}"
         profile_name: "{{ item.1 }}"
-      loop: "{{ dp_ip | product(bdos_profiles) | list }}"
+      loop: "{{ dp_ip | product(bdos_mappings) | list }}"
       loop_control:
         label: "{{ item.1 }} on {{ item.0 }}"
       register: bdos_results
