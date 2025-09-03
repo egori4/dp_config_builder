@@ -1,18 +1,52 @@
+update vars file in below format
+
+---
+# Copy this file to create_syn_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
 dp_ip:
   - "10.105.192.32"
-  - "10.105.192.33"
+  # - "10.105.192.33"
 
-syn_protections:
-  - protection_id: 0
-    params:
-      app_port_group: http
-      activation_threshold: 2500
-      termination_threshold: 1500
-      packet_report: enable
+# Define SYN profiles and protections to attach
+syn_mappings:
+  # Example: Profile Test_10 with protection TEST_10
+  - profile_name: "Test_10"
+    protection_name: "TEST_10"
+    protection_params:
+      app_port_group: "http"             # Destination application port group
+      activation_threshold: "2500"       # Threshold to activate the protection
+      termination_threshold: "1500"      # Threshold to terminate the protection
+      packet_report: "enable"            # Per-attack packet report (enable/disable)
+    profile_params:
+      profile_type: "syn_protection"     # Type of profile
 
-  - protection_id: 1
-    params:
-      app_port_group: https
-      activation_threshold: 5000
-      termination_threshold: 3000
-      packet_report: disable
+  # Example: Profile Test_20 with protection TEST_10
+  - profile_name: "Test_20"
+    protection_name: "TEST_10"
+    protection_params:
+      app_port_group: "https"
+      activation_threshold: "5000"
+      termination_threshold: "3000"
+      packet_report: "disable"
+    profile_params:
+      profile_type: "syn_protection"
+
+  # Example: Profile Test_30 with protection TEST_20
+  - profile_name: "Test_30"
+    protection_name: "TEST_20"
+    protection_params:
+      app_port_group: "ftp"
+      activation_threshold: "1000"
+      termination_threshold: "800"
+      packet_report: "enable"
+    profile_params:
+      profile_type: "syn_protection"
+
+# Notes:
+# - profile_name: Must be unique per DefensePro
+# - protection_name: Must exist on the device
+# - protection_params: API keys must match supported fields
+# - profile_params: Only include the parameters you need to configure
+# - All values should be strings (quote numeric thresholds if needed)
+# - The playbook will create all combinations of dp_ip × syn_mappings

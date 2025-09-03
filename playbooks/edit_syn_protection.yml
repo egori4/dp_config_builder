@@ -3,26 +3,8 @@
   hosts: localhost
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-
-    syn_protections:
-      - protection_id: "500013"
-        name: "TEST_30"
-        app_port_group: "http"
-        activation_threshold: 3500
-        termination_threshold: 2000
-        packet_report: enable
-
-      - protection_id: "500012"
-        name: "TEST_20"
-        app_port_group: "https"
-        activation_threshold: 5000
-        termination_threshold: 4000
-        packet_report: disable
+    - ../vars/cc.yml           # Provider credentials
+    - ../vars/edit_syn_vars.yml  # SYN protections to edit
 
   tasks:
     - block:
@@ -45,7 +27,7 @@
           loop: "{{ dp_ip | product(syn_protections) | list }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
-          register: edit_results  # You can keep this for logging if needed
+          register: edit_results
 
       always:
         - name: Unlock device(s)
