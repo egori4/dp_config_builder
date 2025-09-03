@@ -44,6 +44,7 @@ cl_protections:
     protection_type: "concurrent_connections"  # Options: cps, concurrent_connections
     protocol: "tcp"             # Options: tcp, udp
     threshold: "100"            # Connection limit threshold (number)
+    app_port_group: "https"     # Optional: http, https, dns, ftp, or custom port (leave empty for all ports)
     tracking_type: "src_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
     action: "drop"              # Options: report_only, drop
     packet_report: "disable"    # Options: enable, disable
@@ -51,6 +52,7 @@ cl_protections:
     protection_type: "cps"      # Options: cps, concurrent_connections
     protocol: "udp"             # Options: tcp, udp
     threshold: "500"            # Connection limit threshold (number)
+    app_port_group: ""          # Optional: http, https, dns, ftp, or custom port (leave empty for all ports)
     tracking_type: "dst_ip_and_port"  # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
     action: "report_only"       # Options: report_only, drop
     packet_report: "enable"     # Options: enable, disable
@@ -59,6 +61,7 @@ cl_protections:
 # - protection_type: Type of detection (cps = Connections Per Second, concurrent_connections = Total active connections)
 # - protocol: Network protocol to monitor
 # - threshold: Number at which protection triggers
+# - app_port_group: Application port group to monitor (http, https, dns, ftp, custom port, or empty for all ports)
 # - tracking_type: What traffic to track (src_ip, dst_ip, both IPs, or dst_ip with port)
 # - action: What to do when threshold exceeded (report_only = log only, drop = block traffic)
 # - packet_report: Whether to enable detailed packet reporting

@@ -95,6 +95,13 @@ options:
       - Connection limit threshold (number of connections)
     type: str
     default: '50'
+  app_port_group:
+    description:
+      - Application port group for the connection limit attack (optional)
+      - Common values include http, https, dns, ftp, smtp, imap
+      - Leave empty for all ports
+    type: str
+    default: ''
   tracking_type:
     description:
       - Type of connection counting for connection limiting
@@ -134,6 +141,7 @@ EXAMPLES = r'''
     protection_name: "{{ item.1.name }}"
     protocol: "{{ item.1.protocol | default('tcp') }}"
     threshold: "{{ item.1.threshold | default('50') }}"
+    app_port_group: "{{ item.1.app_port_group | default('') }}"
     tracking_type: "{{ item.1.tracking_type | default('dst_ip') }}"
     action: "{{ item.1.action | default('drop') }}"
     packet_report: "{{ item.1.packet_report | default('disable') }}"
@@ -152,6 +160,7 @@ EXAMPLES = r'''
     protection_name: tcp_conn_limit
     protocol: 'tcp'
     threshold: '100'
+    app_port_group: 'http'
     tracking_type: 'src_ip'
     action: 'drop'
     packet_report: 'enable'
@@ -201,6 +210,7 @@ def run_module():
         protocol=dict(type='str', required=False, default='tcp', 
                      choices=['tcp', 'udp']),
         threshold=dict(type='str', required=False, default='50'),
+        app_port_group=dict(type='str', required=False, default=''),
         tracking_type=dict(type='str', required=False, default='dst_ip',
                           choices=['src_ip', 'dst_ip', 'src_and_dest_ip', 'dst_ip_and_port']),
         action=dict(type='str', required=False, default='drop',
@@ -248,6 +258,7 @@ def run_module():
             body = {
                 "rsIDSConnectionLimitAttackName": module.params['protection_name'],
                 "rsIDSConnectionLimitAttackProtocol": api_protocol,
+                "rsIDSConnectionLimitAttackAppPort": module.params['app_port_group'],
                 "rsIDSConnectionLimitAttackThreshold": module.params['threshold'],
                 "rsIDSConnectionLimitAttackTrackingType": api_tracking_type,
                 "rsIDSConnectionLimitAttackReportMode": api_action,

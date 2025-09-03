@@ -8,6 +8,7 @@
     protection_name: "{{ item.1.name }}"
     protocol: "{{ item.1.protocol | default('tcp') }}"
     threshold: "{{ item.1.threshold | default('50') }}"
+    app_port_group: "{{ item.1.app_port_group | default('') }}"
     tracking_type: "{{ item.1.tracking_type | default('dst_ip') }}"
     action: "{{ item.1.action | default('drop') }}"
     packet_report: "{{ item.1.packet_report | default('disable') }}"
