@@ -70,7 +70,8 @@ ansible-playbook playbooks/create_network_class.yml
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v0.1.3 |       | Rerved for Rahul(BDOS)|
+| v0.1.5 | 2025-09-03 | Added edit and get functionality fot http profile |
+| v0.1.3 | 2025-09-02 | Added edit and get functionality fot bdos profile|
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
 | v0.1.0 | 2025-08-19 | Initial release with network class create/edit/delete/get operations |

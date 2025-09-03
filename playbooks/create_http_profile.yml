@@ -1,0 +1,32 @@
+---
+- name: Create HTTPS Flood profiles on all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml           # CC connection details
+    - ../vars/create_http_vars.yml  # Task-specific vars
+
+  vars:
+    profile_matrix: "{{ dp_ip | product(https_mappings) | list }}"
+
+  tasks:
+
+    - name: Lock all devices
+      dp_lock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+
+    - name: Create HTTPS Flood profiles on all devices
+      create_http_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item.0 }}"
+        name: "{{ item.1.name }}"
+        params: "{{ item.1.params }}"
+      loop: "{{ profile_matrix }}"
+
+    - name: Unlock all devices
+      dp_unlock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"

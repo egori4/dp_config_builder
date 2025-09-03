@@ -1,0 +1,25 @@
+---
+- name: Get HTTPS Flood profiles from all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_http_vars.yml
+
+  vars:
+    profile_matrix: "{{ dp_ip | product(https_profiles) | list }}"
+
+  tasks:
+    - name: Get HTTPS profiles from devices
+      get_http_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item.0 }}"
+        name: "{{ item.1 }}"
+      loop: "{{ profile_matrix }}"
+      loop_control:
+        label: "{{ item.0 }}/{{ item.1 }}"
+      register: profile_results
+
+    - name: Show fetched profiles
+      debug:
+        var: profile_results
