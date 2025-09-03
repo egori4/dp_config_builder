@@ -1,0 +1,63 @@
+---
+- name: Edit connection limit protections
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        # Build device/protection combinations for editing
+        - name: Build device/protection combinations for editing
+          debug:
+            msg: 
+              - "Preparing to edit {{ (dp_ip | length) * (edit_cl_protections | length) }} protection configurations:"
+              - "{% for device in dp_ip %}{% for protection in edit_cl_protections %}{{ device }} + Protection Index {{ protection.protection_index }}{% if protection.protection_name is defined %} ({{ protection.protection_name }}){% endif %} - Will change: {% for key, value in protection.items() %}{% if key not in ['protection_index', 'protection_name'] %}{{ key }}={{ value }}{% if not loop.last %}, {% endif %}{% endif %}{% endfor %}{% endfor %}{% endfor %}"
+          changed_when: false
+          when: edit_cl_protections is defined and edit_cl_protections|length > 0
+
+        - name: Setup device/protection pairs for editing
+          set_fact:
+            edit_protection_pairs: >-
+              {{
+                dp_ip
+                | product(edit_cl_protections | list)
+                | map('list')
+                | list
+              }}
+          when: edit_cl_protections is defined and edit_cl_protections|length > 0
+
+        # Edit connection limit protections
+        - name: Edit connection limit protection on device
+          vars:
+            protection_device_matrix: "{{ dp_ip | product(edit_cl_protections) | list }}"
+          loop: "{{ edit_protection_pairs | default([]) }}"
+          loop_control:
+            label: "{{ item.0 }}/Index:{{ item.1.protection_index }}{% if item.1.protection_name is defined %}/{{ item.1.protection_name }}{% endif %}"
+          edit_cl_protection:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            protection_index: "{{ item.1.protection_index }}"
+            protection_name: "{{ item.1.protection_name | default(omit) }}"
+            protocol: "{{ item.1.protocol | default(omit) }}"
+            threshold: "{{ item.1.threshold | default(omit) }}"
+            app_port_group: "{{ item.1.app_port_group | default(omit) }}"
+            tracking_type: "{{ item.1.tracking_type | default(omit) }}"
+            action: "{{ item.1.action | default(omit) }}"
+            packet_report: "{{ item.1.packet_report | default(omit) }}"
+            protection_type: "{{ item.1.protection_type | default(omit) }}"
+          when: edit_protection_pairs is defined and edit_protection_pairs|length > 0
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
