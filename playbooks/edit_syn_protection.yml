@@ -1,39 +1,54 @@
 ---
 - name: Edit SYN Protections on DefensePro devices
-  hosts: cc
+  hosts: localhost
   gather_facts: no
-
   vars_files:
-    - ../vars/cc.yml            # CC credentials (cc_ip, username, password, verify_ssl, log_level)
-    - ../vars/edit_syn_vars.yml # Contains dp_ip list and syn_protections to edit
+    - ../vars/cc.yml
+
+  vars:
+    dp_ip:
+      - "10.105.192.32"
+
+    syn_protections:
+      - protection_id: "500013"
+        name: "TEST_30"
+        app_port_group: "http"
+        activation_threshold: 3500
+        termination_threshold: 2000
+        packet_report: enable
+
+      - protection_id: "500012"
+        name: "TEST_20"
+        app_port_group: "https"
+        activation_threshold: 5000
+        termination_threshold: 4000
+        packet_report: disable
 
   tasks:
     - block:
-        - name: 🔒 Lock device(s)
+        - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: ✏️ Edit SYN Protections
-          vars:
-            syn_matrix: "{{ dp_ip | product(syn_protections) | list }}"
-          loop: "{{ syn_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.protection_id }}"
+        - name: Edit SYN Protections
           edit_syn_protection:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             protection_id: "{{ item.1.protection_id }}"
-            params: "{{ item.1.params }}"
-          register: syn_edit_results
-
-        - name: 📄 Show SYN edit results
-          debug:
-            var: syn_edit_results
+            name: "{{ item.1.name }}"
+            app_port_group: "{{ item.1.app_port_group }}"
+            activation_threshold: "{{ item.1.activation_threshold }}"
+            termination_threshold: "{{ item.1.termination_threshold }}"
+            packet_report: "{{ item.1.packet_report }}"
+          loop: "{{ dp_ip | product(syn_protections) | list }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}"
+          register: edit_results  # You can keep this for logging if needed
 
       always:
-        - name: 🔓 Unlock device(s)
+        - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"

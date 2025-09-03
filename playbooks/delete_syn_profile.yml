@@ -4,41 +4,36 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-    syn_mappings:
-      - profile_name: "Test_30"
-        service_name: "TEST_30"   # Required for deleting SYN profile
-        protection_id: 500008     # Numeric ID for SYN protection
+    - ../vars/delete_syn_vars.yml   # Use the new vars file
 
   tasks:
+
     - block:
+        # Step 1: Lock devices
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
+        # Step 2: Delete SYN Profiles
         - name: Delete SYN Profiles
           vars:
             profile_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.profile_name }}/{{ item.1.service_name }}"
+            label: "{{ item.0 }}/{{ item.1.profile_name }}/{{ item.1.protection_name }}"
           delete_syn_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             profile_name: "{{ item.1.profile_name }}"
-            service_name: "{{ item.1.service_name }}"
-          register: profile_delete_results
+            protection_name: "{{ item.1.protection_name }}"
+          register: profile_results
           failed_when: >
-            profile_delete_results is failed and
-            ('not found' not in (profile_delete_results.msg | default('')))
+            profile_results is failed and
+            ('not found' not in (profile_results.msg | default('')))
 
+        # Step 3: Delete SYN Protections
         - name: Delete SYN Protections
           vars:
             protection_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
@@ -49,12 +44,13 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             protection_id: "{{ item.1.protection_id }}"
-          register: protection_delete_results
+          register: protection_results
           failed_when: >
-            protection_delete_results is failed and
-            ('not found' not in (protection_delete_results.msg | default('')))
+            protection_results is failed and
+            ('still attached' not in (protection_results.msg | default('')))
 
       always:
+        # Step 4: Unlock devices
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"

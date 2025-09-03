@@ -12,7 +12,7 @@ options:
     required: true
     type: dict
     suboptions:
-      server:
+      cc_ip:
         type: str
         required: true
       username:
@@ -35,7 +35,7 @@ EXAMPLES = r'''
 - name: Lock device
   dp_lock:
     provider:
-      server: 10.105.193.3
+      cc_ip: 10.105.193.3
       username: radware
       password: mypass
       verify_ssl: false
@@ -64,27 +64,27 @@ def run_module():
     provider = module.params['provider'] or {}
     dp_ip = module.params['dp_ip']
 
-    server = provider.get('server')
+    cc_ip = provider.get('cc_ip')
     user = provider.get('username')
     password = provider.get('password')
     verify_ssl = provider.get('verify_ssl', False)
 
-    if not all([server, user, password]):
-        module.fail_json(msg="provider.server, provider.username and provider.password are required")
+    if not all([cc_ip, user, password]):
+        module.fail_json(msg="provider.cc_ip, provider.username and provider.password are required")
 
     from ansible.module_utils.logger import Logger
     log_level = provider.get('log_level', 'disabled')
     logger = Logger(verbosity=log_level)
     debug_info = {}
     try:
-      cc = RadwareCC(server, user, password, verify_ssl=verify_ssl, log_level=log_level, logger=logger)
-      url = f"https://{server}/mgmt/system/config/tree/device/byip/{dp_ip}/lock"
+      cc = RadwareCC(cc_ip, user, password, verify_ssl=verify_ssl, log_level=log_level, logger=logger)
+      url = f"https://{cc_ip}/mgmt/system/config/tree/device/byip/{dp_ip}/lock"
       debug_info = {
         'method': 'POST',
         'url': url,
         'body': None
       }
-      logger.info(f"Locking device {dp_ip} on server {server}")
+      logger.info(f"Locking device {dp_ip} on cc_ip {cc_ip}")
       logger.debug(f"Request: {debug_info}")
       resp = cc._post(url)
       logger.debug(f"Response status: {resp.status_code}")

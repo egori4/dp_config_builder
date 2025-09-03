@@ -7,19 +7,56 @@ DOCUMENTATION = r'''
 ---
 module: delete_syn_profile
 short_description: Delete a SYN Profile from a DefensePro device
+description:
+  - Deletes a SYN profile/service from a DefensePro device via Radware CC API.
 options:
   provider:
+    description: Radware CC connection details
     type: dict
     required: true
+    suboptions:
+      cc_ip: str
+      username: str
+      password: str
+      verify_ssl: bool
+      log_level: str
   dp_ip:
+    description: DefensePro device IP
     type: str
     required: true
   profile_name:
+    description: Name of the SYN profile
     type: str
     required: true
-  service_name:
+  protection_name:
+    description: Name of the attached SYN protection
     type: str
     required: true
+author:
+  - "Your Name"
+'''
+
+EXAMPLES = r'''
+- name: Delete SYN Profile
+  delete_syn_profile:
+    provider:
+      cc_ip: 10.105.193.3
+      username: radware
+      password: mypass
+      verify_ssl: false
+      log_level: debug
+    dp_ip: 10.105.192.33
+    profile_name: "Test1"
+    protection_name: "TEST"
+'''
+
+RETURN = r'''
+response:
+  description: API response
+  type: dict
+debug_info:
+  description: Request/response debug details
+  type: dict
 '''
 
 def run_module():
@@ -27,50 +64,56 @@ def run_module():
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
         profile_name=dict(type='str', required=True),
-        service_name=dict(type='str', required=True)
+        protection_name=dict(type='str', required=True),
     )
 
-    result = dict(changed=False, response={})
-    debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     provider = module.params['provider']
+    cc_ip = provider.get('cc_ip')
+    username = provider.get('username')
+    password = provider.get('password')
+    verify_ssl = provider.get('verify_ssl', False)
     log_level = provider.get('log_level', 'disabled')
+
+    if not all([cc_ip, username, password]):
+        module.fail_json(msg="provider.cc_ip, provider.username, and provider.password are required")
+
     logger = Logger(verbosity=log_level)
+    debug_info = {}
 
     try:
-        cc = RadwareCC(provider['server'], provider['username'], provider['password'],
-                       log_level=log_level, logger=logger)
+        cc = RadwareCC(cc_ip, username, password, verify_ssl=verify_ssl, log_level=log_level, logger=logger)
 
-        if not module.check_mode:
-            profile_name = module.params['profile_name']
-            service_name = module.params['service_name']
+        dp_ip = module.params['dp_ip']
+        profile_name = module.params['profile_name']
+        protection_name = module.params['protection_name']
 
-            # Construct DELETE path with both profile and service as row index
-            path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsIDSSynProfilesTable/{profile_name}/{service_name}"
-            url = f"https://{provider['server']}{path}"
-            debug_info = {'method': 'DELETE', 'url': url, 'body': None}
+        url = f"https://{cc_ip}/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}"
+        debug_info = {'method': 'DELETE', 'url': url, 'body': None}
 
-            logger.info(f"Deleting SYN Profile {profile_name}/{service_name} on device {module.params['dp_ip']}")
-            logger.debug(f"Request: {debug_info}")
+        logger.info(f"Deleting SYN Profile '{profile_name}/{protection_name}' on device {dp_ip}")
+        logger.debug(f"Request: {debug_info}")
 
-            resp = cc._delete(url)
-            resp.raise_for_status()  # Ensure HTTP errors are caught
+        if module.check_mode:
+            module.exit_json(changed=True, response={"msg": "Check mode - no changes applied"}, debug_info=debug_info)
 
-            try:
-                data = resp.json()
-            except ValueError:
-                raise Exception(f"Invalid JSON response: {resp.text}")
+        resp = cc._delete(url)
+        try:
+            resp.raise_for_status()
+        except Exception:
+            # If the profile does not exist, handle gracefully
+            module.exit_json(changed=False, response={"msg": "Profile not found"}, debug_info=debug_info)
 
-            result['response'] = data
-            result['changed'] = True
-            debug_info['response_status'] = resp.status_code
-            debug_info['response_json'] = data
+        try:
+            data = resp.json()
+        except ValueError:
+            data = {"raw_response": resp.text}
+
+        debug_info.update({'response_status': resp.status_code, 'response_json': data})
+        module.exit_json(changed=True, response=data, debug_info=debug_info)
 
     except Exception as e:
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
+        module.fail_json(msg=str(e), debug_info=debug_info)
 
 
 def main():

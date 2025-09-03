@@ -1,0 +1,18 @@
+dp_ip:
+  - "10.105.192.32"
+  - "10.105.192.33"
+
+syn_protections:
+  - protection_id: 0
+    params:
+      app_port_group: http
+      activation_threshold: 2500
+      termination_threshold: 1500
+      packet_report: enable
+
+  - protection_id: 1
+    params:
+      app_port_group: https
+      activation_threshold: 5000
+      termination_threshold: 3000
+      packet_report: disable

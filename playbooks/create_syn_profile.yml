@@ -4,42 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"  # DefensePro device 1
-      - "10.105.192.33"  # DefensePro device 2
-
-    syn_mappings:
-      - profile_name: "Test_10"  # Name of the SYN profile
-        protection_name: "TEST_10"  # Name of the SYN protection
-        protection_params:
-          app_port_group: http             # Destination application port group
-          activation_threshold: 2500      # Threshold to activate the protection
-          termination_threshold: 1500     # Threshold to terminate the protection
-          packet_report: enable           # Per-attack packet report (enable/disable)
-        profile_params:
-          profile_type: syn_protection     # Type of profile
-
-      - profile_name: "Test_20"  
-        protection_name: "TEST_20"
-        protection_params:
-          app_port_group: https
-          activation_threshold: 5000
-          termination_threshold: 3000
-          packet_report: disable
-        profile_params:
-          profile_type: syn_protection
-
-      - profile_name: "Test_30"
-        protection_name: "TEST_30"
-        protection_params:
-          app_port_group: ftp
-          activation_threshold: 1000
-          termination_threshold: 800
-          packet_report: enable
-        profile_params:
-          profile_type: syn_protection
+    - ../vars/create_syn_vars.yml   # ✅ Added external vars file
 
   tasks:
     - block:
@@ -58,8 +23,8 @@
           create_syn_protection:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.protection_name }}"           # Protection name
-            params: "{{ item.1.protection_params }}"      # Protection parameters dictionary
+            name: "{{ item.1.protection_name }}"
+            params: "{{ item.1.protection_params }}"
           register: protection_results
           failed_when: >
             protection_results is failed and
@@ -74,9 +39,9 @@
           create_syn_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
-            profile_name: "{{ item.1.profile_name }}"          # Profile name to create
-            protection_name: "{{ item.1.protection_name }}"    # Protection to attach to profile
-            params: "{{ item.1.profile_params }}"             # Profile parameters dictionary
+            profile_name: "{{ item.1.profile_name }}"
+            protection_name: "{{ item.1.protection_name }}"
+            params: "{{ item.1.profile_params }}"
           register: profile_results
           failed_when: >
             profile_results is failed and
