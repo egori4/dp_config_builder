@@ -2,41 +2,41 @@
 - name: Edit BDOS Flood Profiles on DefensePro devices
   hosts: cc
   gather_facts: no
-
-  # Load credential and BDOS edit vars
   vars_files:
-    - ../vars/cc.yml
-    - ../vars/edit_bdos_vars.yml
+    - ../vars/cc.yml                # CyberController connection details
+    - ../vars/edit_bdos_vars.yml   # Profiles to edit
+
+  vars:
+    # Create matrix of device IPs × profiles
+    profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
 
   tasks:
-    - block:
 
-        - name: 🔒 Lock DefensePro device(s)
-          dp_lock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+    - name: Lock all devices
+      dp_lock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
 
-        - name: ✏️ Edit BDOS Flood Profiles
-          vars:
-            profile_matrix: "{{ dp_ip | product(bdos_edits) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
-          edit_bdos_profile:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
-            params: "{{ item.1.params }}"
+    - name: ✏️ Edit BDOS Flood Profiles
+      edit_bdos_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item.0 }}"
+        name: "{{ item.1.name }}"
+        params: "{{ item.1.params }}"
+      loop: "{{ profile_matrix }}"
+      register: bdos_result
+      ignore_errors: yes
 
-      rescue:
-        - name: ⚠️ BDOS profile edit failed
-          debug:
-            msg: "Task '{{ ansible_failed_task.name }}' failed on device {{ item.0 }} → Reason: {{ ansible_failed_result.msg | default('unknown') }}"
+    - name: ⚠️ BDOS profile edit failed
+      debug:
+        msg: "BDOS profile {{ item.1.name }} failed to edit."
+      loop: "{{ profile_matrix }}"
+      when: bdos_result.results[loop.index0].failed is defined and bdos_result.results[loop.index0].failed
+      ignore_errors: yes
 
-      always:
-        - name: 🔓 Unlock DefensePro device(s)
-          dp_unlock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+    - name: Unlock all devices
+      dp_unlock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"

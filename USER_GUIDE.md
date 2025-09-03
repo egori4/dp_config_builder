@@ -95,7 +95,7 @@ log_level: "info"  # info, debug, or disabled
 
 ### Creating BdoS profile
 ```yaml
-bdos_profiles:
+bdos_mappings:
   - name: "BDOS_Profile_1"
     params:
       TCP Status: "inactive"                 
@@ -117,7 +117,7 @@ bdos_profiles:
 
 ### Editing BDoS Profile  
 ```yaml
-edit_bdos:
+bdos_mappings:
   - name: "BDOS_Profile1"
     rate_limit: 2000
     rate_limit_status: 1

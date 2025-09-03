@@ -1,17 +1,19 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: dp_bdos_profile
-short_description: Manage DefensePro BDOS Flood profiles via Radware CC
+module: edit_bdos_profile
+short_description: Edit existing BDOS Flood profiles on Radware DefensePro
 description:
-  - Creates or updates BDOS Flood profiles on Radware DefensePro devices using Radware CC API.
+  - Edits BDOS Flood profiles on Radware DefensePro devices using Radware CC API.
 options:
   provider:
-    description:
-      - Dictionary with connection parameters for Radware CC.
+    description: Dictionary with Radware CC connection details
     type: dict
     required: true
     suboptions:
@@ -40,8 +42,7 @@ options:
     type: str
     required: true
   params:
-    description:
-      - Dictionary of BDOS Flood profile attributes and values
+    description: Dictionary of BDOS Flood profile attributes and values
     type: dict
     required: true
 author:
@@ -49,8 +50,8 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Create or update BDOS Flood profile (PUT)
-  dp_bdos_profile:
+- name: Edit BDOS Flood profile
+  edit_bdos_profile:
     provider:
       cc_ip: 155.1.1.6
       username: radware
@@ -78,10 +79,52 @@ debug_info:
 '''
 
 # -------------------------------
-# Field Mappings and Numeric Mapping
+# Field Mappings
 # -------------------------------
-FIELD_MAP = { ... }  # same as your current FIELD_MAP
-NUMERIC_MAPPING = { ... }  # same as your current NUMERIC_MAPPING
+FIELD_MAP = {
+    "TCP Status": "rsNetFloodProfileTcpStatus",
+    "TCP SYN Status": "rsNetFloodProfileTcpSynStatus",
+    "UDP Status": "rsNetFloodProfileUdpStatus",
+    "IGMP Status": "rsNetFloodProfileIgmpStatus",
+    "ICMP Status": "rsNetFloodProfileIcmpStatus",
+    "TCP FIN/ACK Status": "rsNetFloodProfileTcpFinAckStatus",
+    "TCP RST Status": "rsNetFloodProfileTcpRstStatus",
+    "TCP PSH/ACK Status": "rsNetFloodProfileTcpPshAckStatus",
+    "TCP SYN/ACK Status": "rsNetFloodProfileTcpSynAckStatus",
+    "TCP Frag Status": "rsNetFloodProfileTcpFragStatus",
+    "UDP Frag Status": "rsNetFloodProfileUdpFragStatus",
+    "Bandwidth In": "rsNetFloodProfileBandwidthIn",
+    "Bandwidth Out": "rsNetFloodProfileBandwidthOut",
+    "Transparent Optimization": "rsNetFloodProfileTransparentOptimization",
+    "Action": "rsNetFloodProfileAction",
+    "Burst Enabled": "rsNetFloodProfileBurstEnabled",
+    "Learning Suppression Threshold": "rsNetFloodProfileLearningSuppressionThreshold",
+    "Footprint Strictness": "rsNetFloodProfileFootprintStrictness",
+    "Rate Limit": "rsNetFloodProfileRateLimit",
+    "Packet Report Status": "rsNetFloodProfilePacketReportStatus",
+    "Packet Trace Status": "rsNetFloodProfilePacketTraceStatus",
+}
+
+NUMERIC_MAPPING = {
+    "TCP Status": {"active": 1, "inactive": 2},
+    "TCP SYN Status": {"active": 1, "inactive": 2},
+    "UDP Status": {"active": 1, "inactive": 2},
+    "IGMP Status": {"active": 1, "inactive": 2},
+    "ICMP Status": {"active": 1, "inactive": 2},
+    "TCP FIN/ACK Status": {"active": 1, "inactive": 2},
+    "TCP RST Status": {"active": 1, "inactive": 2},
+    "TCP PSH/ACK Status": {"active": 1, "inactive": 2},
+    "TCP SYN/ACK Status": {"active": 1, "inactive": 2},
+    "TCP Frag Status": {"active": 1, "inactive": 2},
+    "UDP Frag Status": {"active": 1, "inactive": 2},
+    "Transparent Optimization": {"yes": 1, "no": 2},
+    "Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
+    "Packet Report Status": {"enable": 1, "disable": 2},
+    "Packet Trace Status": {"enable": 1, "disable": 2},
+    "Action": {"report only": 0, "block & report": 1},
+    "Burst Enabled": {"enable": 1, "disable": 2},
+    "Rate Limit": {"disable": 0, "normalEdge": 1, "suspectEdge": 2, "userDefined": 3},
+}
 
 # -------------------------------
 # Helpers
@@ -94,16 +137,16 @@ def translate_params(params):
         val = v.lower() if isinstance(v, str) else v
         if mapping:
             if val not in mapping:
-                raise ValueError(
-                    f"Invalid value '{v}' for '{k}'. Allowed: {list(mapping.keys())}"
-                )
+                raise ValueError(f"Invalid value '{v}' for '{k}'. Allowed: {list(mapping.keys())}")
             translated[api_key] = mapping[val]
         else:
             translated[api_key] = v
     return translated
 
+
 def build_api_path(dp_ip, name):
     return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{name}"
+
 
 # -------------------------------
 # Main Logic
@@ -123,6 +166,7 @@ def run_module():
     dp_ip = module.params['dp_ip']
     name = module.params['name']
     log_level = provider.get('log_level', 'disabled')
+
     logger = Logger(verbosity=log_level)
     debug_info = {}
 
@@ -137,13 +181,12 @@ def run_module():
         body.update(translate_params(module.params['params']))
 
         debug_info['request'] = {"method": "PUT", "url": url, "body": body}
-        logger.info(f"Updating BDOS Flood profile '{name}' on {dp_ip} via PUT")
+        logger.info(f"Editing BDOS Flood profile '{name}' on {dp_ip}")
 
         if module.check_mode:
             result['changed'] = True
             result['response'] = {"msg": "Check mode - no changes applied"}
         else:
-            # Explicitly use PUT
             put_method = getattr(cc, "put", cc._put)
             resp = put_method(url, json=body)
 
@@ -155,7 +198,7 @@ def run_module():
                 raise Exception(f"Invalid JSON response: {resp.text}")
 
             if resp.status_code not in (200, 201):
-                raise Exception(f"Failed to update BDOS profile: {data}")
+                raise Exception(f"Failed to edit BDOS profile: {data}")
 
             result['changed'] = True
             result['response'] = data
@@ -166,8 +209,10 @@ def run_module():
     result['debug_info'] = debug_info
     module.exit_json(**result)
 
+
 def main():
     run_module()
+
 
 if __name__ == "__main__":
     main()
