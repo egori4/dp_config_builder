@@ -38,30 +38,37 @@ netclasses:
 # - The playbook will create all combinations of dp_ip × netclasses × groups
 
 # Connection Limit Protection Subprofiles (only define the ones you want to CREATE)
+# All parameters use user-friendly values that are automatically mapped to API values
 cl_protections:
-  - name: "cl_prot_egor_test10"
-    protocol: "3"           # Protocol type (3 = All, 6 = TCP, 17 = UDP)
-    threshold: "50"         # Connection limit threshold
-    tracking_type: "2"      # Tracking type (1 = Source IP, 2 = Destination IP, 3 = Both)
-    report_mode: "10"       # Report mode
-    packet_report: "2"      # Packet report
-    risk: "3"              # Risk level (2 = Medium, 3 = High) - API requires range [2...3]
-    attack_type: "1"       # Attack type
-  - name: "cl_prot_egor_test11"
-    protocol: "6"
-    threshold: "100"
-    tracking_type: "1"
-    report_mode: "10"
-    packet_report: "2"
-    risk: "3"              # Risk level (2 = Medium, 3 = High) - API requires range [2...3]
-    attack_type: "1"
+  - name: "cl_prot_tcp_example"
+    protection_type: "concurrent_connections"  # Options: cps, concurrent_connections
+    protocol: "tcp"             # Options: tcp, udp
+    threshold: "100"            # Connection limit threshold (number)
+    tracking_type: "src_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
+    action: "drop"              # Options: report_only, drop
+    packet_report: "disable"    # Options: enable, disable
+  - name: "cl_prot_udp_example"
+    protection_type: "cps"      # Options: cps, concurrent_connections
+    protocol: "udp"             # Options: tcp, udp
+    threshold: "500"            # Connection limit threshold (number)
+    tracking_type: "dst_ip_and_port"  # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
+    action: "report_only"       # Options: report_only, drop
+    packet_report: "enable"     # Options: enable, disable
+
+# Parameter Descriptions:
+# - protection_type: Type of detection (cps = Connections Per Second, concurrent_connections = Total active connections)
+# - protocol: Network protocol to monitor
+# - threshold: Number at which protection triggers
+# - tracking_type: What traffic to track (src_ip, dst_ip, both IPs, or dst_ip with port)
+# - action: What to do when threshold exceeded (report_only = log only, drop = block traffic)
+# - packet_report: Whether to enable detailed packet reporting
 
 # Connection Limit Profiles (can reference any protection names - existing or newly created)
 cl_profiles:
-  - name: "cl_prof_egor_test10"
+  - name: "cl_prof_example"
     protections:
-      - "cl_prot_egor_test10"  # Will be created above
-      - "cl_prot_egor_test11"  # Will be created above
+      - "cl_prot_tcp_example"   # Will be created above
+      - "cl_prot_udp_example"   # Will be created above
   # - name: "cl_prof_existing_only"
   #   protections:
   #     - "some_existing_protection"    # Reference existing protections without defining them

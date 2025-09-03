@@ -28,8 +28,8 @@
               }}
           when: cl_protections is defined and cl_protections|length > 0
 
-        # Step 1b: Create connection limit protections with state refresh
-        - name: "Create protections"
+        # Step 1b: Setup connection limit protections with state refresh
+        - name: "Setup protection creation tasks"
           include_tasks: ../tasks/cl_profile_tasks/create_protection_task.yml
           loop: "{{ new_protection_pairs | default([]) }}"
           loop_control:
@@ -51,8 +51,8 @@
                 | list
               }}
 
-        # Step 2b: Create connection limit profiles and attach protections
-        - name: Create connection limit profiles with attached protections on all devices
+        # Step 2b: Configure connection limit profiles and attach protections
+        - name: Configure connection limit profiles with attached protections on all devices
           loop: "{{ profile_protection_pairs }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}/{{ item.2 }}"

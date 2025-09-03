@@ -85,47 +85,77 @@ options:
     type: str
     required: true
   protocol:
+    description:
+      - Protocol type for connection limit protection
     type: str
-    default: '3'
+    choices: ['tcp', 'udp']
+    default: 'tcp'
   threshold:
+    description:
+      - Connection limit threshold (number of connections)
     type: str
     default: '50'
   tracking_type:
+    description:
+      - Type of connection counting for connection limiting
     type: str
-    default: '2'
-  report_mode:
+    choices: ['src_ip', 'dst_ip', 'src_and_dest_ip', 'dst_ip_and_port']
+    default: 'dst_ip'
+  action:
+    description:
+      - Action to take when connection limit is exceeded
     type: str
-    default: '10'
+    choices: ['report_only', 'drop']
+    default: 'drop'
   packet_report:
+    description:
+      - Per-attack packet report setting
     type: str
-    default: '2'
-  risk:
-    type: str
-    default: '3'
-  attack_type:
-    type: str
-    default: '1'
+    choices: ['enable', 'disable'] 
+    default: 'disable'
+  protection_type:
+    description:
+      - Type of connection limit protection detection
+    type: str  
+    choices: ['cps', 'concurrent_connections']
+    default: 'cps'
   index:
     type: int
     default: 0
 '''
 
 EXAMPLES = r'''
-- name: Create a connection limit protection
+# Example of how the module is called within a playbook task
+# Variables come from vars/create_vars.yml file
+- name: "Create connection limit protection {{ item.1.name }} on {{ item.0 }}"
+  create_cl_protection:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item.0 }}"
+    protection_name: "{{ item.1.name }}"
+    protocol: "{{ item.1.protocol | default('tcp') }}"
+    threshold: "{{ item.1.threshold | default('50') }}"
+    tracking_type: "{{ item.1.tracking_type | default('dst_ip') }}"
+    action: "{{ item.1.action | default('drop') }}"
+    packet_report: "{{ item.1.packet_report | default('disable') }}"
+    protection_type: "{{ item.1.protection_type | default('cps') }}"
+    index: 0
+    refresh_state: "{{ not ansible_loop.first }}"
+
+# Direct module call example (for testing or standalone use)
+- name: Create a specific connection limit protection
   create_cl_protection:
     provider:
       cc_ip: 10.105.193.3
       username: radware
       password: mypass
     dp_ip: 10.105.192.32
-    protection_name: cl_prot_egor_test10
-    protocol: '3'
-    threshold: '50'
-    tracking_type: '2'
-    report_mode: '10'
-    packet_report: '2'
-    risk: '3'
-    attack_type: '1'
+    protection_name: tcp_conn_limit
+    protocol: 'tcp'
+    threshold: '100'
+    tracking_type: 'src_ip'
+    action: 'drop'
+    packet_report: 'enable'
+    protection_type: 'concurrent_connections'
     index: 0
 '''
 
@@ -136,17 +166,49 @@ response:
 '''
 
 def run_module():
+    # User-friendly value mappings based on MIB definitions
+    PROTOCOL_MAP = {
+        'tcp': '2',      # tcp (2)
+        'udp': '3'       # udp (3)
+    }
+    
+    ATTACK_TYPE_MAP = {
+        'cps': '1',                    # cps(1)
+        'concurrent_connections': '2'   # concurrentconnection(2)
+    }
+    
+    TRACKING_TYPE_MAP = {
+        'src_ip': '2',              # Source IP tracking (2)
+        'dst_ip': '3',              # Destination IP tracking (3)  
+        'src_and_dest_ip': '4',     # Both source and destination IP (4)
+        'dst_ip_and_port': '5'      # Destination IP and port (5)
+    }
+    
+    ACTION_MAP = {
+        'report_only': '0',         # report-only(0) 
+        'drop': '10'                # drop(10)
+    }
+    
+    PACKET_REPORT_MAP = {
+        'enable': '1',              # enable(1)
+        'disable': '2'              # disable(2)
+    }
+
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
         protection_name=dict(type='str', required=True),
-        protocol=dict(type='str', required=False, default='3'),
+        protocol=dict(type='str', required=False, default='tcp', 
+                     choices=['tcp', 'udp']),
         threshold=dict(type='str', required=False, default='50'),
-        tracking_type=dict(type='str', required=False, default='2'),
-        report_mode=dict(type='str', required=False, default='10'),
-        packet_report=dict(type='str', required=False, default='2'),
-        risk=dict(type='str', required=False, default='3'),
-        attack_type=dict(type='str', required=False, default='1'),
+        tracking_type=dict(type='str', required=False, default='dst_ip',
+                          choices=['src_ip', 'dst_ip', 'src_and_dest_ip', 'dst_ip_and_port']),
+        action=dict(type='str', required=False, default='drop',
+                   choices=['report_only', 'drop']),
+        packet_report=dict(type='str', required=False, default='disable',
+                          choices=['enable', 'disable']),
+        protection_type=dict(type='str', required=False, default='cps',
+                        choices=['cps', 'concurrent_connections']),
         index=dict(type='int', required=False, default=0),
         refresh_state=dict(type='bool', required=False, default=False)
     )
@@ -160,6 +222,16 @@ def run_module():
 
     try:
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+        
+        # Validate and convert user-friendly values to API values
+        try:
+            api_protocol = PROTOCOL_MAP[module.params['protocol']]
+            api_tracking_type = TRACKING_TYPE_MAP[module.params['tracking_type']]  
+            api_protection_type = ATTACK_TYPE_MAP[module.params['protection_type']]
+            api_action = ACTION_MAP[module.params['action']]
+            api_packet_report = PACKET_REPORT_MAP[module.params['packet_report']]
+        except KeyError as e:
+            module.fail_json(msg=f"Invalid parameter value: {e}")
         
         if not module.check_mode:
             # Refresh device state if requested (helps avoid API caching issues)
@@ -175,13 +247,12 @@ def run_module():
             path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsIDSConnectionLimitAttackTable/{module.params['index']}"
             body = {
                 "rsIDSConnectionLimitAttackName": module.params['protection_name'],
-                "rsIDSConnectionLimitAttackProtocol": module.params['protocol'],
+                "rsIDSConnectionLimitAttackProtocol": api_protocol,
                 "rsIDSConnectionLimitAttackThreshold": module.params['threshold'],
-                "rsIDSConnectionLimitAttackTrackingType": module.params['tracking_type'],
-                "rsIDSConnectionLimitAttackReportMode": module.params['report_mode'],
-                "rsIDSConnectionLimitAttackPacketReport": module.params['packet_report'],
-                "rsIDSConnectionLimitAttackRisk": module.params['risk'],
-                "rsIDSConnectionLimitAttackType": module.params['attack_type']
+                "rsIDSConnectionLimitAttackTrackingType": api_tracking_type,
+                "rsIDSConnectionLimitAttackReportMode": api_action,
+                "rsIDSConnectionLimitAttackPacketReport": api_packet_report,
+                "rsIDSConnectionLimitAttackType": api_protection_type
             }
             
             url = f"https://{provider['cc_ip']}{path}"
