@@ -48,7 +48,7 @@ cl_protections:
     tracking_type: "src_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
     action: "drop"              # Options: report_only, drop
     packet_report: "disable"    # Options: enable, disable
-    index: 0                    # Optional: specific index to create at (defaults to 0 if not specified)
+    index: 0                    # Optional: specific index to create at (defaults to 0 if not specified = will be allocated dynnamically)
   - name: "cl_prot_udp_example"
     protection_type: "cps"      # Options: cps, concurrent_connections
     protocol: "udp"             # Options: tcp, udp
@@ -57,7 +57,7 @@ cl_protections:
     tracking_type: "dst_ip_and_port"  # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
     action: "report_only"       # Options: report_only, drop
     packet_report: "enable"     # Options: enable, disable
-    # index: 1                  # Optional: if not specified, defaults to 0
+    # index: 450006             # Optional: if not specified, defaults to 0
   - name: "cl_prot_custom_index"
     protection_type: "cps"      # Options: cps, concurrent_connections
     protocol: "tcp"             # Options: tcp, udp
@@ -66,7 +66,7 @@ cl_protections:
     tracking_type: "dst_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
     action: "drop"              # Options: report_only, drop
     packet_report: "enable"     # Options: enable, disable
-    index: 5                    # Optional: create at specific index 5
+    index: 450007               # Optional: create at specific index 450007
 
 # Parameter Descriptions:
 # - protection_type: Type of detection (cps = Connections Per Second, concurrent_connections = Total active connections)
