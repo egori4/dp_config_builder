@@ -51,7 +51,7 @@ cl_protections:
     tracking_type: "src_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
     action: "drop"              # Options: report_only, drop
     packet_report: "disable"    # Options: enable, disable
-    index: 0                    # Optional: specific index to create at (defaults to 0 if not specified = will be allocated dynnamically)
+    index: 0                    # Optional: specific index to create at (defaults to 0 if not specified = will be allocated dynamically)
   - name: "cl_prot_udp_example"
     protection_type: "cps"      # Options: cps, concurrent_connections
     protocol: "udp"             # Options: tcp, udp

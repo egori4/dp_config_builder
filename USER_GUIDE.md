@@ -95,8 +95,8 @@ ansible-playbook --check playbooks/create_cl_profiles.yml
 # 3. Apply configuration
 ansible-playbook playbooks/create_cl_profiles.yml
 
-# Alternative: Use standalone example
-ansible-playbook playbooks/create_cl_profiles_example.yml --check
+# Alternative: Use with check mode for testing
+ansible-playbook playbooks/create_cl_profiles.yml --check
 ```
 
 #### Workflow 4a: Create Protections Only (Skip Profiles)

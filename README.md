@@ -89,7 +89,7 @@ cp create_vars.yml.example create_vars.yml
 ansible-playbook playbooks/create_network_class.yml
 
 # Connection Limit Profiles Example  
-ansible-playbook playbooks/create_cl_profiles_example.yml --check
+ansible-playbook playbooks/create_cl_profiles.yml --check
 ```
 
 ## Version History

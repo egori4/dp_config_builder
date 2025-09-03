@@ -142,10 +142,10 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{ind
 
 {
     "rsIDSConnectionLimitAttackName": "cl_prot_tcp_limit",
-    "rsIDSConnectionLimitAttackProtocol": "6",
+    "rsIDSConnectionLimitAttackProtocol": "2",
     "rsIDSConnectionLimitAttackThreshold": "100",
     "rsIDSConnectionLimitAttackTrackingType": "2",
-    "rsIDSConnectionLimitAttackReportMode": "0",
+    "rsIDSConnectionLimitAttackReportMode": "10",
     "rsIDSConnectionLimitAttackPacketReport": "2",
     "rsIDSConnectionLimitAttackType": "1"
 }
