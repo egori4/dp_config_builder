@@ -99,6 +99,26 @@ ansible-playbook playbooks/create_cl_profiles.yml
 ansible-playbook playbooks/create_cl_profiles_example.yml --check
 ```
 
+#### Workflow 4a: Create Protections Only (Skip Profiles)
+```bash
+# 1. Edit create_vars.yml - define cl_protections section, comment out cl_profiles
+nano vars/create_vars.yml
+
+# 2. Test and apply
+ansible-playbook --check playbooks/create_cl_profiles.yml
+ansible-playbook playbooks/create_cl_profiles.yml
+```
+
+#### Workflow 4b: Create Profiles Only (Use Existing Protections)
+```bash
+# 1. Edit create_vars.yml - comment out cl_protections, define cl_profiles with existing names
+nano vars/create_vars.yml
+
+# 2. Test and apply  
+ansible-playbook --check playbooks/create_cl_profiles.yml
+ansible-playbook playbooks/create_cl_profiles.yml
+```
+
 ### Workflow 5: Edit Connection Limit Protections
 ```bash
 # 1. Identify existing protections (check DefensePro UI for protection indexes)
@@ -118,6 +138,7 @@ ansible-playbook playbooks/edit_cl_protections.yml
 
 **Usage patterns**:
 - **Create new protections + profiles**: Define both `cl_protections` and `cl_profiles` sections
+- **Create protections only**: Define `cl_protections` section, skip `cl_profiles` section
 - **Use only existing protections**: Skip `cl_protections`, define only `cl_profiles` with existing protection names
 - **Mixed approach**: Create some new protections, reference some existing ones in the same profile
 
@@ -164,6 +185,8 @@ delete_networks:
 ```
 
 ### Connection Limit Profiles - Complete Configuration Reference
+
+**Important**: Both `cl_protections` and `cl_profiles` sections are completely optional. You can define one, another or both, based on your needs.
 
 #### Creating Connection Limit Protections (ALL Supported Parameters)
 ```yaml
@@ -230,9 +253,9 @@ edit_cl_protections:
 -  **Unchanged Values**: Unspecified parameters keep their current values
 -  **Flexible**: Change one parameter or many in a single operation
 
-#### Connection Limit Profiles (Required Section)
+#### Connection Limit Profiles (Optional Section)
 ```yaml
-# REQUIRED: Profiles (can reference existing or newly created protections)
+# OPTIONAL: Profiles (can reference existing or newly created protections)
 cl_profiles:
   - name: "web_server_limits"                   # MANDATORY: Profile name
     protections:                                # MANDATORY: List of protections

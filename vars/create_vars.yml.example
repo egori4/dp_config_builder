@@ -37,8 +37,11 @@ netclasses:
 # - Groups are automatically assigned indices starting from 0
 # - The playbook will create all combinations of dp_ip × netclasses × groups
 
-# Connection Limit Protection Subprofiles (only define the ones you want to CREATE)
+
+################################### Connection Limit Profiles ##############################
+# Connection Limit Protection Subprofiles (OPTIONAL - only define if you want to create new protections)
 # All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this entire section if you only want to create profiles using existing protections
 cl_protections:
   - name: "cl_prot_tcp_example"
     protection_type: "concurrent_connections"  # Options: cps, concurrent_connections
@@ -78,12 +81,19 @@ cl_protections:
 # - packet_report: Whether to enable detailed packet reporting
 # - index: Optional specific index to create protection at (defaults to 0 if not specified)
 
-# Connection Limit Profiles (can reference any protection names - existing or newly created)
+# Connection Limit Profiles (OPTIONAL - only define if you want to create profiles)
+# Can reference any protection names - existing or newly created above
+# You can skip this entire section if you only want to create protections
 cl_profiles:
   - name: "cl_prof_example"
     protections:
       - "cl_prot_tcp_example"   # Will be created above
       - "cl_prot_udp_example"   # Will be created above
-  # - name: "cl_prof_existing_only"
-  #   protections:
-  #     - "some_existing_protection"    # Reference existing protections without defining them
+  - name: "cl_prof_existing_only"
+    protections:
+      - "some_existing_protection"    # Reference existing protections without defining them
+
+# Usage Scenarios:
+# 1. Create protections only: Define cl_protections, skip cl_profiles
+# 2. Create profiles only: Skip cl_protections, define cl_profiles with existing protection names
+# 3. Create both: Define both cl_protections and cl_profiles

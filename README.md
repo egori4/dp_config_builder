@@ -36,9 +36,15 @@ Automate configuration of DefensePro security profiles, policies, and network se
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
 -  **Flexible creation**: All parameters optional except name (sensible defaults provided)
+-  **Optional sections**: Both `cl_protections` and `cl_profiles` sections are optional
 -  **Partial editing**: Only specify parameters you want to change
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
+
+**Section Optionality**:
+- **Protections only**: Define `cl_protections`, skip `cl_profiles`
+- **Profiles only**: Skip `cl_protections`, use existing protection names in `cl_profiles`
+- **Both sections**: Create new protections and profiles together
 
 **Parameter Status**:
 - **MANDATORY**: `name` (create), `protection_index` (edit)  

@@ -34,7 +34,10 @@ dp_config_builder/
 4. **Connection Limit Profile Modules** (`plugins/modules/`)
    - Creation of connection limit protection subprofiles
    - Profile creation and protection attachment
-   - **Note**: `cl_protections` section is optional - can create profiles referencing existing protections only
+   - **Note**: Both `cl_protections` and `cl_profiles` sections are optional
+     - Can create protections only (skip profiles)
+     - Can create profiles only (using existing protections)
+     - Can create both sections together
 
 ## API Endpoints
 
