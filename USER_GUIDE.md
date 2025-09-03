@@ -35,6 +35,9 @@ ansible-playbook playbooks/delete_network_class.yml
 
 # Create connection limit profiles
 ansible-playbook playbooks/create_cl_profiles.yml
+
+# Edit existing connection limit protections
+ansible-playbook playbooks/edit_cl_protections.yml
 ```
 
 ## Common Workflows
@@ -96,7 +99,22 @@ ansible-playbook playbooks/create_cl_profiles.yml
 ansible-playbook playbooks/create_cl_profiles_example.yml --check
 ```
 
-**Note**: The `cl_protections` section is **optional**. You can skip it entirely and define only `cl_profiles` to create profiles using existing protections already configured on your DefensePro devices.
+### Workflow 5: Edit Connection Limit Protections
+```bash
+# 1. Identify existing protections (check DefensePro UI for protection indexes)
+# Protection indexes start from 450001 and increment
+
+# 2. Configure your changes (only specify what you want to change)
+nano vars/edit_vars.yml
+
+# 3. Test first (dry run) - shows exactly what will change
+ansible-playbook --check playbooks/edit_cl_protections.yml
+
+# 4. Apply changes
+ansible-playbook playbooks/edit_cl_protections.yml
+```
+
+**Note**: For editing, you only need to specify the parameters you want to change. All other parameters remain unchanged on the device.
 
 **Usage patterns**:
 - **Create new protections + profiles**: Define both `cl_protections` and `cl_profiles` sections
@@ -145,29 +163,116 @@ delete_networks:
   - {class_name: "old_servers", index: 1}
 ```
 
-### Connection Limit Profiles
+### Connection Limit Profiles - Complete Configuration Reference
+
+#### Creating Connection Limit Protections (ALL Supported Parameters)
 ```yaml
 # OPTIONAL: Protection subprofiles (only define if creating new ones)
 cl_protections:
-  - name: "cl_prot_tcp_limit"
-    protocol: "6"           # TCP
-    threshold: "100"        # Connection limit
-    tracking_type: "1"      # Source IP tracking
-    risk: "3"              # High risk
+  - name: "cl_prot_comprehensive_example"        # MANDATORY: Protection name
+    protocol: "tcp"                              # OPTIONAL: tcp, udp (default: tcp)
+    threshold: "100"                             # OPTIONAL: Connection threshold (default: "50")
+    app_port_group: "https"                      # OPTIONAL: http, https, dns, ftp, smtp, imap, custom port, or "" for all (default: "")
+    tracking_type: "src_ip"                      # OPTIONAL: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port (default: dst_ip)
+    action: "drop"                               # OPTIONAL: drop, report_only (default: drop)
+    packet_report: "enable"                      # OPTIONAL: enable, disable (default: disable)
+    protection_type: "cps"                       # OPTIONAL: cps, concurrent_connections (default: cps)
+    index: 450001                                # OPTIONAL: 0 or 450001+ (default: 0)
 
-# REQUIRED: Profiles (can reference existing or newly created protections)
-cl_profiles:
-  - name: "web_server_limits"
-    protections:
-      - "cl_prot_tcp_limit"      # Will be created above
-      - "existing_protection"    # Already exists on DefensePro
+  # Minimal example (only mandatory parameter)
+  - name: "cl_prot_minimal"                      # MANDATORY: Only this is required
+    # All other parameters will use defaults
+
+  # Custom index example
+  - name: "cl_prot_custom_index"
+    protocol: "udp"
+    threshold: "200"
+    index: 450002                                # Custom index
 ```
 
-**Examples**:
+#### Editing Connection Limit Protections (Partial Updates)
 ```yaml
-# Example 1: Create new protections + profiles
-cl_protections: [...]    # Define new protections
-cl_profiles: [...]       # Reference the new protections
+# Edit existing protections - ONLY specify what you want to change
+edit_cl_protections:
+  - protection_index: 450001                    # MANDATORY: Must specify which protection to edit
+    protection_name: "Updated Protection"        # OPTIONAL: Change name only
+    
+  - protection_index: 450002                    # MANDATORY: Another protection to edit
+    threshold: "500"                            # OPTIONAL: Change threshold only
+    action: "report_only"                       # OPTIONAL: Change action only
+    # All other parameters remain unchanged
+    
+  - protection_index: 450003                    # MANDATORY: Edit multiple parameters
+    protocol: "udp"                             # OPTIONAL: Change protocol
+    threshold: "300"                            # OPTIONAL: Change threshold
+    tracking_type: "dst_ip_and_port"           # OPTIONAL: Change tracking
+    packet_report: "disable"                   # OPTIONAL: Change reporting
+    # Other parameters remain unchanged
+```
+
+**Parameter Reference for Connection Limit Protections**:
+
+| Parameter | Status | Options | Default | Description |
+|-----------|--------|---------|---------|-------------|
+| `name` | **MANDATORY** | Any string | - | Protection name (create only) |
+| `protection_index` | **MANDATORY** | Integer | - | Index to edit (edit only) |
+| `protocol` | OPTIONAL | tcp, udp | tcp | Network protocol |
+| `threshold` | OPTIONAL | "number" | "50" | Connection limit threshold |
+| `app_port_group` | OPTIONAL | http, https, dns, ftp, smtp, imap, custom port, "" | "" | Application port filter |
+| `tracking_type` | OPTIONAL | src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port | dst_ip | Traffic tracking method |
+| `action` | OPTIONAL | drop, report_only | drop | Action when threshold exceeded |
+| `packet_report` | OPTIONAL | enable, disable | disable | Detailed packet reporting |
+| `protection_type` | OPTIONAL | cps, concurrent_connections | cps | Detection type |
+| `index` | OPTIONAL | 0 or 450001+ | 0 | Creation index |
+
+**Key Points for Editing**:
+-  **Partial Updates**: Only specify parameters you want to change
+-  **Unchanged Values**: Unspecified parameters keep their current values
+-  **Flexible**: Change one parameter or many in a single operation
+
+#### Connection Limit Profiles (Required Section)
+```yaml
+# REQUIRED: Profiles (can reference existing or newly created protections)
+cl_profiles:
+  - name: "web_server_limits"                   # MANDATORY: Profile name
+    protections:                                # MANDATORY: List of protections
+      - "cl_prot_tcp_limit"                     # Will be created above
+      - "existing_protection"                   # Already exists on DefensePro
+      
+  - name: "database_limits"                     # Another profile example
+    protections:
+      - "cl_prot_comprehensive_example"         # Reference created protection
+      - "legacy_protection_on_device"           # Reference existing protection
+```
+
+**Profile Configuration Notes**:
+-  **name**: MANDATORY - Unique profile name
+-  **protections**: MANDATORY - List of protection names to include
+-  **Mixed References**: Can combine newly created and existing protections
+-  **Flexible**: Create profiles with any combination of protections
+#### Usage Pattern Examples
+```yaml
+# Example 1: Create new protections + profiles (comprehensive)
+cl_protections:
+  - name: "web_protection"
+    protocol: "tcp"
+    threshold: "100"
+    app_port_group: "https"
+    tracking_type: "src_ip"
+    action: "drop"
+    index: 450001
+  - name: "api_protection"
+    protocol: "tcp"
+    threshold: "500"
+    tracking_type: "dst_ip_and_port"
+    action: "report_only"
+    index: 450002
+
+cl_profiles:
+  - name: "web_security_profile"
+    protections:
+      - "web_protection"      # Newly created
+      - "api_protection"      # Newly created
 
 # Example 2: Use only existing protections (skip cl_protections entirely)
 cl_profiles:
@@ -175,6 +280,19 @@ cl_profiles:
     protections:
       - "protection_already_on_device"
       - "another_existing_protection"
+
+# Example 3: Mixed approach (some new, some existing)
+cl_protections:
+  - name: "new_custom_protection"
+    protocol: "udp"
+    threshold: "200"
+    index: 450003
+
+cl_profiles:
+  - name: "mixed_profile"
+    protections:
+      - "new_custom_protection"      # Newly created above
+      - "legacy_protection"          # Already exists on device
 ```
 
 ## Troubleshooting

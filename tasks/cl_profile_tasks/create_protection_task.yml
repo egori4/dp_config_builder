@@ -13,5 +13,5 @@
     action: "{{ item.1.action | default('drop') }}"
     packet_report: "{{ item.1.packet_report | default('disable') }}"
     protection_type: "{{ item.1.protection_type | default('cps') }}"
-    index: 0
+    index: "{{ item.1.index | default(0) }}"
     refresh_state: "{{ not ansible_loop.first }}"  # Refresh device state for 2nd, 3rd, etc. protections

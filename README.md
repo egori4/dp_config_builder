@@ -26,11 +26,23 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
 | `get_network_class.yml` | Query current state | [USER_GUIDE.md](USER_GUIDE.md#common-workflows) |
 
-### Connection Limit Profiles (Available Now)
+### Connection Limit Profiles
 
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
 | `create_cl_profiles.yml` | Create connection limit profiles and protections | *See create_vars.yml for configuration* |
+| `edit_cl_protections.yml` | Edit existing connection limit protections | *See edit_vars.yml for configuration* |
+
+**Connection Limit Protection Features**:
+-  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
+-  **Flexible creation**: All parameters optional except name (sensible defaults provided)
+-  **Partial editing**: Only specify parameters you want to change
+-  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
+-  **Profile management**: Reference existing or newly created protections
+
+**Parameter Status**:
+- **MANDATORY**: `name` (create), `protection_index` (edit)  
+- **OPTIONAL**: All other parameters have defaults and can be omitted
 
 
 

@@ -56,7 +56,13 @@ dp_config_builder/
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
 | **Create Protection** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{index}` |
+| **Edit Protection** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{index}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}` |
+
+**Note**: `{index}` parameter:
+- Optional in variables (defaults to 0)
+- Valid values: 0 or next available starting from 450001+
+- Used in URL path for both creation and editing operations
 
 ## Module Development Pattern
 
@@ -129,18 +135,23 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
 
 ### Create Connection Limit Protection
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/0
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{index}
 
 {
     "rsIDSConnectionLimitAttackName": "cl_prot_tcp_limit",
     "rsIDSConnectionLimitAttackProtocol": "6",
     "rsIDSConnectionLimitAttackThreshold": "100",
-    "rsIDSConnectionLimitAttackTrackingType": "1",
-    "rsIDSConnectionLimitAttackReportMode": "10",
+    "rsIDSConnectionLimitAttackTrackingType": "2",
+    "rsIDSConnectionLimitAttackReportMode": "0",
     "rsIDSConnectionLimitAttackPacketReport": "2",
-    "rsIDSConnectionLimitAttackRisk": "3",
     "rsIDSConnectionLimitAttackType": "1"
 }
+```
+
+**Index Parameter**:
+- **Optional**: Defaults to 0 if not specified in variables
+- **Valid Values**: 0 (default) or next available starting from 450001+
+- **API Behavior**: Index becomes part of the URL path for creation and editing
 ```
 
 ### Create Connection Limit Profile
