@@ -1,17 +1,19 @@
+#!/usr/bin/python
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: delete_http_profile
-short_description: Delete an HTTP profile from Radware device
+module: delete_https_profile
+short_description: Delete an HTTPS Flood profile on Radware DefensePro via CC API
 description:
-  - Deletes an HTTP profile on Radware DefensePro via Radware CC API.
+  - Deletes an existing HTTPS Flood profile from a DefensePro device using Radware CC API.
 options:
   provider:
     description:
-      - Connection details to Radware CC
+      - Dictionary with CC connection parameters
     type: dict
     required: true
     suboptions:
@@ -26,13 +28,11 @@ options:
         type: str
         required: true
   dp_ip:
-    description:
-      - Device IP where the profile exists
+    description: DefensePro device IP managed by CC
     type: str
     required: true
-  http_profile_name:
-    description:
-      - Name of the HTTP profile to delete
+  name:
+    description: Name of the HTTPS Flood profile to delete
     type: str
     required: true
 author:
@@ -40,80 +40,89 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Delete HTTP profile
-  delete_http_profile:
+- name: Delete HTTPS Flood profile
+  delete_https_profile:
     provider:
       cc_ip: 155.1.1.6
       username: radware
       password: mypass
     dp_ip: 155.1.1.7
-    http_profile_name: "HTTP_Profile1"
+    name: "HTTPS_Profile_1"
 '''
 
 RETURN = r'''
 response:
-  description: API response from Radware CC
+  description: API response from CC
   type: dict
+changed:
+  description: True if a profile was deleted
+  type: bool
 '''
 
 def run_module():
-    module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        http_profile_name=dict(type='str', required=True),
+    module = AnsibleModule(
+        argument_spec=dict(
+            provider=dict(type='dict', required=True),
+            dp_ip=dict(type='str', required=True),
+            name=dict(type='str', required=True),
+        ),
+        supports_check_mode=True
     )
 
-    result = dict(changed=False, response={})
-    debug_info = {}
-
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    profile_name = module.params['http_profile_name']
+    profile_name = module.params['name']
 
-    # Setup logger
-    log_level = provider.get("log_level", "disabled")
+    result = {"changed": False, "response": {}}
+    debug_info = {}
+
+    log_level = provider.get('log_level', 'disabled')
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(
-            provider['cc_ip'],
-            provider['username'],
-            provider['password'],
-            log_level=log_level,
-            logger=logger,
-        )
+        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
+                       log_level=log_level, logger=logger)
 
-        path = f"/mgmt/device/byip/{dp_ip}/config/rsHTTPProfileTable/{profile_name}"
-        url = f"https://{provider['cc_ip']}{path}"
+        # Build DELETE URL for HTTPS Flood profile
+        url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsHttpsFloodProfileTable/{profile_name}"
+        debug_info.update({"method": "DELETE", "url": url})
 
-        debug_info['request'] = {"method": "DELETE", "url": url}
-        logger.info(f"Deleting HTTP profile '{profile_name}' on device {dp_ip}")
+        logger.info(f"Deleting HTTPS Flood profile '{profile_name}' on {dp_ip}")
+        logger.debug(f"Request: {debug_info}")
 
-        if not module.check_mode:
-            resp = cc._delete(url)
-            debug_info['response_status'] = resp.status_code
+        if module.check_mode:
+            module.exit_json(changed=True, msg="Check mode: profile would be deleted", debug_info=debug_info)
 
-            try:
-                data = resp.json() if resp.content else {"status": "deleted"}
-            except ValueError:
-                data = {"raw_response": resp.text or "Profile deleted"}
+        resp = cc._delete(url)
+        debug_info["response_status"] = resp.status_code
 
-            debug_info['response_json'] = data
+        # Parse response
+        if resp.headers.get("Content-Type") == "application/json":
+            data = resp.json()
+        else:
+            data = {"raw": resp.text}
 
-            if resp.status_code not in [200, 204]:
-                raise Exception(f"Failed to delete HTTP profile '{profile_name}': {data}")
+        # Determine if deletion was successful
+        if resp.status_code in [200, 204]:
+            result["changed"] = True
+        elif resp.status_code == 404:
+            result["changed"] = False
+            data = {"msg": f"Profile '{profile_name}' not found"}
+        else:
+            module.fail_json(msg=f"Failed to delete profile: HTTP {resp.status_code}", debug_info=debug_info)
 
-            result.update(changed=True, response=data)
+        result["response"] = data
+        debug_info["response_json"] = data
 
     except Exception as e:
+        logger.error(f"Exception: {e}")
         module.fail_json(msg=str(e), debug_info=debug_info, **result)
 
-    result['debug_info'] = debug_info
+    result["debug_info"] = debug_info
     module.exit_json(**result)
 
 def main():
     run_module()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

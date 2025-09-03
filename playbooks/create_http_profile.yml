@@ -1,113 +1,32 @@
 ---
-- name: Create HTTP Profiles on Radware Devices
+- name: Create HTTPS Flood profiles on all devices
   hosts: cc
   gather_facts: no
   vars_files:
-<<<<<<< HEAD
-    - ../vars/cc.yml   # Provider/device login details
+    - ../vars/cc.yml           # CC connection details
+    - ../vars/create_http_vars.yml  # Task-specific vars
 
   vars:
-=======
-    - ../vars/cc.yml  # CC connection details
-
-  vars:
-    # List of DefensePro device IPs
->>>>>>> 4d144d2a0cb216f0e27cf840f3872c98f9936db0
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-<<<<<<< HEAD
-    http_profiles:
-      - name: "HTTP_Profile1"
-        max_connections: 1000
-        timeout: 30
-      - name: "HTTP_Profile2"
-        max_connections: 500
-        timeout: 20
+    profile_matrix: "{{ dp_ip | product(https_mappings) | list }}"
 
   tasks:
 
-    - name: Lock device(s)
+    - name: Lock all devices
       dp_lock:
-        host: "{{ item }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
       loop: "{{ dp_ip }}"
 
-    - name: Create HTTP profiles on devices
-      dp_http_profile:
-        host: "{{ item.0 }}"
+    - name: Create HTTPS Flood profiles on all devices
+      create_http_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item.0 }}"
         name: "{{ item.1.name }}"
-        max_connections: "{{ item.1.max_connections }}"
-        timeout: "{{ item.1.timeout }}"
-      loop: "{{ dp_ip | product(http_profiles) | list }}"
-      loop_control:
-        label: "{{ item.1.name }} on {{ item.0 }}"
+        params: "{{ item.1.params }}"
+      loop: "{{ profile_matrix }}"
 
-    - name: Unlock device(s)
+    - name: Unlock all devices
       dp_unlock:
-        host: "{{ item }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
       loop: "{{ dp_ip }}"
-=======
-    # Multiple HTTPS Flood profiles with unique parameters
-    https_profiles:
-      - name: "HTTPS_Profile_1"
-        params:
-          Profile Action: "block & report"        # report / block & report
-          Rate Limit: "100000"                    # Max packets per second
-          Selective Challenge: "enable"
-          Collective Challenge: "enable"
-          Challenge Method: "httpRedirect"        # javaScript / httpRedirect
-          Rate Limit Status: "disable"
-          Full Session Decryption: "disable"
-
-      - name: "HTTPS_Profile_2"
-        params:
-          Profile Action: "report"
-          Rate Limit: "50000"
-          Selective Challenge: "disable"
-          Collective Challenge: "enable"
-          Challenge Method: "javaScript"
-          Rate Limit Status: "enable"
-          Full Session Decryption: "enable"
-
-      - name: "HTTPS_Profile_3"
-        params:
-          Profile Action: "block & report"
-          Rate Limit: "75000"
-          Selective Challenge: "enable"
-          Collective Challenge: "disable"
-          Challenge Method: "httpRedirect"
-          Rate Limit Status: "enable"
-          Full Session Decryption: "disable"
-
-  tasks:
-    - block:
-        - name: Lock device(s)
-          dp_lock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-
-        - name: Create HTTPS Flood profiles on each device
-          vars:
-            profile_matrix: "{{ dp_ip | product(https_profiles) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
-          create_http_profile:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
-            params: "{{ item.1.params }}"
-
-      always:
-        - name: Unlock device(s)
-          dp_unlock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
->>>>>>> 4d144d2a0cb216f0e27cf840f3872c98f9936db0

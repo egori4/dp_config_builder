@@ -1,10 +1,10 @@
 # DefensePro Configuration Builder - User Guide
 
-**Quick automation for Radware DefensePro network class management**
+**Quick automation for Radware DefensePro https profile management**
 
 ## What This Does
 
-Automate creation, editing, and deletion of DefensePro network classes across multiple devices using Ansible.
+Automate creation, editing, and deletion of DefensePro http profile across multiple devices using Ansible.
 
 ## Quick Start (5 minutes)
 
@@ -12,70 +12,71 @@ Automate creation, editing, and deletion of DefensePro network classes across mu
 ```bash
 # Copy configuration templates
 cd vars/
-cp cc_example.yml cc.yml                    # Edit variables as needed
-cp create_vars.yml.example create_vars.yml  # Edit variables as needed
-cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
-cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
-cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp cc_example.yml cc.yml                      # Edit CyberController connection details
+cp create_https_vars.yml.example create_https_vars.yml   # Edit HTTPS profile creation variables
+cp edit_https_vars.yml.example edit_https_vars.yml       # Edit HTTPS profile editing variables
+cp delete_https_vars.yml.example delete_https_vars.yml   # Edit HTTPS profile deletion variables
+cp get_https_vars.yml.example get_https_vars.yml         # Edit HTTPS profile fetch variables
+
 ```
 
 ### 2. Run Operations
 ```bash
-# See what network classes exist
-ansible-playbook playbooks/get_network_class.yml
+# See what HTTPS profiles exist
+ansible-playbook playbooks/get_http_profile.yml
 
-# Create new network classes
-ansible-playbook playbooks/create_network_class.yml
+# Create new HTTPS profiles
+ansible-playbook playbooks/create_http_profile.yml
 
-# Edit existing network classes  
-ansible-playbook playbooks/edit_network_class.yml
+# Edit existing HTTPS profiles
+ansible-playbook playbooks/edit_http_profile.yml
 
-# Delete network classes
-ansible-playbook playbooks/delete_network_class.yml
+# Delete HTTPS profiles
+ansible-playbook playbooks/delete_http_profile.yml
 ```
 
 ## Common Workflows
 
-### Workflow 1: Create New Network Classes
+### Workflow 1: Create New Http profile
 ```bash
 # 1. Edit your requirements
-nano vars/create_vars.yml
+nano vars/create_http_vars.yml
 
 # 2. Test first (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_http_profile.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_http_profile.yml
 ```
 
-### Workflow 2: Modify Existing Networks
+### Workflow 2: Modify Existing Http Profile
 ```bash
 # 1. See current state
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_http_profile.yml
 
 # 2. Define your changes
-nano vars/edit_vars.yml
+nano vars/edit_https_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_http_profile.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_network_class.yml
+ansible-playbook playbooks/edit_http_profile.yml
 ```
 
-### Workflow 3: Clean Up Networks
+### Workflow 3: Clean Up Http Profile
 ```bash
-# 1. Identify what to delete
-ansible-playbook playbooks/get_network_class.yml
+# 1. Identify profiles to delete
+ansible-playbook playbooks/get_http_profile.yml
 
 # 2. Define deletions
-nano vars/delete_vars.yml
+nano vars/delete_https_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/delete_network_class.yml
+ansible-playbook --check playbooks/delete_http_profile.yml
 
 # 4. Apply deletions
-ansible-playbook playbooks/delete_network_class.yml
+ansible-playbook playbooks/delete_http_profile.yml
 ```
 
 ## Configuration Files
@@ -97,27 +98,40 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating Networks
+### Creating Http Profile
 ```yaml
-netclasses:
-  - name: "web_servers"
-    groups:
-      - { address: "192.168.1.0", mask: "255.255.255.0" }
-      - { address: "192.168.2.0", mask: "24" }
+https_mappings:
+  - name: "HTTPS_Profile_1"
+    params:
+      Profile Action: "block & report"        # report / block & report
+      Rate Limit: "100000"                    # Max packets per second
+      Selective Challenge: "enable"           # enable / disable
+      Collective Challenge: "enable"          # enable / disable
+      Challenge Method: "httpRedirect"        # javaScript / httpRedirect
+      Rate Limit Status: "disable"            # enable / disable
+      Full Session Decryption: "disable"      # enable / disable
+
 ```
 
-### Editing Networks  
+### Editing Http Profile  
 ```yaml
-edit_networks:
-  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
-  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
+edit_https_mappings:
+  - name: "HTTPS_Profile_1"
+    params:
+      Profile Action: "report"
+      Rate Limit: "50000"
+      Selective Challenge: "disable"
+      Collective Challenge: "enable"
+      Challenge Method: "javaScript"
+      Rate Limit Status: "enable"
+      Full Session Decryption: "enable"
 ```
 
-### Deleting Networks
+### Deleting Http Profile
 ```yaml
-delete_networks:
-  - {class_name: "web_servers", index: 0}
-  - {class_name: "old_servers", index: 1}
+delete_https_mappings:
+  - "HTTPS_Profile_1"
+  - "HTTPS_Profile_2"
 ```
 
 ## Troubleshooting
@@ -146,12 +160,12 @@ cat vars/cc.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_http_profile.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_http_profile.yml
 ```
 
 ###  **Start with One Device**
@@ -164,15 +178,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_http_profile.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
-netclasses:
-  - name: "web_servers_dmz"      # Good: Clear purpose
+Http Profile:
+  - name: "Http_profilename"      # Good: Clear purpose
     # vs
-  - name: "net1"                 # Bad: Unclear
+  - name: "Http"                 # Bad: Unclear
 ```
 
 ## Getting Help
