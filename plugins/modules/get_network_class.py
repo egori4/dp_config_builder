@@ -31,18 +31,18 @@ def run_module():
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(provider['server'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
         filter_class_name = module.params.get('filter_class_name')
         if filter_class_name:
-            url = f"https://{provider['server']}/mgmt/v2/devices/{module.params['dp_ip']}/config/itemlist/rsBWMNetworkTable/{filter_class_name}"
+            url = f"https://{provider['cc_ip']}/mgmt/v2/devices/{module.params['dp_ip']}/config/itemlist/rsBWMNetworkTable/{filter_class_name}"
         else:
-            url = f"https://{provider['server']}/mgmt/v2/devices/{module.params['dp_ip']}/config/itemlist/rsBWMNetworkTable"
+            url = f"https://{provider['cc_ip']}/mgmt/v2/devices/{module.params['dp_ip']}/config/itemlist/rsBWMNetworkTable"
         debug_info = {
             'method': 'GET',
             'url': url,
             'body': None
         }
-        logger.info(f"Getting network class info for device {module.params['dp_ip']} on server {provider['server']}")
+        logger.info(f"Getting network class info for device {module.params['dp_ip']} on cc_ip {provider['cc_ip']}")
         logger.debug(f"Request: {debug_info}")
         resp = cc._get(url)
         logger.debug(f"Response status: {resp.status_code}")
