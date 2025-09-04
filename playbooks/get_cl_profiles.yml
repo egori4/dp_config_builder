@@ -11,6 +11,7 @@
       get_cl_configuration:
         provider: "{{ cc }}"
         dp_ip: "{{ item }}"
+        filter_profile_names: "{{ filter_profile_names | default([]) }}"
       loop: "{{ dp_ip }}"
       loop_control:
         label: "Device: {{ item }}"

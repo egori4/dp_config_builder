@@ -13,12 +13,14 @@ from ansible.module_utils.radware_cc import RadwareCC
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True)
+        dp_ip=dict(type='str', required=True),
+        filter_profile_names=dict(type='list', required=False, default=[])
     )
     result = dict(changed=False, profiles=[], debug_info={})
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
+    filter_profile_names = module.params['filter_profile_names']
     log_level = provider.get('log_level', 'disabled')
     logger = Logger(verbosity=log_level)
     cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
@@ -76,7 +78,20 @@ def run_module():
             }
             profiles[prof_name]['protections'].append(prot_settings)
 
-        result['profiles'] = list(profiles.values())
+        # Apply filtering if filter_profile_names is provided
+        all_profiles = list(profiles.values())
+        if filter_profile_names:
+            filtered_profiles = [p for p in all_profiles if p['profile_name'] in filter_profile_names]
+            result['profiles'] = filtered_profiles
+            debug_info['filter_applied'] = True
+            debug_info['filter_profile_names'] = filter_profile_names
+            debug_info['filtered_count'] = len(filtered_profiles)
+            debug_info['total_count'] = len(all_profiles)
+        else:
+            result['profiles'] = all_profiles
+            debug_info['filter_applied'] = False
+            debug_info['total_count'] = len(all_profiles)
+
         result['debug_info'] = debug_info
         module.exit_json(**result)
     except Exception as e:
