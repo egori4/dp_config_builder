@@ -26,8 +26,8 @@ filter_class_name: "egor_test_net"  # Set to a class name to filter, or leave em
 
 ########################## Connection Limit Profile Filter variables ##########################
 # Filter by specific profile names, or leave empty list for all profiles
-filter_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names to filter, or leave empty for all
+filter_cl_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names to filter, or leave empty for all
 # Examples:
-# filter_profile_names: ["cl_prof_egor_test10"]  # Show only one profile
-# filter_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
-# filter_profile_names: []  # Show all profiles (default)
+# filter_cl_profile_names: ["cl_prof_egor_test10"]  # Show only one profile
+# filter_cl_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
+# filter_cl_profile_names: []  # Show all profiles (default)

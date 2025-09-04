@@ -38,6 +38,9 @@ ansible-playbook playbooks/create_cl_profiles.yml
 
 # Edit existing connection limit protections (uses edit_cl_configuration module)
 ansible-playbook playbooks/edit_cl_protections.yml
+
+# Get connection limit profiles and protections (uses get_cl_configuration module)
+ansible-playbook playbooks/get_cl_profiles.yml
 ```
 
 ## Common Workflows
@@ -142,13 +145,33 @@ ansible-playbook playbooks/edit_cl_protections.yml
 - **Use only existing protections**: Skip `cl_protections`, define only `cl_profiles` with existing protection names
 - **Mixed approach**: Create some new protections, reference some existing ones in the same profile
 
+### Workflow 6: Get Connection Limit Profiles
+```bash
+# 1. See all profiles and protections on devices
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 2. Filter by specific profile names (edit get_vars.yml first)
+nano vars/get_vars.yml  # Set filter_cl_profile_names: ["profile1", "profile2"]
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 3. Reset to show all profiles
+nano vars/get_vars.yml  # Set filter_cl_profile_names: []
+ansible-playbook playbooks/get_cl_profiles.yml
+```
+
+**Note**: The get operation shows profiles with their associated protections and all protection settings. You can filter by profile names or show all profiles.
+
 ## Configuration Files
 
-### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, etc.)
+### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)
 ```yaml
 dp_ip:
   - "10.105.192.32"  # Add your DefensePro IPs here
   - "10.105.192.33"
+
+# For getting profiles (get_vars.yml)
+filter_cl_profile_names: []  # Show all profiles (default)
+# filter_cl_profile_names: ["profile1", "profile2"]  # Filter specific profiles
 ```
 
 ### CyberController Connection (`vars/cc.yml`)
@@ -231,6 +254,17 @@ edit_cl_protections:
     tracking_type: "dst_ip_and_port"           # OPTIONAL: Change tracking
     packet_report: "disable"                   # OPTIONAL: Change reporting
     # Other parameters remain unchanged
+```
+
+#### Getting Connection Limit Profiles and Protections
+```yaml
+# Get all profiles and protections from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Filter by specific profile names (configure in get_vars.yml)
+filter_cl_profile_names: ["profile1", "profile2"]  # Show only these profiles
+# filter_cl_profile_names: []                      # Show all profiles (default)
 ```
 
 **Parameter Reference for Connection Limit Protections**:

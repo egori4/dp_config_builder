@@ -32,12 +32,15 @@ dp_config_builder/
    - Consistent parameter validation and error handling
 
 4. **Connection Limit Profile Modules** (`plugins/modules/`)
-   - Creation of connection limit protection subprofiles
+   - Creation and editing of connection limit protection subprofiles
    - Profile creation and protection attachment
-   - **Note**: Both `cl_protections` and `cl_profiles` sections are optional
-     - Can create protections only (skip profiles)
-     - Can create profiles only (using existing protections)
-     - Can create both sections together
+   - **New Architecture (v1.0.4+)**:
+     - Creation: `create_cl_configuration.py` (loops/mapping in Python)
+     - Editing: `edit_cl_configuration.py` (loops/mapping in Python, per-device call, internal protection loop)
+     - Getting: `get_cl_configuration.py` (fetches profiles+protections, maps values, supports filtering)
+     - Playbooks: `create_cl_profiles.yml`, `edit_cl_protections.yml`, and `get_cl_profiles.yml` use per-device loop, pass list of protections to module
+     - **Note**: Both `cl_protections` and `cl_profiles` sections are optional for creation; for editing, only specify parameters to change (partial update)
+     - **Comparison to Previous**: Old edit logic used complex YAML loops and mapping; new logic centralizes all mapping and error handling in Python for maintainability and consistency.
 
 ## API Endpoints
 
@@ -61,6 +64,8 @@ dp_config_builder/
 | **Create Protection** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{index}` |
 | **Edit Protection** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{index}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable` |
+| **Get Protections** | GET | `/mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable` |
 
 **Note**: `{index}` parameter:
 - Optional in variables (defaults to 0)
@@ -163,6 +168,40 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitProfileTable/web
     "rsIDSConnectionLimitProfileAttackName": "cl_prot_tcp_limit"
 }
 ```
+
+### Get Connection Limit Profiles Response (New Architecture)
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitProfileTable
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable
+
+Response (mapped and combined):
+{
+    "profiles": [
+        {
+            "profile_name": "cl_prof_egor_test10",
+            "protections": [
+                {
+                    "protection_name": "cl_prot_egor_test10",
+                    "protection_id": "450141", 
+                    "protection_type": "cps",
+                    "tracking_type": "dst_ip",
+                    "protocol": "tcp",
+                    "threshold": "50",
+                    "action": "drop",
+                    "packet_report": "enable",
+                    "app_port_group": "http"
+                }
+            ]
+        }
+    ]
+}
+```
+
+**Usage:**
+- Call `get_cl_configuration` once per device
+- Optional filtering: `filter_cl_profile_names: ["profile1", "profile2"]`
+- All API mappings handled internally (reverse of create/edit logic)
+- Returns nested structure: profiles -> protections -> subsettings
 
 ### Get Network Classes Response
 ```json

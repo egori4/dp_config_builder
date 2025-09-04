@@ -32,12 +32,14 @@ Automate configuration of DefensePro security profiles, policies, and network se
 |----------|---------|---------------|
 | `create_cl_profiles.yml` | Create connection limit profiles and protections | *See create_vars.yml for configuration* |
 | `edit_cl_protections.yml` | Edit existing connection limit protections | *See edit_vars.yml for configuration* |
+| `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
 -  **Flexible creation**: All parameters optional except name (sensible defaults provided)
 -  **Optional sections**: Both `cl_protections` and `cl_profiles` sections are optional
 -  **Partial editing**: Only specify parameters you want to change
+-  **Profile querying**: Get all profiles and protections with optional filtering by profile names
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
 
@@ -93,9 +95,20 @@ ansible-playbook playbooks/create_cl_profiles.yml --check
 
 # Edit Connection Limit Protections (uses edit_cl_configuration module)
 ansible-playbook playbooks/edit_cl_protections.yml --check
+
+# Get Connection Limit Profiles (uses get_cl_configuration module)
+ansible-playbook playbooks/get_cl_profiles.yml
 ```
 
 ## Version History
+
+Todo:
+
+Network classes
+    - align simplified architecture logic from cl
+    - get netclasses- align formating from cl
+    - get netclasses - add filtering as list rather than string - similar to cl
+
 
 | Version | Date | Changes |
 |---------|------|---------|
