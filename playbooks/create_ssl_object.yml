@@ -1,0 +1,50 @@
+---
+- name: Create Protected SSL Objects on Devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_ssl_vars.yml   # 👈 new var file
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Create SSL Objects
+          vars:
+            object_matrix: "{{ dp_ip | product(ssl_objects) | list }}"
+          loop: "{{ object_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.ssl_object_name }}"
+          create_ssl_object:
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
+            dp_ip: "{{ item.0 }}"
+            ssl_object_name: "{{ item.1.ssl_object_name }}"
+            params: "{{ item.1.params }}"
+          register: ssl_results
+          failed_when: >
+            ssl_results is failed and
+            ('already exists' not in (ssl_results.msg | default('')))
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"

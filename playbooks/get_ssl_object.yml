@@ -1,0 +1,24 @@
+---
+- name: Get Protected SSL Objects from Devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_ssl_vars.yml
+
+  tasks:
+    - name: Fetch SSL Object(s)
+      vars:
+        fetch_matrix: "{{ dp_ip | product(ssl_objects_to_get) | list }}"
+      loop: "{{ fetch_matrix }}"
+      loop_control:
+        label: "{{ item.0 }}/{{ item.1.ssl_object_name | default('ALL') }}"
+      get_ssl_object:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item.0 }}"
+        ssl_object_name: "{{ item.1.ssl_object_name | default(omit) }}"
+      register: ssl_results
+
+    - name: Show SSL Object results
+      debug:
+        var: ssl_results

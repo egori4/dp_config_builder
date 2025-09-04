@@ -27,19 +27,19 @@ dp_config_builder/
    - Structured logging with verbosity levels
    - File-based logging with rotation
 
-3. **Network Class Modules** (`plugins/modules/`)
-   - CRUD operations for DefensePro network classes
+3. **ssl object Modules** (`plugins/modules/`)
+   - CRUD operations for DefensePro ssl object
    - Consistent parameter validation and error handling
 
 ## API Endpoints
 
-### Network Class Management
+### ssl object Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsBWMNetworkTable[/{class_name}` |
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
 
 ### Device Locking
 | Operation | Method | Endpoint |
@@ -92,43 +92,58 @@ def run_module():
 
 ## Request/Response Patterns
 
-### Create Network Class
+### Create ssl object
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
+POST /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/server1
 
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkSubIndex": 0,
-    "rsBWMNetworkAddress": "192.168.1.0", 
-    "rsBWMNetworkMask": "255.255.255.0",
-    "rsBWMNetworkMode": "1"
+  "rsProtectedSslObjName": "server1",
+  "rsProtectedSslObjIpAddr": "155.1.102.7",
+  "rsProtectedSslObjPort": 443,
+  "rsProtectedSslObjProfileStatus": "enable"
+}
+
+```
+
+### Edit ssl object
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/server1
+
+{
+  "rsProtectedSslObjIpAddr": "155.1.102.15",
+  "rsProtectedSslObjPort": 443,
+  "rsProtectedSslObjProfileStatus": "enable"
 }
 ```
 
-### Edit Network Class
+### Get ssl object Response
 ```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
-
-{
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkAddress": "10.1.1.0",
-    "rsBWMNetworkMask": "24"
-}
-```
-
-### Get Network Classes Response
-```json
-{
-    "rsBWMNetworkTable": [
-        {
-            "rsBWMNetworkName": "web_servers",
-            "rsBWMNetworkSubIndex": "0",
-            "rsBWMNetworkAddress": "192.168.1.0",
-            "rsBWMNetworkMask": "24",
-            "rsBWMNetworkMode": "1",
-            "rsBWMNetworkFromIP": "192.168.1.0",
-            "rsBWMNetworkToIP": "192.168.1.255"
-        }
+ "rsProtectedSslObjTable": [
+                            {
+                                "rsBEDecryptionEnable": "1",
+                                "rsBEL4PortNumber": "80",
+                                "rsBEProtectedObjCipherSuiteSystemEnable": "1",
+                                "rsBEProtectedObjSSLV3Enable": "2",
+                                "rsBEProtectedObjTLS10Enable": "2",
+                                "rsBEProtectedObjTLS11Enable": "1",
+                                "rsBEProtectedObjTLS12Enable": "1",
+                                "rsBEProtectedObjTLS13Enable": "1",
+                                "rsBEProtectedObjUserCipher": "",
+                                "rsProtectedObjAddCertificate": "",
+                                "rsProtectedObjApplPort": "443",
+                                "rsProtectedObjCipherSuiteSystemEnable": "1",
+                                "rsProtectedObjDefaultSNICertificate": "",
+                                "rsProtectedObjEnable": "1",
+                                "rsProtectedObjIpAddr": "155.1.102.7",
+                                "rsProtectedObjName": "server1",
+                                "rsProtectedObjRemoveCertificate": "",
+                                "rsProtectedObjSSLV3Enable": "2",
+                                "rsProtectedObjTLS10Enable": "2",
+                                "rsProtectedObjTLS11Enable": "1",
+                                "rsProtectedObjTLS12Enable": "1",
+                                "rsProtectedObjTLS13Enable": "1",
+                                "rsProtectedObjUserCipher": ""
+                            }
     ]
 }
 ```
@@ -202,24 +217,20 @@ session_{md5_hash}.time   # Creation timestamp
 
 ### Unit Testing
 ```bash
-# Syntax validation
-python3 -m py_compile plugins/modules/create_network_class.py
+# Python syntax
+python3 -m py_compile plugins/modules/create_protected_ssl_object.py
 
-# YAML validation  
-python3 -c "import yaml; yaml.safe_load(open('vars/create_vars.yml'))"
-
-# Ansible module testing
-ansible-doc -t module plugins/modules/create_network_class
+# YAML validation
+python3 -c "import yaml; yaml.safe_load(open('vars/create_ssl_vars.yml'))"
 ```
 
 ### Integration Testing
 ```bash
-# Check mode (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+# Dry run
+ansible-playbook --check playbooks/create_ssl_object.yml
 
-# Single device testing
-# Edit vars file to target one device, then run normally
-ansible-playbook playbooks/create_network_class.yml
+# Run on one device
+ansible-playbook playbooks/create_ssl_object.yml -l dp1
 ```
 
 ## Extending the Modules
