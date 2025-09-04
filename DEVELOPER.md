@@ -78,36 +78,14 @@ def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        # Operation-specific parameters
+        # For multi-edit: edit_cl_configuration (list of dicts)
     )
-    
-    result = dict(changed=False, response={})
-    debug_info = {}
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    
-    # Extract provider and setup logging
-    provider = module.params['provider']
-    log_level = provider.get('log_level', 'disabled')
-    from ansible.module_utils.logger import Logger
-    logger = Logger(verbosity=log_level)
-    
-    try:
-        # Initialize RadwareCC client
-        cc = RadwareCC(provider['cc_ip'], provider['username'], 
-                      provider['password'], log_level=log_level, logger=logger)
-        
-        if not module.check_mode:
-            # Construct API request
-            # Execute operation
-            # Handle response
-            pass
-            
-    except Exception as e:
-        logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-    
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
+    # ...existing code...
+    # For multi-edit modules, loop over protections inside Python, not YAML
+    # All mappings (protocol, action, tracking_type, etc.) handled in Python
+    # Partial update: only send parameters to change
+    # Error handling and logging centralized
+    # ...existing code...
 ```
 
 ## Request/Response Patterns
@@ -150,6 +128,25 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{ind
     "rsIDSConnectionLimitAttackType": "1"
 }
 ```
+### Edit Connection Limit Protections
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{index}
+
+{
+    "rsIDSConnectionLimitAttackName": "cl_prot_tcp_limit",
+    "rsIDSConnectionLimitAttackProtocol": "2",
+    "rsIDSConnectionLimitAttackThreshold": "100",
+    "rsIDSConnectionLimitAttackTrackingType": "2",
+    "rsIDSConnectionLimitAttackReportMode": "10",
+    "rsIDSConnectionLimitAttackPacketReport": "2",
+    "rsIDSConnectionLimitAttackType": "1"
+}
+```
+
+**Usage:**
+- Call `edit_cl_configuration` once per device, pass list of protections to edit
+- Each protection dict must include `protection_index` (mandatory), and any parameters to change
+- All mappings handled internally
 
 **Index Parameter**:
 - **Optional**: Defaults to 0 if not specified in variables
@@ -277,20 +274,21 @@ ansible-playbook playbooks/create_network_class.yml
 
 ### Adding New Operations
 
-1. **Create Module** (`plugins/modules/new_operation.py`)
-   - Follow the standard module pattern
-   - Add proper documentation strings
-   - Implement error handling
+1. **Create/Edit Module** (`plugins/modules/create_cl_configuration.py` or `edit_cl_configuration.py`)
+    - Follow the standard module pattern
+    - For multi-edit, move all looping/mapping to Python
+    - Add proper documentation strings
+    - Implement  error handling and logging
 
-2. **Create Playbook** (`playbooks/new_operation.yml`)
-   - Use external variable files
-   - Include device locking/unlocking
-   - Add descriptive loop labels
+2. **Create/Edit Playbook** (`playbooks/create_cl_profiles.yml` or `edit_cl_protections.yml`)
+    - Use per-device loop, pass list of items to module
+    - Include device locking/unlocking
+    - Add descriptive loop labels
 
-3. **Create Variables** (`vars/new_operation_vars.yml.example`)
-   - Document all parameters
-   - Provide usage examples
-   - Add to .gitignore pattern
+3. **Create/Edit Variables** (`vars/edit_vars.yml.example`)
+    - Document all parameters
+    - Provide usage examples (see USER_GUIDE.md)
+    - Add to .gitignore pattern
 
 ### Adding New Endpoints
 

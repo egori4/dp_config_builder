@@ -33,10 +33,10 @@ ansible-playbook playbooks/edit_network_class.yml
 # Delete network classes
 ansible-playbook playbooks/delete_network_class.yml
 
-# Create connection limit profiles
+# Create connection limit profiles (uses create_cl_configuration module)
 ansible-playbook playbooks/create_cl_profiles.yml
 
-# Edit existing connection limit protections
+# Edit existing connection limit protections (uses edit_cl_configuration module)
 ansible-playbook playbooks/edit_cl_protections.yml
 ```
 

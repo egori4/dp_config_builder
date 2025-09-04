@@ -47,7 +47,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 - **Both sections**: Create new protections and profiles together
 
 **Parameter Status**:
-- **MANDATORY**: `name` (create), `protection_index` (edit)  
+- **MANDATORY**: `name` (create), `protection_index` (edit)
 - **OPTIONAL**: All other parameters have defaults and can be omitted
 
 
@@ -88,8 +88,11 @@ cp create_vars.yml.example create_vars.yml
 # Edit create_vars.yml with your networks and devices
 ansible-playbook playbooks/create_network_class.yml
 
-# Connection Limit Profiles Example  
+# Connection Limit Profiles Example
 ansible-playbook playbooks/create_cl_profiles.yml --check
+
+# Edit Connection Limit Protections (uses edit_cl_configuration module)
+ansible-playbook playbooks/edit_cl_protections.yml --check
 ```
 
 ## Version History

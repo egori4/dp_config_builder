@@ -15,7 +15,7 @@
           loop: "{{ dp_ip }}"
 
         - name: Configure connection limit protections and profiles
-          manage_cl_configuration:
+          create_cl_configuration:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
             cl_protections: "{{ cl_protections | default([]) }}"
