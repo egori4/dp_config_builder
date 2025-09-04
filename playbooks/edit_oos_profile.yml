@@ -1,0 +1,32 @@
+---
+- name: Edit OOS (Stateful) profiles on all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_oos_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s) before editing profiles
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Edit each OOS profile on all devices
+          loop: "{{ dp_ip | product(oos_profiles) | list }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}"
+          edit_oos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            name: "{{ item.1.name }}"
+            params: "{{ item.1.params }}"
+
+      always:
+        - name: Unlock device(s) after editing profiles
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
