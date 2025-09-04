@@ -3,3 +3,9 @@ inventory.ini
 ansible.cfg
 playbooks/log
 tmp/
+
+# User-specific variable files (exclude from Git)
+vars/*_vars.yml
+
+# Keep templates in Git (don't ignore these)
+!vars/*_vars.yml.example

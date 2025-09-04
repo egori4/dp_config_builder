@@ -4,12 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-      # - "10.105.192.33"
-
-    filter_class_name: "egor_test_net"  # Set to a class name to filter, or leave empty for all
+    - ../vars/get_vars.yml
 
   tasks:
     - name: Get network class mapping from device

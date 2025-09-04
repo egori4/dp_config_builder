@@ -42,10 +42,10 @@ def run_module():
   logger = Logger(verbosity=log_level)
 
   try:
-    cc = RadwareCC(provider['server'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
     if not module.check_mode:
       path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsBWMNetworkTable/{module.params['class_name']}/{module.params['index']}"
-      url = f"https://{provider['server']}{path}"
+      url = f"https://{provider['cc_ip']}{path}"
       debug_info = {
         'method': 'DELETE',
         'url': url,
