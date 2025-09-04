@@ -1,0 +1,44 @@
+---
+- name: Get connection limit profiles and protections (Simple)
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - name: Get connection limit profiles and protections
+      get_cl_configuration:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
+      register: cl_profiles_result
+
+    - name: Display connection limit profiles and protections (formatted)
+      vars:
+        formatted_output: |
+          Device: {{ item.item }}
+          Profiles and Protections:
+          {% for profile in item.profiles %}
+          
+          Profile: {{ profile.profile_name }}
+          Protections:
+          {% for prot in profile.protections %}
+            - Protection Name: {{ prot.protection_name }}
+                Protection ID: {{ prot.protection_id }}
+                Protection Type: {{ prot.protection_type }}
+                Tracking Type: {{ prot.tracking_type }}
+                Protocol: {{ prot.protocol }}
+                Threshold: {{ prot.threshold }}
+                Action: {{ prot.action }}
+                Packet Report: {{ prot.packet_report }}
+                App Port Group: {{ prot.app_port_group }}
+          {% endfor %}
+          {% endfor %}
+      debug:
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ cl_profiles_result.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"
