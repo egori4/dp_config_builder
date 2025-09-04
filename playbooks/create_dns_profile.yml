@@ -1,47 +1,10 @@
 ---
-- name: Create DNS Protection profiles on all devices
+- name: Create DNS Protection profile
   hosts: cc
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml  # CC connection details
-
-  vars:
-    # List of DefensePro device IPs
-    dp_ip:
-      #- "10.105.192.32"
-      - "10.105.192.33"
-
-    # Multiple DNS Protection profiles with unique parameters
-    dns_profiles:
-      - name: "DNS_Profile_1"
-        params:
-          DNS Expected Qps: "4000"
-          DNS Action: "block & report"          # block & report / report
-          DNS Max Allow Qps: "4500"
-          DNS Manual Trigger Status: "disable"  # enable / disable
-          DNS Footprint Strictness: "medium"    # low / medium / high
-          DNS Packet Report Status: "enable"    # enable / disable
-          DNS Learning Suppression Threshold: "50"
-
-      - name: "DNS_Profile_2"
-        params:
-          DNS Expected Qps: "3000"
-          DNS Action: "block & report"
-          DNS Max Allow Qps: "3500"
-          DNS Manual Trigger Status: "disable"
-          DNS Footprint Strictness: "high"
-          DNS Packet Report Status: "disable"
-          DNS Learning Suppression Threshold: "50"
-
-      - name: "DNS_Profile_3"
-        params:
-          DNS Expected Qps: "6000"
-          DNS Action: "block & report"
-          DNS Max Allow Qps: "7000"
-          DNS Manual Trigger Status: "disable"
-          DNS Footprint Strictness: "low"
-          DNS Packet Report Status: "enable"
-          DNS Learning Suppression Threshold: "70"
+    - ../vars/cc.yml            # CC connection details
+    - ../vars/create_dns_vars.yml  # DP IPs and DNS profiles
 
   tasks:
     - block:
@@ -51,9 +14,9 @@
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Create DNS Protection profiles on each device
+        - name: Create DNS Protection profile
           vars:
-            profile_matrix: "{{ dp_ip | product(dns_profiles) | list }}"
+            profile_matrix: "{{ dp_ip | product(dns_profile) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"

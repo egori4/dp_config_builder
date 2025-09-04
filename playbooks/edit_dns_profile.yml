@@ -1,10 +1,10 @@
 ---
-- name: Delete DNS Protection profile
+- name: Edit DNS Protection profile
   hosts: cc
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml             # CC connection details
-    - ../vars/delete_dns_vars.yml  # DP IPs and profiles to delete
+    - ../vars/cc.yml
+    - ../vars/edit_dns_vars.yml
 
   tasks:
     - block:
@@ -14,16 +14,17 @@
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Delete each DNS Protection profile
+        - name: Edit DNS Protection profiles
           vars:
-            device_profile_matrix: "{{ dp_ip | product(dns_profile) | list }}"
-          loop: "{{ device_profile_matrix }}"
+            profile_matrix: "{{ dp_ip | product(dns_profile) | list }}"
+          loop: "{{ profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
-          delete_dns_profile:
+          edit_dns_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
             name: "{{ item.1.name }}"
+            params: "{{ item.1.params }}"
 
       always:
         - name: Unlock device(s)

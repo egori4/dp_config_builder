@@ -27,8 +27,8 @@ dp_config_builder/
    - Structured logging with verbosity levels
    - File-based logging with rotation
 
-3. **Network Class Modules** (`plugins/modules/`)
-   - CRUD operations for DefensePro network classes
+3. **dns profile Modules** (`plugins/modules/`)
+   - CRUD operations for DefensePro dns profile
    - Consistent parameter validation and error handling
 
 ## API Endpoints
@@ -36,10 +36,10 @@ dp_config_builder/
 ### Network Class Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsBWMNetworkTable[/{class_name}` |
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
 
 ### Device Locking
 | Operation | Method | Endpoint |
@@ -92,42 +92,45 @@ def run_module():
 
 ## Request/Response Patterns
 
-### Create Network Class
+### Create dns profile
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
+POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/DNS_Profile_1
 
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkSubIndex": 0,
-    "rsBWMNetworkAddress": "192.168.1.0", 
-    "rsBWMNetworkMask": "255.255.255.0",
-    "rsBWMNetworkMode": "1"
+    "rsDnsProtProfileName": "DNS_Profile_1",
+    "rsDnsProtProfileExpectedQps": 4000,
+    "rsDnsProtProfileAction": 1,
+    "rsDnsProtProfileMaxAllowQps": 4500,
+    "rsDnsProtProfileManualTriggerStatus": 2,
+    "rsDnsProtProfileFootprintStrictness": 1,
+    "rsDnsProtProfilePacketReportStatus": 1,
+    "rsDnsProtProfileLearningSuppressionThreshold": 50
 }
 ```
 
 ### Edit Network Class
 ```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
+PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/DNS_Profile_1
 
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkAddress": "10.1.1.0",
-    "rsBWMNetworkMask": "24"
+    "rsDnsProtProfileExpectedQps": 5000,
+    "rsDnsProtProfileAction": 0
 }
 ```
 
 ### Get Network Classes Response
 ```json
 {
-    "rsBWMNetworkTable": [
+    "rsDnsProtProfileTable": [
         {
-            "rsBWMNetworkName": "web_servers",
-            "rsBWMNetworkSubIndex": "0",
-            "rsBWMNetworkAddress": "192.168.1.0",
-            "rsBWMNetworkMask": "24",
-            "rsBWMNetworkMode": "1",
-            "rsBWMNetworkFromIP": "192.168.1.0",
-            "rsBWMNetworkToIP": "192.168.1.255"
+            "rsDnsProtProfileName": "DNS_Profile_1",
+            "rsDnsProtProfileExpectedQps": "4000",
+            "rsDnsProtProfileAction": "1",
+            "rsDnsProtProfileMaxAllowQps": "4500",
+            "rsDnsProtProfileManualTriggerStatus": "2",
+            "rsDnsProtProfileFootprintStrictness": "1",
+            "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfileLearningSuppressionThreshold": "50"
         }
     ]
 }
@@ -203,23 +206,23 @@ session_{md5_hash}.time   # Creation timestamp
 ### Unit Testing
 ```bash
 # Syntax validation
-python3 -m py_compile plugins/modules/create_network_class.py
+python3 -m py_compile plugins/modules/create_dns_profile.py
 
 # YAML validation  
 python3 -c "import yaml; yaml.safe_load(open('vars/create_vars.yml'))"
 
 # Ansible module testing
-ansible-doc -t module plugins/modules/create_network_class
+ansible-doc -t module plugins/modules/create_dns_profile.py
 ```
 
 ### Integration Testing
 ```bash
 # Check mode (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_dns_profile.yml
 
 # Single device testing
 # Edit vars file to target one device, then run normally
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_dns_profile.yml
 ```
 
 ## Extending the Modules

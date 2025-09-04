@@ -12,70 +12,70 @@ Automate creation, editing, and deletion of DefensePro network classes across mu
 ```bash
 # Copy configuration templates
 cd vars/
-cp cc_example.yml cc.yml                    # Edit variables as needed
-cp create_vars.yml.example create_vars.yml  # Edit variables as needed
-cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
-cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
-cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp cc_example.yml cc.yml                     # Edit CC connection variables
+cp create_dns_vars.yml.example create_dns_vars.yml
+cp edit_dns_vars.yml.example edit_dns_vars.yml
+cp delete_dns_vars.yml.example delete_dns_vars.yml
+cp get_dns_vars.yml.example get_dns_vars.yml
 ```
 
 ### 2. Run Operations
 ```bash
-# See what network classes exist
-ansible-playbook playbooks/get_network_class.yml
+# Retrieve DNS profiles
+ansible-playbook playbooks/get_dns_profile.yml
 
-# Create new network classes
-ansible-playbook playbooks/create_network_class.yml
+# Create new DNS profiles
+ansible-playbook playbooks/create_dns_profile.yml
 
-# Edit existing network classes  
-ansible-playbook playbooks/edit_network_class.yml
+# Edit existing DNS profiles  
+ansible-playbook playbooks/edit_dns_profile.yml
 
-# Delete network classes
-ansible-playbook playbooks/delete_network_class.yml
+# Delete DNS profiles
+ansible-playbook playbooks/delete_dns_profile.yml
 ```
 
 ## Common Workflows
 
-### Workflow 1: Create New Network Classes
+### Workflow 1: Create New dns profile
 ```bash
 # 1. Edit your requirements
-nano vars/create_vars.yml
+nano vars/create_dns_vars.yml
 
 # 2. Test first (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_dns_profile.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_dns_profile.yml
 ```
 
-### Workflow 2: Modify Existing Networks
+### Workflow 2: Modify Existing dns profile
 ```bash
 # 1. See current state
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_dns_profile.yml
 
 # 2. Define your changes
-nano vars/edit_vars.yml
+nano vars/edit_dns_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_dns_profile.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_network_class.yml
+ansible-playbook playbooks/edit_dns_profile.yml
 ```
 
-### Workflow 3: Clean Up Networks
+### Workflow 3: Delete dns profile
 ```bash
 # 1. Identify what to delete
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_dns_profile.yml
 
 # 2. Define deletions
-nano vars/delete_vars.yml
+nano vars/delete_dns_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/delete_network_class.yml
+ansible-playbook --check playbooks/delete_dns_profile.yml
 
 # 4. Apply deletions
-ansible-playbook playbooks/delete_network_class.yml
+ansible-playbook playbooks/delete_dns_profile.yml
 ```
 
 ## Configuration Files
@@ -97,27 +97,36 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating Networks
+### Creating dns profile
 ```yaml
-netclasses:
-  - name: "web_servers"
-    groups:
-      - { address: "192.168.1.0", mask: "255.255.255.0" }
-      - { address: "192.168.2.0", mask: "24" }
+dns_profile:
+  - name: "DNS_Profile_1"
+    params:
+      DNS Expected Qps: "4000"
+      DNS Action: "block & report"
+      DNS Max Allow Qps: "4500"
+      DNS Manual Trigger Status: "disable"
+      DNS Footprint Strictness: "medium"
+      DNS Packet Report Status: "enable"
+      DNS Learning Suppression Threshold: "50"
 ```
 
-### Editing Networks  
+### Editing dns profile 
 ```yaml
-edit_networks:
-  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
-  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
+dns_profile:
+  - name: "DNS_Profile_1"
+    params:
+      DNS Expected Qps: "5000"
+      DNS Action: "report"
+      DNS Max Allow Qps: "5500"
+      DNS Manual Trigger Status: "enable"
 ```
 
-### Deleting Networks
+### Deleting dns profile
 ```yaml
-delete_networks:
-  - {class_name: "web_servers", index: 0}
-  - {class_name: "old_servers", index: 1}
+dns_profiles:
+  - name: "DNS_Profile_1"
+  - name: "DNS_Profile_2"
 ```
 
 ## Troubleshooting
@@ -146,12 +155,12 @@ cat vars/cc.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_dns_profile.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_dns_profile.yml
 ```
 
 ###  **Start with One Device**
@@ -164,15 +173,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_dns_profile.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
 netclasses:
-  - name: "web_servers_dmz"      # Good: Clear purpose
+  - name: "dns_profilename"      # Good: Clear purpose
     # vs
-  - name: "net1"                 # Bad: Unclear
+  - name: "dns1"                 # Bad: Unclear
 ```
 
 ## Getting Help
