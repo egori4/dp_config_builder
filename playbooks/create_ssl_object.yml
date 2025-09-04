@@ -4,30 +4,17 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-    ssl_objects:
-      - ssl_object_name: "server1"
-        params:
-          ssl_object_profile: "enable"
-          IP_Address: "155.1.102.7"
-          Port: 443
-
-      - ssl_object_name: "server2"
-        params:
-          ssl_object_profile: "disable"  # enable / disable
-          IP_Address: "155.1.102.8"
-          Port: 443   # 0-65535 - App port
+    - ../vars/create_ssl_vars.yml   # 👈 new var file
 
   tasks:
     - block:
         - name: Lock device(s)
           dp_lock:
-            provider: "{{ cc }}"
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
@@ -38,7 +25,11 @@
           loop_control:
             label: "{{ item.0 }}/{{ item.1.ssl_object_name }}"
           create_ssl_object:
-            provider: "{{ cc }}"
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
             dp_ip: "{{ item.0 }}"
             ssl_object_name: "{{ item.1.ssl_object_name }}"
             params: "{{ item.1.params }}"
@@ -50,6 +41,10 @@
       always:
         - name: Unlock device(s)
           dp_unlock:
-            provider: "{{ cc }}"
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"

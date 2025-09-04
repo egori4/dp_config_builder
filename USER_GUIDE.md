@@ -1,10 +1,10 @@
 # DefensePro Configuration Builder - User Guide
 
-**Quick automation for Radware DefensePro network class management**
+**Quick automation for Radware DefensePro ssl object management**
 
 ## What This Does
 
-Automate creation, editing, and deletion of DefensePro network classes across multiple devices using Ansible.
+Automate creation, editing, and deletion of DefensePro ssl object across multiple devices using Ansible.
 
 ## Quick Start (5 minutes)
 
@@ -12,70 +12,71 @@ Automate creation, editing, and deletion of DefensePro network classes across mu
 ```bash
 # Copy configuration templates
 cd vars/
-cp cc_example.yml cc.yml                    # Edit variables as needed
-cp create_vars.yml.example create_vars.yml  # Edit variables as needed
-cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
-cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
-cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp cc_example.yml cc.yml                     # Edit CyberController details
+cp create_ssl_vars.yml.example create_ssl_vars.yml  # Define objects to create
+cp edit_ssl_vars.yml.example edit_ssl_vars.yml      # Define objects to edit
+cp delete_ssl_vars.yml.example delete_ssl_vars.yml  # Define objects to delete
+cp get_ssl_vars.yml.example get_ssl_vars.yml        # Define objects to fetch
+
 ```
 
 ### 2. Run Operations
 ```bash
-# See what network classes exist
-ansible-playbook playbooks/get_network_class.yml
+# Fetch SSL object(s)
+ansible-playbook playbooks/get_ssl_object.yml
 
-# Create new network classes
-ansible-playbook playbooks/create_network_class.yml
+# Create new SSL object(s)
+ansible-playbook playbooks/create_ssl_object.yml
 
-# Edit existing network classes  
-ansible-playbook playbooks/edit_network_class.yml
+# Edit existing SSL object(s)
+ansible-playbook playbooks/edit_ssl_object.yml
 
-# Delete network classes
-ansible-playbook playbooks/delete_network_class.yml
+# Delete SSL object(s)
+ansible-playbook playbooks/delete_ssl_object.yml
 ```
 
 ## Common Workflows
 
-### Workflow 1: Create New Network Classes
+### Workflow 1: Create New ssl object
 ```bash
-# 1. Edit your requirements
-nano vars/create_vars.yml
+# 1. Define SSL objects
+nano vars/create_ssl_vars.yml
 
 # 2. Test first (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_ssl_object.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_ssl_object.yml
 ```
 
-### Workflow 2: Modify Existing Networks
+### Workflow 2: Modify Existing ssl object
 ```bash
-# 1. See current state
-ansible-playbook playbooks/get_network_class.yml
+# 1. Fetch current state
+ansible-playbook playbooks/get_ssl_object.yml
 
-# 2. Define your changes
-nano vars/edit_vars.yml
+# 2. Define changes
+nano vars/edit_ssl_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_ssl_object.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_network_class.yml
+ansible-playbook playbooks/edit_ssl_object.yml
 ```
 
-### Workflow 3: Clean Up Networks
+### Workflow 3: Delete ssl object
 ```bash
-# 1. Identify what to delete
-ansible-playbook playbooks/get_network_class.yml
+# 1. Identify SSL objects
+ansible-playbook playbooks/get_ssl_object.yml
 
 # 2. Define deletions
-nano vars/delete_vars.yml
+nano vars/delete_ssl_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/delete_network_class.yml
+ansible-playbook --check playbooks/delete_ssl_object.yml
 
 # 4. Apply deletions
-ansible-playbook playbooks/delete_network_class.yml
+ansible-playbook playbooks/delete_ssl_object.yml
 ```
 
 ## Configuration Files
@@ -97,27 +98,31 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating Networks
+### Creating ssl object
 ```yaml
-netclasses:
-  - name: "web_servers"
-    groups:
-      - { address: "192.168.1.0", mask: "255.255.255.0" }
-      - { address: "192.168.2.0", mask: "24" }
+ssl_objects:
+  - ssl_object_name: "server1"
+    params:
+      ssl_object_profile: "enable"   # enable/disable
+      IP_Address: "155.1.102.7"
+      Port: 443
 ```
 
-### Editing Networks  
+### Editing ssl object  
 ```yaml
-edit_networks:
-  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
-  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
+ssl_objects_to_edit:
+  - ssl_object_name: "server1"
+    params:
+      ssl_object_profile: "enable"
+      IP_Address: "155.1.102.15"
+      Port: 443
 ```
 
-### Deleting Networks
+### Deleting ssl object
 ```yaml
-delete_networks:
-  - {class_name: "web_servers", index: 0}
-  - {class_name: "old_servers", index: 1}
+delete_ssl_object:
+  - ssl_object_name: "server1"
+  - ssl_object_name: "server2"
 ```
 
 ## Troubleshooting
@@ -146,12 +151,12 @@ cat vars/cc.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_ssl_object.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_ssl_object.yml
 ```
 
 ###  **Start with One Device**
@@ -164,15 +169,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_ssl_object.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
-netclasses:
-  - name: "web_servers_dmz"      # Good: Clear purpose
+ssl_objects:
+  - ssl_object_name: "server1_https"      # Good: Clear purpose
     # vs
-  - name: "net1"                 # Bad: Unclear
+  - name: "ssl_object"                 # Bad: Unclear
 ```
 
 ## Getting Help

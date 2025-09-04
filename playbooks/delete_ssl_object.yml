@@ -4,32 +4,32 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-    ssl_objects_to_delete:
-      - ssl_object_name: "server1"
-      - ssl_object_name: "server2"
+    - ../vars/delete_ssl_vars.yml   # 👈 new vars file
 
   tasks:
     - block:
         - name: Lock device(s)
           dp_lock:
-            provider: "{{ cc }}"
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
         - name: Delete SSL Objects
           vars:
-            delete_matrix: "{{ dp_ip | product(ssl_objects_to_delete) | list }}"
+            delete_matrix: "{{ dp_ip | product(delete_ssl_object) | list }}"
           loop: "{{ delete_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.ssl_object_name }}"
           delete_ssl_object:
-            provider: "{{ cc }}"
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
             dp_ip: "{{ item.0 }}"
             ssl_object_name: "{{ item.1.ssl_object_name }}"
           register: delete_results
@@ -40,6 +40,10 @@
       always:
         - name: Unlock device(s)
           dp_unlock:
-            provider: "{{ cc }}"
+            provider:
+              cc_ip: "{{ cc.cc_ip }}"
+              username: "{{ cc.username }}"
+              password: "{{ cc.password }}"
+              log_level: "{{ cc.log_level }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
