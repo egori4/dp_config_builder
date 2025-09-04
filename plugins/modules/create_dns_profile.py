@@ -1,4 +1,4 @@
-# plugins/modules/dp_dns_profile.py
+# plugins/modules/create_dns_profile.py
 """
 Ansible module to create or manage DefensePro DNS Protection profiles via Radware CyberController API.
 
@@ -53,7 +53,7 @@ from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: dp_dns_profile
+module: create_dns_profile
 short_description: Create or manage DefensePro DNS Protection profiles
 description:
   - Creates or edits a DNS Protection profile on Radware DefensePro via Radware CC API.
