@@ -1,22 +1,35 @@
 ---
 - name: Get BDOS Flood Profiles from DefensePro devices
-  hosts: localhost
+  hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/get_bdos_vars.yml  # Contains dp_ip × bdos_profiles
+    - ../vars/get_bdos_vars.yml
 
   tasks:
-    - name: Fetch BDOS Flood Profiles
-      get_bdos_profile:
-        provider: "{{ provider }}"
-        dp_ip: "{{ item.0 }}"
-        profile_name: "{{ item.1 }}"
-      loop: "{{ dp_ip | product(bdos_mappings) | list }}"
-      loop_control:
-        label: "{{ item.1 }} on {{ item.0 }}"
-      register: bdos_results
+    - name: Lock all devices
+      dp_lock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      register: lock_results
 
-    - name: Display BDOS profile info
+    - name: Get BDOS Flood profile from device
+      get_bdos_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        name: "{{ bdos_name if bdos_name is defined else omit }}"
+      loop: "{{ dp_ip }}"
+      register: bdos_results
+      failed_when: false   # Avoid failing the playbook if a profile is not found
+
+    - name: Unlock all devices
+      dp_unlock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      register: unlock_results
+
+    - name: Print structured results (device → response)
       debug:
-        var: bdos_results.results
+        var: bdos_results.results | map(attribute='item') | zip(bdos_results.results | map(attribute='response')) | list

@@ -1,26 +1,35 @@
 ---
-- name: Get network class mapping from all devices
+- name: Get BDOS Flood Profiles from DefensePro devices
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/get_vars.yml
+    - ../vars/get_bdos_vars.yml
 
   tasks:
-    - name: Get network class mapping from device
-      get_network_class:
+    - name: Lock all devices
+      dp_lock:
         provider: "{{ cc }}"
         dp_ip: "{{ item }}"
-        filter_class_name: "{{ filter_class_name if filter_class_name else omit }}"
       loop: "{{ dp_ip }}"
-      register: network_class_results
+      register: lock_results
 
+    - name: Get BDOS Flood profile from device
+      get_bdos_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        name: "{{ bdos_name if bdos_name is defined else omit }}"
+      loop: "{{ dp_ip }}"
+      register: bdos_results
+      failed_when: false   # Avoid failing the playbook if a profile is not found
 
-    - name: Print only device and response (structured)
+    - name: Unlock all devices
+      dp_unlock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      register: unlock_results
+
+    - name: Print structured results (device → response)
       debug:
-        var: network_class_results.results | map(attribute='item') | zip(network_class_results.results | map(attribute='response')) | list
-
-
-    # - name: Print network class mapping for all devices
-    #   debug:
-    #     var: network_class_results
+        var: bdos_results.results | map(attribute='item') | zip(bdos_results.results | map(attribute='response')) | list

@@ -1,5 +1,30 @@
 # plugins/modules/create_bdos_profile.py
+"""
+Ansible module to create or update BDOS Flood profiles on Radware DefensePro devices.
 
+This module allows you to manage BDOS Flood profiles via the Radware CyberController API.
+It requires connection parameters for the Radware CyberController, the target DefensePro IP,
+the profile name, and the desired profile attributes.
+
+Functions:
+  translate_params(params): Converts user-friendly keys/values to Radware API format.
+  build_api_path(dp_ip, name): Constructs the API endpoint URL.
+  run_module(): Main logic to perform profile creation/updating.
+  main(): Entrypoint for module execution.
+
+Module Arguments:
+  provider (dict): Connection details for Radware CC.
+  dp_ip (str): Target DefensePro IP.
+  name (str): BDOS profile name.
+  params (dict): Dictionary of BDOS profile attributes.
+
+Returns:
+  response (dict): API response from Radware CC.
+  changed (bool): Indicates if any changes were applied.
+  debug_info (dict): Debug info including request/response details.
+
+Supports check mode.
+"""
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
@@ -164,10 +189,12 @@ def translate_params(params):
 
 
 def build_api_path(dp_ip, name):
+    """Construct API endpoint path for BDOS profile creation."""
     return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{name}"
 
+
 # -------------------------------
-# Main Logic
+# Main Module Logic
 # -------------------------------
 def run_module():
     module_args = dict(
@@ -184,7 +211,6 @@ def run_module():
     dp_ip = module.params['dp_ip']
     name = module.params['name']
     log_level = provider.get('log_level', 'disabled')
-
     logger = Logger(verbosity=log_level)
     debug_info = {}
 
@@ -199,16 +225,15 @@ def run_module():
         body.update(translate_params(module.params['params']))
 
         debug_info['request'] = {"method": "POST", "url": url, "body": body}
-        logger.info(f"Preparing BDOS Flood profile '{name}' on {dp_ip}")
+        logger.info(f"Creating BDOS Flood profile '{name}' on {dp_ip}")
 
         if module.check_mode:
             result['changed'] = True
             result['response'] = {"msg": "Check mode - no changes applied"}
         else:
-            post_method = getattr(cc, "post", cc._post)
-            resp = post_method(url, json=body)
-
+            resp = cc._post(url, json=body)
             debug_info['response_status'] = resp.status_code
+
             try:
                 data = resp.json()
                 debug_info['response_json'] = data
@@ -228,6 +253,9 @@ def run_module():
     module.exit_json(**result)
 
 
+# -------------------------------
+# Entrypoint
+# -------------------------------
 def main():
     run_module()
 

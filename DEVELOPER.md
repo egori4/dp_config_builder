@@ -36,10 +36,10 @@ dp_config_builder/
 ### Network Class Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsBWMNetworkTable[/{class_name}` |
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
 
 ### Device Locking
 | Operation | Method | Endpoint |
@@ -92,42 +92,48 @@ def run_module():
 
 ## Request/Response Patterns
 
-### Create Network Class
+### Create bdos profile
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
+POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/BDOS_Profile_10
 
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkSubIndex": 0,
-    "rsBWMNetworkAddress": "192.168.1.0", 
-    "rsBWMNetworkMask": "255.255.255.0",
-    "rsBWMNetworkMode": "1"
+    "rsNetFloodProfileName": "BDOS_Profile_10",
+    "rsNetFloodProfileTcpStatus": 1,
+    "rsNetFloodProfileUdpStatus": 2,
+    "rsNetFloodProfileIcmpStatus": 1,
+    "rsNetFloodProfileTcpSynAckStatus": 2,
+    "rsNetFloodProfileTcpFragStatus": 1,
+    "rsNetFloodProfileBandwidthIn": "30000",
+    "rsNetFloodProfileBandwidthOut": "30000",
+    "rsNetFloodProfileTransparentOptimization": 2,
+    "rsNetFloodProfileAction": 0,
+    "rsNetFloodProfileBurstEnabled": 2,
+    "rsNetFloodProfileFootprintStrictness": 0,
+    "rsNetFloodProfilePacketReportStatus": 2,
+    "rsNetFloodProfilePacketTraceStatus": 2
 }
 ```
 
-### Edit Network Class
+### Edit bdos profile
 ```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
+PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/BDOS_Profile_10
 
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkAddress": "10.1.1.0",
-    "rsBWMNetworkMask": "24"
+    "rsNetFloodProfileName": "BDOS_Profile_10",
+    "rsNetFloodProfileBandwidthIn": "40000",
+    "rsNetFloodProfileBandwidthOut": "30000"
 }
 ```
 
-### Get Network Classes Response
+### Get bdos profile Response
 ```json
 {
-    "rsBWMNetworkTable": [
+    "rsNetFloodProfileTable": [
         {
-            "rsBWMNetworkName": "web_servers",
-            "rsBWMNetworkSubIndex": "0",
-            "rsBWMNetworkAddress": "192.168.1.0",
-            "rsBWMNetworkMask": "24",
-            "rsBWMNetworkMode": "1",
-            "rsBWMNetworkFromIP": "192.168.1.0",
-            "rsBWMNetworkToIP": "192.168.1.255"
+            "rsNetFloodProfileName": "BDOS_Profile_10",
+            "rsNetFloodProfileTcpStatus": 1,
+            "rsNetFloodProfileUdpStatus": 2,
+            "rsNetFloodProfileIcmpStatus": 1
         }
     ]
 }
@@ -203,23 +209,23 @@ session_{md5_hash}.time   # Creation timestamp
 ### Unit Testing
 ```bash
 # Syntax validation
-python3 -m py_compile plugins/modules/create_network_class.py
+python3 -m py_compile plugins/modules/create_bdos_profile.py
 
 # YAML validation  
 python3 -c "import yaml; yaml.safe_load(open('vars/create_vars.yml'))"
 
 # Ansible module testing
-ansible-doc -t module plugins/modules/create_network_class
+ansible-doc -t module plugins/modules/create_bdos_profile.py
 ```
 
 ### Integration Testing
 ```bash
 # Check mode (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_bdos_profile.yml
 
 # Single device testing
 # Edit vars file to target one device, then run normally
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_bdos_profile.yml
 ```
 
 ## Extending the Modules

@@ -1,14 +1,10 @@
 ---
 - name: Edit BDOS Flood Profiles on DefensePro devices
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
-    - ../vars/cc.yml                # CyberController connection details
-    - ../vars/edit_bdos_vars.yml   # Profiles to edit
-
-  vars:
-    # Create matrix of device IPs × profiles
-    profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
+    - ../vars/cc.yml
+    - ../vars/edit_bdos_vars.yml
 
   tasks:
 
@@ -17,6 +13,8 @@
         provider: "{{ cc }}"
         dp_ip: "{{ item }}"
       loop: "{{ dp_ip }}"
+      loop_control:
+        label: "{{ item }}"
 
     - name: ✏️ Edit BDOS Flood Profiles
       edit_bdos_profile:
@@ -24,19 +22,14 @@
         dp_ip: "{{ item.0 }}"
         name: "{{ item.1.name }}"
         params: "{{ item.1.params }}"
-      loop: "{{ profile_matrix }}"
-      register: bdos_result
-      ignore_errors: yes
-
-    - name: ⚠️ BDOS profile edit failed
-      debug:
-        msg: "BDOS profile {{ item.1.name }} failed to edit."
-      loop: "{{ profile_matrix }}"
-      when: bdos_result.results[loop.index0].failed is defined and bdos_result.results[loop.index0].failed
-      ignore_errors: yes
+      loop: "{{ dp_ip | product(bdos_mappings) | list }}"
+      loop_control:
+        label: "{{ item.1.name }} on {{ item.0 }}"
 
     - name: Unlock all devices
       dp_unlock:
         provider: "{{ cc }}"
         dp_ip: "{{ item }}"
       loop: "{{ dp_ip }}"
+      loop_control:
+        label: "{{ item }}"

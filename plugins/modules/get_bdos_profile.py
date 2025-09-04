@@ -1,5 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+# plugins/modules/get_bdos_profile.py
+"""
+Ansible module to fetch BDOS Flood profiles from Radware DefensePro devices via Radware CyberController API.
+
+This module retrieves details of an existing BDOS Flood profile on a DefensePro device using
+the Radware CC API. Supports check mode and detailed logging.
+"""
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
@@ -8,78 +13,68 @@ from ansible.module_utils.logger import Logger
 DOCUMENTATION = r'''
 ---
 module: get_bdos_profile
-short_description: Retrieve a BDOS Flood profile from DefensePro
+short_description: Fetch BDOS Flood profiles from DefensePro
 description:
-  - Fetches BDOS Flood profile configuration from Radware DefensePro using Radware CC API.
+  - Retrieves a BDOS Flood profile from a DefensePro device via Radware CC API.
 options:
   provider:
-    description: Dictionary with connection parameters for Radware CC.
+    description:
+      - Dictionary with Radware CC connection details.
     type: dict
     required: true
     suboptions:
       cc_ip:
-        description: Radware CC IP address
+        description: CC IP address
         type: str
         required: true
       username:
-        description: Radware CC username
+        description: CC username
         type: str
         required: true
       password:
-        description: Radware CC password
+        description: CC password
         type: str
         required: true
       log_level:
-        description: Logging verbosity (disabled, info, debug)
+        description: Log verbosity level
         type: str
         default: disabled
   dp_ip:
     description: DefensePro device IP address
     type: str
     required: true
-  profile_name:
-    description: BDOS Flood profile name
+  name:
+    description: Name of the BDOS Flood profile to fetch
     type: str
     required: true
-author:
-  - "Your Name"
 '''
 
 EXAMPLES = r'''
 - name: Get BDOS Flood profile
   get_bdos_profile:
     provider:
-      cc_ip: 155.1.1.6
+      cc_ip: 10.105.193.3
       username: radware
-      password: mypass
+      password: radware
       log_level: debug
-    dp_ip: 155.1.1.7
-    profile_name: "BDOS_Test"
+    dp_ip: 10.105.192.32
+    name: BDOS_Profile_10
 '''
 
 RETURN = r'''
 response:
-  description: API response containing the BDOS Flood profile configuration
+  description: API response containing BDOS Flood profile details
   type: dict
 debug_info:
-  description: Request/response debug details
+  description: Request/response debug info
   type: dict
 '''
 
-# -------------------------------
-# Helpers
-# -------------------------------
-def build_api_path(dp_ip, profile_name):
-    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}"
-
-# -------------------------------
-# Main Module Logic
-# -------------------------------
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        profile_name=dict(type='str', required=True),
+        name=dict(type='str', required=True),
     )
 
     result = dict(changed=False, response={}, debug_info={})
@@ -87,9 +82,8 @@ def run_module():
 
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    profile_name = module.params['profile_name']
+    name = module.params['name']
     log_level = provider.get('log_level', 'disabled')
-
     logger = Logger(verbosity=log_level)
     debug_info = {}
 
@@ -97,30 +91,28 @@ def run_module():
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
 
-        path = build_api_path(dp_ip, profile_name)
+        path = f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{name}"
         url = f"https://{provider['cc_ip']}{path}"
+        debug_info['request'] = {'method': 'GET', 'url': url}
 
-        debug_info['request'] = {"method": "GET", "url": url}
-        logger.info(f"Fetching BDOS Flood profile '{profile_name}' from {dp_ip}")
+        logger.info(f"Fetching BDOS Flood profile '{name}' from {dp_ip}")
+        resp = cc._get(url)
+        debug_info['response_status'] = resp.status_code
 
-        if module.check_mode:
-            result['response'] = {"msg": "Check mode - no changes applied"}
-        else:
-            resp = cc.get(url)
-            debug_info['response_status'] = resp.status_code
-            try:
-                data = resp.json()
-                debug_info['response_json'] = data
-            except ValueError:
-                raise Exception(f"Invalid JSON response: {resp.text}")
+        try:
+            data = resp.json()
+            debug_info['response_json'] = data
+        except ValueError:
+            raise Exception(f"Invalid JSON response: {resp.text}")
 
-            if resp.status_code != 200:
-                raise Exception(f"Failed to fetch BDOS profile: {data}")
+        if resp.status_code not in (200, 201):
+            raise Exception(f"Failed to fetch BDOS profile '{name}': {data}")
 
-            result['response'] = data
+        result['response'] = data
 
     except Exception as e:
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+        result['debug_info'] = debug_info
+        module.fail_json(msg=str(e), **result)
 
     result['debug_info'] = debug_info
     module.exit_json(**result)
