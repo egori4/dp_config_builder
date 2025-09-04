@@ -3,7 +3,8 @@
   hosts: localhost
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml   # CC connection details + profiles
+    - ../vars/cc.yml        # CC connection details
+    - ../vars/create_oos_vars.yml       # OOS profile definitions
 
   tasks:
     - block:
@@ -15,10 +16,10 @@
 
         - name: Create OOS Stateful profiles on each device
           vars:
-            profile_matrix: "{{ dp_ip | product(oos_mapping) | list }}"
+            profile_matrix: "{{ dp_ip | product(oos_profiles) | list }}"
           loop: "{{ profile_matrix }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
+            label: "{{ item.0 }} → {{ item.1.name }}"
           create_oos_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"

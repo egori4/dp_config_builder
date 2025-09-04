@@ -1,15 +1,59 @@
-#!/usr/bin/python
+# plugins/modules/create_oos_profile.py
+"""
+Ansible module to create or manage DefensePro OOS (Stateful) profiles via Radware CyberController API.
 
+This module allows you to create or update OOS (Out of State / Stateful) profiles on Radware DefensePro devices
+using the Radware CyberController API. It requires connection parameters for the CyberController, the target DefensePro IP,
+and the Stateful profile attributes.
+
+Classes:
+  None
+
+Functions:
+  run_module():
+    Main logic for the module. Handles argument parsing, logging, API request construction,
+    and response handling. Supports check mode.
+
+  main():
+    Entrypoint for the module execution.
+
+Module Arguments:
+  provider (dict): Connection parameters for Radware CyberController.
+    - cc_ip (str): CyberController IP address.
+    - username (str): Username for authentication.
+    - password (str): Password for authentication.
+    - log_level (str, optional): Logging verbosity (default: 'disabled').
+  dp_ip (str): Target DefensePro device IP address.
+  name (str): Name of the OOS Stateful profile.
+  params (dict): Dictionary of Stateful profile attributes, such as thresholds and actions.
+
+Returns:
+  response (dict): API response from Radware CyberController.
+  changed (bool): Indicates if any change was made.
+  debug_info (dict): Debug information including request and response details.
+
+Exceptions:
+  Raises Exception if API response is invalid or if any error occurs during execution.
+
+References:
+  - Radware CyberController API documentation for Stateful profile management.
+  - AnsibleModule documentation: https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html
+  - RadwareCC utility: ansible.module_utils.radware_cc
+  - Logger utility: ansible.module_utils.logger
+
+Note:
+  The module supports check mode and provides detailed logging if log_level is set.
+"""
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: dp_oos_profile
+module: create_oos_profile
 short_description: Create or manage DefensePro OOS (Stateful) profiles
 description:
-  - Creates an OOS / Stateful profile on Radware DefensePro via Radware CC API.
+  - Creates or updates OOS / Stateful profiles on Radware DefensePro via Radware CC API.
 options:
   provider:
     description:
@@ -34,23 +78,19 @@ options:
     type: str
     required: true
   params:
-    description:
-      - Dictionary of Stateful profile attributes
     type: dict
     required: true
-author:
-  - "Your Name"
 '''
 
 EXAMPLES = r'''
 - name: Create OOS profile
-  dp_oos_profile:
+  create_oos_profile:
     provider:
       cc_ip: 10.105.193.3
       username: radware
       password: radware
     dp_ip: 10.105.192.32
-    name: "Test1"
+    name: "OOS_Profile_1"
     params:
       Act Threshold: "5000"
       Term Threshold: "4000"
@@ -58,7 +98,7 @@ EXAMPLES = r'''
       Packet Trace Status: "enable"
       Packet Report Status: "enable"
       Risk Level: "medium"
-      Profile Action: "block"
+      Action: "block & report"
 '''
 
 RETURN = r'''
@@ -67,100 +107,76 @@ response:
   type: dict
 '''
 
-# Mapping user-friendly → API integer values (do not change)
+# Mapping user-friendly → API integer values
 PARAM_MAP = {
     "Syn-Ack Allow": {"enable": 1, "disable": 2},
     "Packet Trace Status": {"enable": 1, "disable": 2},
     "Packet Report Status": {"enable": 1, "disable": 2},
-    "Risk Level": {"low": 1, "medium": 2, "high": 3},
-    "Profile Action": {"allow": 0, "block": 1},
+    "Action": {"report only": 0, "block & report": 1},
 }
 
-# Mapping user-friendly keys → API field names (do not change)
+# Mapping user-friendly keys → API field names
 FIELD_MAP = {
     "Act Threshold": "rsSTATFULProfileactThreshold",
     "Term Threshold": "rsSTATFULProfiletermThreshold",
     "Syn-Ack Allow": "rsSTATFULProfilesynAckAllow",
     "Packet Trace Status": "rsSTATFULProfilePacketTraceStatus",
     "Packet Report Status": "rsSTATFULProfilePacketReportStatus",
-    "Risk Level": "rsSTATFULProfileRisk",
-    "Profile Action": "rsSTATFULProfileAction",
+    "Action": "rsSTATFULProfileAction",
 }
 
 def translate_params(params):
-    """Convert user-friendly params to API-ready integer fields."""
+    """Convert user-friendly params to API-ready fields."""
     return {
         FIELD_MAP.get(k, k): (PARAM_MAP[k].get(v, v) if k in PARAM_MAP else v)
         for k, v in params.items()
     }
 
 def run_module():
-    module = AnsibleModule(
-        argument_spec=dict(
-            provider=dict(type='dict', required=True),
-            dp_ip=dict(type='str', required=True),
-            name=dict(type='str', required=True),
-            params=dict(type='dict', required=True),
-        ),
-        supports_check_mode=True,
-    )
+  module_args = dict(
+    provider=dict(type='dict', required=True),
+    dp_ip=dict(type='str', required=True),
+    name=dict(type='str', required=True),
+    params=dict(type='dict', required=True)
+  )
 
-    provider = module.params['provider']
-    dp_ip = module.params['dp_ip']
-    name = module.params['name']
-    params = module.params['params']
+  result = dict(changed=False, response={})
+  debug_info = {}
+  module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+  provider = module.params['provider']
+  log_level = provider.get('log_level', 'disabled')
+  logger = Logger(verbosity=log_level)
 
-    logger = Logger(verbosity=provider.get('log_level', 'disabled'))
-
-    result = dict(changed=False, response={})
-    debug_info = {}
-
-    try:
-        cc = RadwareCC(
-            provider['cc_ip'],
-            provider['username'],
-            provider['password'],
-            log_level=provider.get('log_level', 'disabled'),
-            logger=logger,
-        )
-
-        if not module.check_mode:
-            path = f"/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{name}"
-            url = f"https://{provider['cc_ip']}{path}"
-            body = {"rsSTATFULProfileName": name, **translate_params(params)}
-
-            debug_info.update(method="POST", url=url, body=body)
-            logger.info(f"Creating OOS Stateful profile '{name}' on device {dp_ip}")
-            logger.debug(f"Request: {debug_info}")
-
-            resp = cc._post(url, json=body)
-            debug_info["response_status"] = resp.status_code
-
-            # Treat non-2xx as errors with context
-            if resp.status_code not in (200, 201):
-                payload = resp.text
-                try:
-                    payload = resp.json()
-                except Exception:
-                    pass
-                debug_info["response_error"] = payload
-                raise Exception(f"API error {resp.status_code}: {payload}")
-
-            # Safe JSON parse with fallback
-            if resp.headers.get("Content-Type", "").lower().startswith("application/json"):
-                data = resp.json()
-            else:
-                data = {"raw": resp.text}
-
-            debug_info["response_json"] = data
-            result.update(changed=True, response=data)
-
-    except Exception as e:
-        logger.error(f"Exception: {e}")
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-
-    result["debug_info"] = debug_info
-    module.exit_json(**result)
+  try:
+    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+    if not module.check_mode:
+      path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsStatefulProfileTable/{module.params['name']}"
+      body = {"rsSTATFULProfileName": module.params['name'], **translate_params(module.params['params'])}
+      url = f"https://{provider['cc_ip']}{path}"
+      debug_info = {
+        'method': 'POST',
+        'url': url,
+        'body': body
+      }
+      logger.info(f"Creating OOS Stateful profile {module.params['name']} on device {module.params['dp_ip']}")
+      logger.debug(f"Request: {debug_info}")
+      resp = cc._post(url, json=body)
+      logger.debug(f"Response status: {resp.status_code}")
+      try:
+        data = resp.json()
+        logger.debug(f"Response JSON: {data}")
+      except ValueError:
+        logger.error(f"Invalid JSON response: {resp.text}")
+        raise Exception(f"Invalid JSON response: {resp.text}")
+      result['response'] = data
+      result['changed'] = True
+      debug_info['response_status'] = resp.status_code
+      debug_info['response_json'] = data
+  except Exception as e:
+    logger.error(f"Exception: {str(e)}")
+    module.fail_json(msg=str(e), debug_info=debug_info, **result)
+  result['debug_info'] = debug_info
+  module.exit_json(**result)
 
 def main():
     run_module()

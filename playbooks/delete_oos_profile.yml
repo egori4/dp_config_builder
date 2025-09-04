@@ -4,15 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-
-  vars:
-    dp_ip:
-      - "10.105.192.32"
-      - "10.105.192.33"
-
-    # List of OOS profiles to delete
-    delete_oos_profiles:
-      - "Test1"
+    - ../vars/delete_oos_vars.yml
 
   tasks:
     - block:
@@ -37,4 +29,3 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-
