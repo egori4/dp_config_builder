@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 - name: Create network class only
   hosts: cc
@@ -60,3 +61,49 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+=======
+---
+- name: Create network class
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Build all device/class/group combinations (device-major order)
+          set_fact:
+            all_pairs: >-
+              {{
+                dp_ip
+                | product(netclasses | subelements('groups'))
+                | map('flatten')
+                | map('flatten')
+                | list
+              }}
+
+        - name: Create network groups for all netclasses on all devices (device-major order)
+          loop: "{{ all_pairs }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}/{{ item.2.address }}/{{ item.2.mask }}"
+          create_network_class:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            class_name: "{{ item.1.name }}"
+            address: "{{ item.2.address }}"
+            mask: "{{ item.2.mask }}"
+            index: "{{ (item.1.groups | map(attribute='address') | list).index(item.2.address) }}"
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+>>>>>>> upstream/main

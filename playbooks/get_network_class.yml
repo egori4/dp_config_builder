@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 - name: Get network class mapping from all devices
   hosts: cc
@@ -29,3 +30,31 @@
     # - name: Print network class mapping for all devices
     #   debug:
     #     var: network_class_results
+=======
+---
+- name: Get network class mapping from all devices
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - name: Get network class mapping from device
+      get_network_class:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_class_name: "{{ filter_class_name if filter_class_name else omit }}"
+      loop: "{{ dp_ip }}"
+      register: network_class_results
+
+
+    - name: Print only device and response (structured)
+      debug:
+        var: network_class_results.results | map(attribute='item') | zip(network_class_results.results | map(attribute='response')) | list
+
+
+    # - name: Print network class mapping for all devices
+    #   debug:
+    #     var: network_class_results
+>>>>>>> upstream/main
