@@ -33,6 +33,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `create_cl_profiles.yml` | Create connection limit profiles and protections | *See create_vars.yml for configuration* |
 | `edit_cl_protections.yml` | Edit existing connection limit protections | *See edit_vars.yml for configuration* |
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
+| `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
@@ -40,6 +41,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 -  **Optional sections**: Both `cl_protections` and `cl_profiles` sections are optional
 -  **Partial editing**: Only specify parameters you want to change
 -  **Profile querying**: Get all profiles and protections with optional filtering by profile names
+-  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
 
@@ -98,16 +100,23 @@ ansible-playbook playbooks/edit_cl_protections.yml --check
 
 # Get Connection Limit Profiles (uses get_cl_configuration module)
 ansible-playbook playbooks/get_cl_profiles.yml
+
+# Delete Connection Limit Profiles (uses delete_cl_configuration module)
+ansible-playbook playbooks/delete_cl_profiles.yml --check
 ```
 
 ## Version History
 
 Todo:
 
-Network classes
-    - align simplified architecture logic from cl
-    - get netclasses- align formating from cl
-    - get netclasses - add filtering as list rather than string - similar to cl
+    Network classes
+        - align simplified architecture logic from cl
+        - get netclasses- align formating from cl
+        - get netclasses - add filtering as list rather than string - similar to cl
+    General
+        - make sure all modules use _request error handling so we do not write twice
+        - check --check validations works on all playbooks
+
 
 
 | Version | Date | Changes |

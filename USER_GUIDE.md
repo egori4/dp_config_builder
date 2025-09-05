@@ -41,6 +41,9 @@ ansible-playbook playbooks/edit_cl_protections.yml
 
 # Get connection limit profiles and protections (uses get_cl_configuration module)
 ansible-playbook playbooks/get_cl_profiles.yml
+
+# Delete connection limit profiles and protections (uses delete_cl_configuration module)
+ansible-playbook playbooks/delete_cl_profiles.yml
 ```
 
 ## Common Workflows
@@ -161,6 +164,39 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 **Note**: The get operation shows profiles with their associated protections and all protection settings. You can filter by profile names or show all profiles.
 
+### Workflow 7: Delete Connection Limit Profiles and Protections
+```bash
+# 1. Identify what to delete (get current state first)
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 2. Configure your deletions
+nano vars/delete_vars.yml
+
+# 3. Test first (dry run) - shows exactly what will be deleted
+ansible-playbook --check playbooks/delete_cl_profiles.yml
+
+# The check mode will show:
+# - Profile Operations: Which protections will be removed from which profiles
+# - Protection Deletions: Which protections will be deleted entirely (with their indexes)
+# - Validation: Both names and indexes are validated against current device state
+# - Status indicators: ⚠️ NOT FOUND for protections/indexes that don't exist on the device
+
+# 4. Apply deletions
+ansible-playbook playbooks/delete_cl_profiles.yml
+```
+
+**Important Rules for Deletion**:
+- **Profile deletions**: Remove protections from profiles (profile auto-deleted when last protection removed)
+- **Protection deletions**: Delete protections entirely (protection must not be in any profile)
+- **Order matters**: Profile deletions are processed before protection deletions
+- **Dependencies**: Cannot delete protection if it's still associated with any profile
+- **Preview mode**: Use `--check` flag to see exactly what would be deleted before applying changes
+
+**Usage patterns**:
+- **Remove from profiles only**: Define `cl_profile_deletions` section, skip `cl_protection_deletions`
+- **Delete protections only**: Skip `cl_profile_deletions`, define `cl_protection_deletions` with standalone protections
+- **Complete cleanup**: Define both sections - remove from profiles first, then delete protections
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)
@@ -265,6 +301,28 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Filter by specific profile names (configure in get_vars.yml)
 filter_cl_profile_names: ["profile1", "profile2"]  # Show only these profiles
 # filter_cl_profile_names: []                      # Show all profiles (default)
+```
+
+#### Deleting Connection Limit Profiles and Protections
+```yaml
+# OPTIONAL: Remove protections from profiles (without deleting protection itself)
+cl_profile_deletions:
+  - profile_name: "profile_to_modify"
+    protections:
+      - "protection1"
+      - "protection2"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+cl_protection_deletions:
+  - protections_to_delete:
+      - "standalone_protection"      # Delete by name (module looks up index)
+      - "another_protection"         # Delete by name (module looks up index)
+      - "old_protection"             # Delete by name (module looks up index)
+      - 450001                       # Delete by index directly
+      - 450002                       # Delete by index directly
+
+# Important: Both sections are optional - define based on your needs
+# Order: Profile deletions processed first, then protection deletions
 ```
 
 **Parameter Reference for Connection Limit Protections**:
@@ -372,6 +430,15 @@ cat vars/cc.yml
 ```bash
 # Ensure all required variables are set in your vars files
 # Check the .example files for required format
+```
+
+### "Protection deletion failed" errors
+```bash
+# Check if protection is still associated with any profile
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Remove protection from profiles first, then delete protection
+# Edit delete_vars.yml - define both sections if doing complete cleanup
 ```
 
 ## Best Practices

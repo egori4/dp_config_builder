@@ -203,6 +203,61 @@ Response (mapped and combined):
 - All API mappings handled internally (reverse of create/edit logic)
 - Returns nested structure: profiles -> protections -> subsettings
 
+### Delete Connection Limit Profiles and Protections (`delete_cl_configuration`)
+
+**Purpose**: Delete connection limit protections and profiles with flexible options.
+
+**Module**: `plugins/modules/delete_cl_configuration.py`
+
+**API Endpoints**:
+- Remove protection from profile: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}`
+- Delete protection entirely: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{protection_id}`
+
+**Input Parameters**:
+```yaml
+# OPTIONAL: Remove protections from profiles (profile auto-deleted when last protection removed)
+cl_profile_deletions:
+  - profile_name: "cl_prof_egor_test10"
+    protections:
+      - "cl_prot_egor_test10"
+      - "cl_prot_egor_test11"
+      - "cl_prot_egor_test12"
+  
+  - profile_name: "another_profile"
+    protections:
+      - "protection_to_remove"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+# The format supporting both names and indexes:
+cl_protection_deletions:
+  - protections_to_delete:
+      - "protection_name_1"      # Delete by name (module looks up index)
+      - "protection_name_2"      # Delete by name (module looks up index)
+      - 450001                   # Delete by index directly
+      - 450002                   # Delete by index directly
+```
+
+**Key Features**:
+- Protection cannot be deleted if still associated with any profile
+- Profile is automatically deleted when last protection is removed
+- Both sections are optional - define based on your needs
+- Order: profile deletions processed first, then protection deletions
+- **Format**: Single list supporting both names (strings) and indexes (integers)
+- **Smart processing**: Module fetches current protections only when string names are used
+- **Enhanced validation**: Check mode validates both names and indexes against device state
+
+**API Endpoints**:
+- Get current protections (conditional): `GET /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable`
+- Remove protection from profile: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}`
+- Delete protection entirely: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{protection_id}`
+
+**Usage:**
+- Call `delete_cl_configuration` once per device
+- Both `cl_profile_deletions` and `cl_protection_deletions` are optional
+- Module handles error reporting for failed operations
+- **No need to know indexes**: Just specify protection names, module handles name-to-index mapping
+- Configure deletions in `delete_vars.yml` (consolidated with network class deletions)
+
 ### Get Network Classes Response
 ```json
 {

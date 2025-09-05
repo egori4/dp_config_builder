@@ -1,5 +1,5 @@
 ---
-- name: Create connection limit protections and profiles (Simple Approach)
+- name: Create connection limit protections and profiles
   hosts: cc
   gather_facts: no
   vars_files:

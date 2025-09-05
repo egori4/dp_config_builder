@@ -2,12 +2,16 @@
 # delete_vars.yml.example - Template for deleting network class variables
 # Copy this file to delete_vars.yml and customize with your environment details
 
+
+########################### Target DefensePro Devices ######################
 # Target DefensePro devices - add or remove IP addresses as needed
 dp_ip:
   - "10.105.192.32"
   # - "10.105.192.33"
   # - "10.105.192.34"
 
+
+########################## Network Class Deletions ##########################
 # Define the network class groups to delete
 # To get the list of network classes to delete and their indices, use the get_network_class module first
 delete_networks:
@@ -21,9 +25,68 @@ delete_networks:
   # - {class_name: "web_servers", index: 0}
   # - {class_name: "database_servers", index: 0}
 
-# Notes:
+# Network Class Deletion Notes:
 # - class_name: The name of the network class containing the group to delete
 # - index: The sub-index of the network group within the class (as integer)
 # - Use get_network_class module to discover existing classes and their current indices
 # - The playbook will delete all combinations of dp_ip × delete_networks
 # - Deletion is permanent - ensure you have backups if needed
+
+
+########################## Connection Limit Deletions ##########################
+# For connection limit profile and protection deletions, see sections below
+# Use delete_cl_profiles.yml playbook for these operations
+
+# Connection Limit Profile Deletions #############################
+# OPTIONAL: Remove protections from profiles (without deleting the protection itself)
+# Note: When the last protection is removed from a profile, the profile is automatically deleted
+
+cl_profile_deletions:
+  - profile_name: "cl_prof_egor_test10"
+    protections:
+      - "cl_prot_egor_test11"
+      - "cl_prot_egor_test12"
+  
+  # - profile_name: "another_profile"
+  #   protections:
+  #     - "protection_to_remove"
+
+# Connection Limit Protection Deletions ##########################
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+# Important: Protection cannot be deleted if it's still associated with any profile
+
+# The format supporting both names (strings) and indexes (integers)
+cl_protection_deletions:
+  - protections_to_delete:
+      - "cl_prot_egor_test10"    # Delete by name (module will look up index)
+      - "cl_prot_egor_test11"    # Delete by name (module will look up index)
+      - 450156                   # Delete by index directly
+      - 450157                   # Delete by index directly
+
+# Connection Limit Deletion Notes 
+# 1. Both sections (cl_profile_deletions and cl_protection_deletions) are OPTIONAL
+# 2. You can define one, another or both
+# 3. Order matters: Remove protections from profiles BEFORE deleting the protections themselves
+# 4. Profile deletion is automatic when last protection is removed
+# 5. Protection deletion: Support both names (strings) and indexes (integers) in the same list
+#    - Names: Module automatically fetches current protections to map names to indexes  
+#    - Indexes: Used directly for deletion
+
+# Connection Limit Usage Patterns
+# Pattern 1: Remove protections from profiles only (keep protections for reuse)
+# - Define only cl_profile_deletions section
+# - Skip cl_protection_deletions section
+
+# Pattern 2: Delete protections entirely (must not be in any profile)
+# - Define only cl_protection_deletions section  
+# - Skip cl_profile_deletions section
+
+# Pattern 3: Complete cleanup (remove from profiles AND delete protections)
+# - Define both sections
+# - Module will process profile deletions first, then protection deletions
+
+# Pattern 4: Mixed operations
+# - Remove some protections from profiles
+# - Delete other standalone protections
+# - Define both sections with different protection names
+
