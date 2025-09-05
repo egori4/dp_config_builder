@@ -1,0 +1,17 @@
+---
+# create_protection_task.yml - Task to create a single protection with state refresh
+
+- name: "Configure connection limit protection {{ item.1.name }} on {{ item.0 }}"
+  create_cl_protection:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item.0 }}"
+    protection_name: "{{ item.1.name }}"
+    protocol: "{{ item.1.protocol | default('tcp') }}"
+    threshold: "{{ item.1.threshold | default('50') }}"
+    app_port_group: "{{ item.1.app_port_group | default('') }}"
+    tracking_type: "{{ item.1.tracking_type | default('dst_ip') }}"
+    action: "{{ item.1.action | default('drop') }}"
+    packet_report: "{{ item.1.packet_report | default('disable') }}"
+    protection_type: "{{ item.1.protection_type | default('cps') }}"
+    index: "{{ item.1.index | default(0) }}"
+    refresh_state: "{{ not ansible_loop.first }}"  # Refresh device state for 2nd, 3rd, etc. protections

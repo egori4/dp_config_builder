@@ -1,0 +1,99 @@
+---
+# create_vars.yml.example - Template for creating network class variables
+# Copy this file to create_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# Define network classes to create with their network groups
+netclasses:
+  # Example: Create a network class named "egor_test_net" with 4 network groups
+  - name: "egor_test_net"
+    groups:
+      - { address: "10.10.10.0", mask: "255.255.255.0" }
+      - { address: "10.10.11.0", mask: "255.255.255.0" }
+      - { address: "10.10.12.0", mask: "255.255.255.0" }
+      - { address: "10.10.13.0", mask: "255.255.255.0" }
+  
+  # Example: Create another network class  
+  # - name: "web_servers"
+  #   groups:
+  #     - { address: "192.168.1.0", mask: "255.255.255.0" }
+  #     - { address: "192.168.2.0", mask: "255.255.255.0" }
+  
+  # Example: Create with CIDR notation
+  # - name: "database_servers"  
+  #   groups:
+  #     - { address: "10.20.1.0", mask: "24" }
+  #     - { address: "10.20.2.0", mask: "24" }
+
+# Notes:
+# - name: Must be unique network class name
+# - address: Network address for each group within the class
+# - mask: Can be CIDR notation (e.g., "24") or dotted decimal (e.g., "255.255.255.0")  
+# - Groups are automatically assigned indices starting from 0
+# - The playbook will create all combinations of dp_ip × netclasses × groups
+
+
+################################### Connection Limit Profiles ##############################
+# Connection Limit Protection Subprofiles (OPTIONAL - only define if you want to create new protections)
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this entire section if you only want to create profiles using existing protections
+cl_protections:
+  - name: "cl_prot_tcp_example"
+    protection_type: "concurrent_connections"  # Options: cps, concurrent_connections
+    protocol: "tcp"             # Options: tcp, udp
+    threshold: "100"            # Connection limit threshold (number)
+    app_port_group: "https"     # Optional: http, https, dns, ftp, or custom port (leave empty for all ports)
+    tracking_type: "src_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
+    action: "drop"              # Options: report_only, drop
+    packet_report: "disable"    # Options: enable, disable
+    index: 0                    # Optional: specific index to create at (defaults to 0 if not specified = will be allocated dynamically)
+  - name: "cl_prot_udp_example"
+    protection_type: "cps"      # Options: cps, concurrent_connections
+    protocol: "udp"             # Options: tcp, udp
+    threshold: "500"            # Connection limit threshold (number)
+    app_port_group: ""          # Optional: http, https, dns, ftp, or custom port (leave empty for all ports)
+    tracking_type: "dst_ip_and_port"  # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
+    action: "report_only"       # Options: report_only, drop
+    packet_report: "enable"     # Options: enable, disable
+    # index: 450006             # Optional: if not specified, defaults to 0
+  - name: "cl_prot_custom_index"
+    protection_type: "cps"      # Options: cps, concurrent_connections
+    protocol: "tcp"             # Options: tcp, udp
+    threshold: "200"            # Connection limit threshold (number)
+    app_port_group: "http"      # Optional: http, https, dns, ftp, or custom port (leave empty for all ports)
+    tracking_type: "dst_ip"     # Options: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port
+    action: "drop"              # Options: report_only, drop
+    packet_report: "enable"     # Options: enable, disable
+    index: 450007               # Optional: create at specific index 450007
+
+# Parameter Descriptions:
+# - protection_type: Type of detection (cps = Connections Per Second, concurrent_connections = Total active connections)
+# - protocol: Network protocol to monitor
+# - threshold: Number at which protection triggers
+# - app_port_group: Application port group to monitor (http, https, dns, ftp, custom port, or empty for all ports)
+# - tracking_type: What traffic to track (src_ip, dst_ip, both IPs, or dst_ip with port)
+# - action: What to do when threshold exceeded (report_only = log only, drop = block traffic)
+# - packet_report: Whether to enable detailed packet reporting
+# - index: Optional specific index to create protection at (defaults to 0 if not specified)
+
+# Connection Limit Profiles (OPTIONAL - only define if you want to create profiles)
+# Can reference any protection names - existing or newly created above
+# You can skip this entire section if you only want to create protections
+cl_profiles:
+  - name: "cl_prof_example"
+    protections:
+      - "cl_prot_tcp_example"   # Will be created above
+      - "cl_prot_udp_example"   # Will be created above
+  - name: "cl_prof_existing_only"
+    protections:
+      - "some_existing_protection"    # Reference existing protections without defining them
+
+# Usage Scenarios:
+# 1. Create protections only: Define cl_protections, skip cl_profiles
+# 2. Create profiles only: Skip cl_protections, define cl_profiles with existing protection names
+# 3. Create both: Define both cl_protections and cl_profiles

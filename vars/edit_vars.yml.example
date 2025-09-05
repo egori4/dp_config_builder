@@ -1,0 +1,85 @@
+---
+# edit_vars.yml.example - Template for editing profiles variables
+# Copy this file to edit_vars.yml and customize with your environment details
+
+# Target DefensePro devices - add or remove IP addresses as needed
+dp_ip:
+  - "10.105.192.32"
+  # - "10.105.192.33"
+  # - "10.105.192.34"
+
+# Define the network class groups to edit
+# Each entry specifies which class_name, index, and new values to apply
+# To get the current network class structure and indices, use the get_network_class module first
+edit_networks:
+  # Example: Edit index 2 of "egor_test_net" to have address 100.1.117.0/27
+  - {class_name: "egor_test_net", index: 2, address: "100.1.117.0", mask: "27"}
+  
+  # Example: Edit index 1 of "egor_test_net" to have address 100.16.10.0/24  
+  - {class_name: "egor_test_net", index: 1, address: "100.16.10.0", mask: "24"}
+  
+  # Example: Edit index 0 with subnet mask in dotted decimal notation
+  # - {class_name: "egor_test_net", index: 0, address: "192.168.100.0", mask: "255.255.255.0"}
+  
+  # Example: Edit different network class
+  # - {class_name: "another_net_class", index: 0, address: "10.0.0.0", mask: "255.255.255.0"}
+  
+  # Add more entries as needed - the playbook will process all combinations of dp_ip × edit_networks
+
+# Notes for Network Classes:
+# - class_name: Must be an existing network class name
+# - index: The sub-index of the network group within the class (starting from 0)
+# - address: The new network address to assign
+# - mask: Can be CIDR notation (e.g., "24") or dotted decimal (e.g., "255.255.255.0")
+# - Use get_network_class module to discover existing classes and their current indices
+
+################################## Connection Limit Protections Variables ###############################
+# Define connection limit protections to edit
+# Each protection requires protection_index (mandatory) to identify which protection to edit
+# Protection_index can be found either by checking on DefensePro UI Protections-> Connection Limit protections menu or by running get_cl_protections.yml playbook
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+edit_cl_protections:
+  # Example: Edit protection index 450001, changing multiple parameters
+  - protection_index: 450001               # Protection index to edit (MANDATORY - starts from 450001)
+    protection_name: "HTTP Protection"      # Descriptive name for documentation (optional)
+    protocol: "tcp"                        # Protocol: tcp, udp (optional - only if changing)
+    threshold: "500"                       # Connection rate threshold as string (optional - only if changing)
+    app_port_group: "http"                 # Application port group - lowercase (optional - only if changing)
+    tracking_type: "src_ip"                # Tracking: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port (optional)
+    action: "drop"                         # Action: drop, report_only (optional - only if changing)
+    packet_report: "enable"                # Packet reporting: enable, disable (optional - only if changing)
+    protection_type: "cps"                 # Protection type: cps, concurrent_connections (optional - only if changing)
+
+  # Example: Edit protection index 450003, changing only specific parameters
+  # - protection_index: 450003             # Another protection to edit
+  #   protection_name: "SMTP Protection"    # Descriptive name
+  #   protocol: "tcp"                      # Protocol type
+  #   threshold: "200"                     # Connection limit threshold
+  #   app_port_group: "smtp"               # Application port group (or leave empty "" for all ports)
+  #   tracking_type: "dst_ip"              # Tracking type
+  #   action: "report_only"                # Action mode
+  #   packet_report: "disable"             # Packet reporting setting
+  #   protection_type: "concurrent_connections" # Protection detection type
+
+  # Example: Edit protection index 450005, changing minimal parameters
+  # - protection_index: 450005             # Yet another protection
+  #   threshold: "1000"                    # Only change the threshold
+  #   action: "drop"                       # Only change the action
+  #   # All other parameters remain unchanged
+
+  # Add more protection entries as needed
+
+# Notes for Connection Limit Protections:
+# - protection_index: MANDATORY - identifies which protection to edit (get from DefensePro UI or future get_cl_protections.yml)
+#   Connection limit protection indexes start from 450001 and increment upward
+# - protection_name: Optional descriptive label for documentation
+# - Only specify parameters you want to change - unspecified parameters keep their current values
+# 
+# ALL SUPPORTED Connection Limit Protections PARAMETERS with user-friendly values:
+# - protocol: "tcp", "udp" (Protocol type)
+# - threshold: "number" (Connection limit threshold as string, e.g., "500", "1000")
+# - app_port_group: "http", "https", "smtp", "dns", "ftp", "imap" or custom port, "" for all ports (must be lowercase)
+# - tracking_type: "src_ip", "dst_ip", "src_and_dest_ip", "dst_ip_and_port" (What to track for limiting)
+# - action: "drop", "report_only" (Action when threshold exceeded)
+# - packet_report: "enable", "disable" (Detailed packet reporting)
+# - protection_type: "cps", "concurrent_connections" (Detection type: Connections Per Second vs Total Active Connections)

@@ -1,0 +1,32 @@
+---
+- name: Create connection limit protections and profiles (Simple Approach)
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Configure connection limit protections and profiles
+          create_cl_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            cl_protections: "{{ cl_protections | default([]) }}"
+            cl_profiles: "{{ cl_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
