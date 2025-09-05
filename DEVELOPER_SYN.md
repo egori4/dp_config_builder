@@ -117,6 +117,12 @@ except Exception as e:
 - Session lifetime: 600 seconds (configurable)
 - Automatic cleanup of expired sessions
 
+### Session File Format
+```
+session_{md5_hash}.pkl    # Pickled cookies
+session_{md5_hash}.time   # Creation timestamp
+```
+
 ## Logging
 
 - Log levels: `disabled`, `info`, `debug`
@@ -145,6 +151,8 @@ ansible-playbook playbooks/create_syn_profile.yml
 
 ## Extending the Modules
 
+### Adding New Operations
+
 1. **Create Module** (`plugins/modules/new_syn_operation.py`)
    - Follow the standard module pattern
    - Add proper documentation strings
@@ -157,6 +165,13 @@ ansible-playbook playbooks/create_syn_profile.yml
 3. **Create Variables** (`vars/new_syn_operation_vars.yml.example`)
    - Document all parameters
    - Provide usage examples
+
+### Adding New Endpoints
+
+1. **Research API** - Use CyberController API documentation
+2. **Add to RadwareCC** - If new HTTP methods needed
+3. **Test Manually** - Use curl/postman first
+4. **Implement Module** - Following existing patterns
 
 ## API Reference
 
