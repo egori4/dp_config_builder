@@ -108,7 +108,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/DNS_Profile_1
 }
 ```
 
-### Edit Network Class
+### Edit dns profile
 ```json
 PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/DNS_Profile_1
 
@@ -118,7 +118,7 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/DNS_Profile_1
 }
 ```
 
-### Get Network Classes Response
+### Get dns profile Response
 ```json
 {
     "rsDnsProtProfileTable": [
