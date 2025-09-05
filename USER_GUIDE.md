@@ -1,81 +1,82 @@
 # DefensePro Configuration Builder - User Guide
 
-**Quick automation for Radware DefensePro network class management**
+**Quick automation for Radware DefensePro syn profile management**
 
 ## What This Does
 
-Automate creation, editing, and deletion of DefensePro network classes across multiple devices using Ansible.
+Automate creation, editing, and deletion of DefensePro syn profile across multiple devices using Ansible.
 
 ## Quick Start (5 minutes)
 
 ### 1. Setup Your Environment
 ```bash
 # Copy configuration templates
+# Copy configuration templates
 cd vars/
-cp cc_example.yml cc.yml                    # Edit variables as needed
-cp create_vars.yml.example create_vars.yml  # Edit variables as needed
-cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
-cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
-cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp cc_example.yml cc.yml                            # Edit variables as needed
+cp create_syn_vars.yml.example create_syn_vars.yml  # Edit for your environment
+cp edit_syn_vars.yml.example edit_syn_vars.yml      # Edit for your environment
+cp delete_syn_vars.yml.example delete_syn_vars.yml  # Edit for your environment
+cp get_syn_vars.yml.example get_syn_vars.yml        # Edit for your environment
 ```
 
 ### 2. Run Operations
 ```bash
-# See what network classes exist
-ansible-playbook playbooks/get_network_class.yml
+# See what SYN Protections exist
+ansible-playbook playbooks/get_syn_protection.yml
 
-# Create new network classes
-ansible-playbook playbooks/create_network_class.yml
+# Create new SYN Protections
+ansible-playbook playbooks/create_syn_protection.yml
 
-# Edit existing network classes  
-ansible-playbook playbooks/edit_network_class.yml
+# Edit existing SYN Protections
+ansible-playbook playbooks/edit_syn_protection.yml
 
-# Delete network classes
-ansible-playbook playbooks/delete_network_class.yml
+# Delete SYN Protections
+ansible-playbook playbooks/delete_syn_protection.yml
 ```
 
 ## Common Workflows
 
-### Workflow 1: Create New Network Classes
+### Workflow 1: Create New syn profile & protection
 ```bash
 # 1. Edit your requirements
-nano vars/create_vars.yml
+nano vars/create_syn_vars.yml
 
 # 2. Test first (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_syn_protection.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook playbooks/create_syn_protection.yml
 ```
 
-### Workflow 2: Modify Existing Networks
+### Workflow 2: Modify Existing syn protection
 ```bash
 # 1. See current state
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_syn_protection.yml
 
 # 2. Define your changes
-nano vars/edit_vars.yml
+nano vars/edit_syn_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_syn_protection.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_network_class.yml
+ansible-playbook playbooks/edit_syn_protection.yml
 ```
 
-### Workflow 3: Clean Up Networks
+### Workflow 3: delete syn profile and protection
 ```bash
 # 1. Identify what to delete
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_syn_protection.yml
 
 # 2. Define deletions
-nano vars/delete_vars.yml
+nano vars/delete_syn_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/delete_network_class.yml
+ansible-playbook --check playbooks/delete_syn_protection.yml
 
 # 4. Apply deletions
-ansible-playbook playbooks/delete_network_class.yml
+ansible-playbook playbooks/delete_syn_protection.yml
 ```
 
 ## Configuration Files
@@ -97,27 +98,36 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating Networks
+### Creating syn profile & protection
 ```yaml
-netclasses:
-  - name: "web_servers"
-    groups:
-      - { address: "192.168.1.0", mask: "255.255.255.0" }
-      - { address: "192.168.2.0", mask: "24" }
+syn_mappings:
+  - profile_name: "Test_10"
+    protection_name: "TEST_10"
+    protection_params:
+      app_port_group: "http"
+      activation_threshold: "2500"
+      termination_threshold: "1500"
+      packet_report: "enable"
 ```
 
-### Editing Networks  
+### Editing syn profile & protection  
 ```yaml
-edit_networks:
-  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
-  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
+syn_mappings:
+  - profile_name: "Test_20"
+    protection_name: "TEST_10"
+    protection_id: "500014"
+    protection_params:
+      app_port_group: "https"
+      activation_threshold: "5000"
+      termination_threshold: "3000"
+      packet_report: "disable"
 ```
 
-### Deleting Networks
+### Deleting syn profile & protection
 ```yaml
-delete_networks:
-  - {class_name: "web_servers", index: 0}
-  - {class_name: "old_servers", index: 1}
+delete_syn:
+  - protection_id: "500013"
+  - protection_id: "500014"
 ```
 
 ## Troubleshooting
@@ -146,12 +156,12 @@ cat vars/cc.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_network_class.yml
+ansible-playbook playbooks/get_syn_profile.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_network_class.yml
+ansible-playbook --check playbooks/edit_syn_profile.yml
 ```
 
 ###  **Start with One Device**
@@ -164,15 +174,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_syn_profile.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
 netclasses:
-  - name: "web_servers_dmz"      # Good: Clear purpose
+  - name: "syn_profilename"      # Good: Clear purpose
     # vs
-  - name: "net1"                 # Bad: Unclear
+  - name: "syn1"                 # Bad: Unclear
 ```
 
 ## Getting Help

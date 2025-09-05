@@ -1,6 +1,6 @@
 ---
 - name: Edit SYN Protections on DefensePro devices
-  hosts: localhost
+  hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml           # Provider credentials
@@ -8,29 +8,29 @@
 
   tasks:
     - block:
-        - name: Lock device(s)
+        - name: 🔒 Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Edit SYN Protections
+        - name: 📝 Edit SYN Protections
           edit_syn_protection:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
-            protection_id: "{{ item.1.protection_id }}"
-            name: "{{ item.1.name }}"
-            app_port_group: "{{ item.1.app_port_group }}"
-            activation_threshold: "{{ item.1.activation_threshold }}"
-            termination_threshold: "{{ item.1.termination_threshold }}"
-            packet_report: "{{ item.1.packet_report }}"
-          loop: "{{ dp_ip | product(syn_protections) | list }}"
+            protection_id: "{{ item.1.protection_id | default('500013') }}"   # Add ID if known
+            name: "{{ item.1.protection_name }}"
+            app_port_group: "{{ item.1.protection_params.app_port_group }}"
+            activation_threshold: "{{ item.1.protection_params.activation_threshold }}"
+            termination_threshold: "{{ item.1.protection_params.termination_threshold }}"
+            packet_report: "{{ item.1.protection_params.packet_report }}"
+          loop: "{{ dp_ip | product(syn_mappings) | list }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
+            label: "{{ item.0 }}/{{ item.1.profile_name }}"
           register: edit_results
 
       always:
-        - name: Unlock device(s)
+        - name: 🔓 Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
