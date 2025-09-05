@@ -1,6 +1,6 @@
-# DefensePro Configuration Builder - Developer Guide
+# DefensePro SYN Profile Module - Developer Guide
 
-**Technical documentation for developers working on the DefensePro Ansible modules**
+**Technical documentation for developers working on the DefensePro SYN Profile Ansible modules**
 
 ## Architecture Overview
 
@@ -8,10 +8,10 @@
 dp_config_builder/
 ├── playbooks/           # Ansible playbooks (orchestration layer)
 ├── plugins/
-│   ├── modules/         # Custom Ansible modules (business logic)
+│   ├── modules/         # Custom Ansible modules 
 │   └── module_utils/    # Shared utilities (RadwareCC, Logger)
-├── vars/               # Configuration templates and user data
-└── tasks/              # Reusable task fragments
+├── vars/                # Configuration templates and user data
+└── tasks/               # Reusable task fragments
 ```
 
 ## Module Architecture
@@ -27,25 +27,16 @@ dp_config_builder/
    - Structured logging with verbosity levels
    - File-based logging with rotation
 
-3. **Network Class Modules** (`plugins/modules/`)
-   - CRUD operations for DefensePro network classes
+3. **SYN Profile Modules** (`plugins/modules/create_syn_profile.py`)
+   - CRUD operations for DefensePro SYN profiles
    - Consistent parameter validation and error handling
 
 ## API Endpoints
 
-### Network Class Management
+### SYN Profile Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
-| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsBWMNetworkTable[/{class_name}` |
-
-### Device Locking
-| Operation | Method | Endpoint |
-|-----------|--------|----------|
-| **Lock** | POST | `/mgmt/device/byip/{dp_ip}/config/lock` |
-| **Unlock** | POST | `/mgmt/device/byip/{dp_ip}/config/unlock` |
+| **Create/Update** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}` |
 
 ## Module Development Pattern
 
@@ -58,78 +49,32 @@ def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        # Operation-specific parameters
+        profile_name=dict(type='str', required=True),
+        protection_name=dict(type='str', required=True),
+        params=dict(type='dict', required=True),
     )
-    
-    result = dict(changed=False, response={})
-    debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    
-    # Extract provider and setup logging
-    provider = module.params['provider']
-    log_level = provider.get('log_level', 'disabled')
-    from ansible.module_utils.logger import Logger
-    logger = Logger(verbosity=log_level)
-    
-    try:
-        # Initialize RadwareCC client
-        cc = RadwareCC(provider['cc_ip'], provider['username'], 
-                      provider['password'], log_level=log_level, logger=logger)
-        
-        if not module.check_mode:
-            # Construct API request
-            # Execute operation
-            # Handle response
-            pass
-            
-    except Exception as e:
-        logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-    
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
+    # ...existing code...
 ```
 
 ## Request/Response Patterns
 
-### Create Network Class
+### Create SYN Profile
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
+POST /mgmt/device/byip/10.105.192.33/config/rsIDSSynProfilesTable/Test1/TEST
 
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkSubIndex": 0,
-    "rsBWMNetworkAddress": "192.168.1.0", 
-    "rsBWMNetworkMask": "255.255.255.0",
-    "rsBWMNetworkMode": "1"
+    "rsIDSSynProfilesName": "Test1",
+    "rsIDSSynProfileServiceName": "TEST",
+    "rsIDSSynProfileType": 4
 }
 ```
 
-### Edit Network Class
-```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
-
-{
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkAddress": "10.1.1.0",
-    "rsBWMNetworkMask": "24"
-}
-```
-
-### Get Network Classes Response
+### Example Success Response
 ```json
 {
-    "rsBWMNetworkTable": [
-        {
-            "rsBWMNetworkName": "web_servers",
-            "rsBWMNetworkSubIndex": "0",
-            "rsBWMNetworkAddress": "192.168.1.0",
-            "rsBWMNetworkMask": "24",
-            "rsBWMNetworkMode": "1",
-            "rsBWMNetworkFromIP": "192.168.1.0",
-            "rsBWMNetworkToIP": "192.168.1.255"
-        }
-    ]
+    "status": "ok",
+    "message": "SYN profile created successfully"
 }
 ```
 
@@ -168,11 +113,9 @@ except Exception as e:
 
 ## Session Management
 
-### Session Persistence
-- Sessions stored in `./tmp/radware_cc_sessions/` (preferred) or system temp
+- Sessions stored in `./tmp/radware_cc_sessions/` or system temp
 - Session lifetime: 600 seconds (configurable)
 - Automatic cleanup of expired sessions
-- Hash-based session keys for multi-user environments
 
 ### Session File Format
 ```
@@ -182,19 +125,14 @@ session_{md5_hash}.time   # Creation timestamp
 
 ## Logging
 
-### Log Levels
-- `disabled`: No logging
-- `info`: Operational messages
-- `debug`: Detailed request/response data
-
-### Log Location
-- File: `playbooks/log/log_YYYYMMDD.log`
+- Log levels: `disabled`, `info`, `debug`
+- Log file: `playbooks/log/log_YYYYMMDD.log`
 - Format: `[TIMESTAMP] [LEVEL] [MODULE] Message`
 
 ### Example Log Output
 ```
 [2025-08-28 17:30:45] [INFO] [RadwareCC] Logging in to Radware CC at 10.105.193.3 as radware
-[2025-08-28 17:30:45] [INFO] [create_network_class] Creating network class web_servers at index 0
+[2025-08-28 17:30:45] [INFO] [create_syn_profile] Creating SYN profile Test1 with protection TEST
 [2025-08-28 17:30:46] [DEBUG] [RadwareCC] Response status: 200
 ```
 
@@ -202,44 +140,31 @@ session_{md5_hash}.time   # Creation timestamp
 
 ### Unit Testing
 ```bash
-# Syntax validation
-python3 -m py_compile plugins/modules/create_network_class.py
-
-# YAML validation  
-python3 -c "import yaml; yaml.safe_load(open('vars/create_vars.yml'))"
-
-# Ansible module testing
-ansible-doc -t module plugins/modules/create_network_class
+python3 -m py_compile plugins/modules/create_syn_profile.py
 ```
 
 ### Integration Testing
 ```bash
-# Check mode (dry run)
-ansible-playbook --check playbooks/create_network_class.yml
-
-# Single device testing
-# Edit vars file to target one device, then run normally
-ansible-playbook playbooks/create_network_class.yml
+ansible-playbook --check playbooks/create_syn_profile.yml
+ansible-playbook playbooks/create_syn_profile.yml
 ```
 
 ## Extending the Modules
 
 ### Adding New Operations
 
-1. **Create Module** (`plugins/modules/new_operation.py`)
+1. **Create Module** (`plugins/modules/new_syn_operation.py`)
    - Follow the standard module pattern
    - Add proper documentation strings
    - Implement error handling
 
-2. **Create Playbook** (`playbooks/new_operation.yml`)
+2. **Create Playbook** (`playbooks/new_syn_operation.yml`)
    - Use external variable files
    - Include device locking/unlocking
-   - Add descriptive loop labels
 
-3. **Create Variables** (`vars/new_operation_vars.yml.example`)
+3. **Create Variables** (`vars/new_syn_operation_vars.yml.example`)
    - Document all parameters
    - Provide usage examples
-   - Add to .gitignore pattern
 
 ### Adding New Endpoints
 
@@ -264,7 +189,6 @@ logger.info(message)     # Info level
 logger.debug(message)    # Debug level
 logger.error(message)    # Error level
 ```
-
 
 ## Security Considerations
 
