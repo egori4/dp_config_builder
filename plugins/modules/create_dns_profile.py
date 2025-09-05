@@ -2,11 +2,17 @@
 """
 Ansible module to create or manage DefensePro DNS Protection profiles via Radware CyberController API.
 
-This module allows you to create a DNS Protection profile on Radware DefensePro devices
+This module allows you to create or edit a DNS Protection profile on Radware DefensePro devices
 using the Radware CyberController API. It requires connection parameters for the Radware CyberController,
 the target DefensePro IP, and DNS profile details.
 
+Classes:
+  None
+
 Functions:
+  translate_params(params):
+    Convert user-friendly keys and values to Radware API format.
+
   run_module():
     Main logic for the module. Handles argument parsing, logging, API request construction,
     and response handling. Supports check mode.
@@ -21,13 +27,25 @@ Module Arguments:
     - password (str): Password for authentication.
     - log_level (str, optional): Logging verbosity (default: 'disabled').
   dp_ip (str): Target DefensePro device IP address.
-  name (str): DNS profile name.
-  params (dict): DNS profile parameters in user-friendly format.
+  name (str): Name of the DNS profile to create or edit.
+  params (dict): Dictionary of DNS profile attributes using user-friendly names.
 
 Returns:
   response (dict): API response from Radware CyberController.
   changed (bool): Indicates if any change was made.
   debug_info (dict): Debug information including request and response details.
+
+Exceptions:
+  Raises Exception if API response is invalid or if any error occurs during execution.
+
+References:
+  - Radware CyberController API documentation for DNS profile management.
+  - AnsibleModule documentation: https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html
+  - RadwareCC utility: ansible.module_utils.radware_cc
+  - Logger utility: ansible.module_utils.logger
+
+Note:
+  The module supports check mode and provides detailed logging if log_level is set.
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
@@ -38,7 +56,7 @@ DOCUMENTATION = r'''
 module: create_dns_profile
 short_description: Create or manage DefensePro DNS Protection profiles
 description:
-  - Creates a DNS Protection profile on Radware DefensePro via Radware CC API.
+  - Creates or edits a DNS Protection profile on Radware DefensePro via Radware CC API.
 options:
   provider:
     description:
@@ -57,9 +75,9 @@ options:
         type: str
         required: true
       log_level:
+        description: Logging verbosity (disabled, info, debug)
         type: str
         required: false
-        default: "disabled"
   dp_ip:
     type: str
     required: true
@@ -68,23 +86,25 @@ options:
     required: true
   params:
     description:
-      - Dictionary of DNS profile attributes (user-friendly keys allowed)
+      - Dictionary of DNS profile attributes using user-friendly names.
     type: dict
     required: true
+author:
+  - "Your Name"
 '''
 
 EXAMPLES = r'''
 - name: Create DNS Protection profile
-  create_dns_profile:
+  dp_dns_profile:
     provider:
-      cc_ip: 10.105.193.3
+      cc_ip: 155.1.1.6
       username: radware
       password: mypass
-    dp_ip: 10.105.192.33
-    name: "DNS_Profile_1"
+    dp_ip: 155.1.1.7
+    name: "DNS_Demo2"
     params:
       DNS Expected Qps: "4000"
-      DNS Action: "block & report"
+      DNS Action: "block"
       DNS Max Allow Qps: "4500"
       DNS Manual Trigger Status: "disable"
       DNS Footprint Strictness: "medium"
@@ -96,12 +116,9 @@ RETURN = r'''
 response:
   description: API response from Radware CC
   type: dict
-debug_info:
-  description: Internal debug information including request and response
-  type: dict
 '''
 
-# Mapping user-friendly keys → API keys
+# Mapping for user-friendly → Radware API keys
 FIELD_MAP = {
     "DNS Expected Qps": "rsDnsProtProfileExpectedQps",
     "DNS Action": "rsDnsProtProfileAction",
@@ -114,7 +131,7 @@ FIELD_MAP = {
 
 # Numeric mapping for user-friendly values
 NUMERIC_MAPPING = {
-    "DNS Action": {"report": 0, "block & report": 1},
+    "DNS Action": {"report only": 0, "block & report": 1},
     "DNS Manual Trigger Status": {"enable": 1, "disable": 2},
     "DNS Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
     "DNS Packet Report Status": {"enable": 1, "disable": 2},
@@ -123,15 +140,12 @@ NUMERIC_MAPPING = {
 def translate_params(params):
     """Convert user-friendly keys and values to Radware API format."""
     translated = {}
-    for key, val in params.items():
-        api_key = FIELD_MAP.get(key, key)
-        if key in NUMERIC_MAPPING:
-            val_lower = str(val).lower()
-            if val_lower not in NUMERIC_MAPPING[key]:
-                raise ValueError(f"Invalid value '{val}' for {key}")
-            translated[api_key] = NUMERIC_MAPPING[key][val_lower]
+    for k, v in params.items():
+        api_key = FIELD_MAP.get(k, k)
+        if k in NUMERIC_MAPPING:
+            translated[api_key] = NUMERIC_MAPPING[k][str(v).lower()]
         else:
-            translated[api_key] = int(val) if str(val).isdigit() else val
+            translated[api_key] = int(v) if str(v).isdigit() else v
     return translated
 
 def run_module():
@@ -142,45 +156,48 @@ def run_module():
         params=dict(type='dict', required=True)
     )
 
+    result = dict(changed=False, response={})
+    debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     provider = module.params['provider']
-    dp_ip = module.params['dp_ip']
-    profile_name = module.params['name']
-    profile_params = module.params['params']
     log_level = provider.get('log_level', 'disabled')
-
-    result = dict(changed=False, response={}, debug_info={})
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
+                       log_level=log_level, logger=logger)
 
-        if module.check_mode:
-            module.exit_json(**result)
+        if not module.check_mode:
+            path = f"/mgmt/device/byip/{module.params['dp_ip']}/config/rsDnsProtProfileTable/{module.params['name']}"
+            body = {"rsDnsProtProfileName": module.params['name']}
+            body.update(translate_params(module.params['params']))
 
-        path = f"/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
-        body = {"rsDnsProtProfileName": profile_name}
-        body.update(translate_params(profile_params))
+            url = f"https://{provider['cc_ip']}{path}"
+            debug_info = {'method': 'POST', 'url': url, 'body': body}
 
-        url = f"https://{provider['cc_ip']}{path}"
-        result['debug_info'] = {'method': 'POST', 'url': url, 'body': body}
-        logger.info(f"Creating DNS Protection profile '{profile_name}' on device {dp_ip}")
-        logger.debug(f"Request payload: {body}")
+            logger.info(f"Creating DNS Protection profile {module.params['name']} on device {module.params['dp_ip']}")
+            logger.debug(f"Request: {debug_info}")
 
-        resp = cc._post(url, json=body)
-        try:
-            data = resp.json()
-        except ValueError:
-            raise Exception(f"Invalid JSON response: {resp.text}")
+            resp = cc._post(url, json=body)
+            logger.debug(f"Response status: {resp.status_code}")
 
-        result['response'] = data
-        result['changed'] = True
-        result['debug_info'].update({'response_status': resp.status_code, 'response_json': data})
+            try:
+                data = resp.json()
+                logger.debug(f"Response JSON: {data}")
+            except ValueError:
+                logger.error(f"Invalid JSON response: {resp.text}")
+                raise Exception(f"Invalid JSON response: {resp.text}")
+
+            result['response'] = data
+            result['changed'] = True
+            debug_info['response_status'] = resp.status_code
+            debug_info['response_json'] = data
 
     except Exception as e:
         logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), **result)
+        module.fail_json(msg=str(e), debug_info=debug_info, **result)
 
+    result['debug_info'] = debug_info
     module.exit_json(**result)
 
 def main():

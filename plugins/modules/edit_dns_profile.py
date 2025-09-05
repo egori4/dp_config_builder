@@ -1,10 +1,10 @@
-# plugins/modules/create_dns_profile.py
+# plugins/modules/edit_dns_profile.py
 """
-Ansible module to create or manage DefensePro DNS Protection profiles via Radware CyberController API.
+Ansible module to edit/update a DNS Protection profile on DefensePro via Radware CyberController API.
 
-This module allows you to create a DNS Protection profile on Radware DefensePro devices
+This module allows you to update an existing DNS Protection profile on Radware DefensePro devices
 using the Radware CyberController API. It requires connection parameters for the Radware CyberController,
-the target DefensePro IP, and DNS profile details.
+the target DefensePro IP, and the DNS profile details to update.
 
 Functions:
   run_module():
@@ -21,8 +21,8 @@ Module Arguments:
     - password (str): Password for authentication.
     - log_level (str, optional): Logging verbosity (default: 'disabled').
   dp_ip (str): Target DefensePro device IP address.
-  name (str): DNS profile name.
-  params (dict): DNS profile parameters in user-friendly format.
+  name (str): DNS profile name to edit.
+  params (dict): DNS profile parameters to update in user-friendly format.
 
 Returns:
   response (dict): API response from Radware CyberController.
@@ -35,10 +35,8 @@ from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: create_dns_profile
-short_description: Create or manage DefensePro DNS Protection profiles
-description:
-  - Creates a DNS Protection profile on Radware DefensePro via Radware CC API.
+module: edit_dns_profile
+short_description: Edit an existing DNS Protection profile on DefensePro
 options:
   provider:
     description:
@@ -47,35 +45,39 @@ options:
     required: true
     suboptions:
       cc_ip:
-        description: CC IP address
+        description: CyberController IP address
         type: str
         required: true
       username:
+        description: Username for authentication
         type: str
         required: true
       password:
+        description: Password for authentication
         type: str
         required: true
       log_level:
+        description: Logging verbosity
         type: str
         required: false
         default: "disabled"
   dp_ip:
+    description: Target DefensePro device IP
     type: str
     required: true
   name:
+    description: DNS profile name to edit
     type: str
     required: true
   params:
-    description:
-      - Dictionary of DNS profile attributes (user-friendly keys allowed)
+    description: DNS profile parameters to update
     type: dict
     required: true
 '''
 
 EXAMPLES = r'''
-- name: Create DNS Protection profile
-  create_dns_profile:
+- name: Edit DNS Protection profile
+  edit_dns_profile:
     provider:
       cc_ip: 10.105.193.3
       username: radware
@@ -83,13 +85,9 @@ EXAMPLES = r'''
     dp_ip: 10.105.192.33
     name: "DNS_Profile_1"
     params:
-      DNS Expected Qps: "4000"
-      DNS Action: "block & report"
-      DNS Max Allow Qps: "4500"
-      DNS Manual Trigger Status: "disable"
-      DNS Footprint Strictness: "medium"
-      DNS Packet Report Status: "enable"
-      DNS Learning Suppression Threshold: "50"
+      DNS Expected Qps: "5000"
+      DNS Max Allow Qps: "5500"
+      DNS Footprint Strictness: "high"
 '''
 
 RETURN = r'''
@@ -153,24 +151,33 @@ def run_module():
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+        cc = RadwareCC(
+            provider['cc_ip'],
+            provider['username'],
+            provider['password'],
+            log_level=log_level,
+            logger=logger
+        )
 
         if module.check_mode:
             module.exit_json(**result)
 
         path = f"/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
-        body = {"rsDnsProtProfileName": profile_name}
-        body.update(translate_params(profile_params))
+        body = translate_params(profile_params)
 
         url = f"https://{provider['cc_ip']}{path}"
-        result['debug_info'] = {'method': 'POST', 'url': url, 'body': body}
-        logger.info(f"Creating DNS Protection profile '{profile_name}' on device {dp_ip}")
+        result['debug_info'] = {'method': 'PUT', 'url': url, 'body': body}
+
+        logger.info(f"Editing DNS Protection profile '{profile_name}' on device {dp_ip}")
         logger.debug(f"Request payload: {body}")
 
-        resp = cc._post(url, json=body)
+        resp = cc._put(url, json=body)
+        logger.debug(f"Response status: {resp.status_code}")
+
         try:
             data = resp.json()
         except ValueError:
+            logger.error(f"Invalid JSON response: {resp.text}")
             raise Exception(f"Invalid JSON response: {resp.text}")
 
         result['response'] = data

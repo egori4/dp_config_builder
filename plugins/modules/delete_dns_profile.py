@@ -1,10 +1,10 @@
-# plugins/modules/create_dns_profile.py
+# plugins/modules/delete_dns_profile.py
 """
-Ansible module to create or manage DefensePro DNS Protection profiles via Radware CyberController API.
+Ansible module to delete a DNS Protection profile from DefensePro via Radware CyberController API.
 
-This module allows you to create a DNS Protection profile on Radware DefensePro devices
+This module allows you to delete a DNS Protection profile on Radware DefensePro devices
 using the Radware CyberController API. It requires connection parameters for the Radware CyberController,
-the target DefensePro IP, and DNS profile details.
+the target DefensePro IP, and the profile name.
 
 Functions:
   run_module():
@@ -21,8 +21,7 @@ Module Arguments:
     - password (str): Password for authentication.
     - log_level (str, optional): Logging verbosity (default: 'disabled').
   dp_ip (str): Target DefensePro device IP address.
-  name (str): DNS profile name.
-  params (dict): DNS profile parameters in user-friendly format.
+  name (str): DNS profile name to delete.
 
 Returns:
   response (dict): API response from Radware CyberController.
@@ -35,10 +34,8 @@ from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: create_dns_profile
-short_description: Create or manage DefensePro DNS Protection profiles
-description:
-  - Creates a DNS Protection profile on Radware DefensePro via Radware CC API.
+module: delete_dns_profile
+short_description: Delete a DNS Protection profile from DefensePro
 options:
   provider:
     description:
@@ -47,49 +44,41 @@ options:
     required: true
     suboptions:
       cc_ip:
-        description: CC IP address
+        description: CyberController IP address
         type: str
         required: true
       username:
+        description: Username for authentication
         type: str
         required: true
       password:
+        description: Password for authentication
         type: str
         required: true
       log_level:
+        description: Logging verbosity
         type: str
         required: false
         default: "disabled"
   dp_ip:
+    description: Target DefensePro device IP
     type: str
     required: true
   name:
+    description: DNS profile name to delete
     type: str
-    required: true
-  params:
-    description:
-      - Dictionary of DNS profile attributes (user-friendly keys allowed)
-    type: dict
     required: true
 '''
 
 EXAMPLES = r'''
-- name: Create DNS Protection profile
-  create_dns_profile:
+- name: Delete DNS Protection profile
+  delete_dns_profile:
     provider:
       cc_ip: 10.105.193.3
       username: radware
       password: mypass
     dp_ip: 10.105.192.33
     name: "DNS_Profile_1"
-    params:
-      DNS Expected Qps: "4000"
-      DNS Action: "block & report"
-      DNS Max Allow Qps: "4500"
-      DNS Manual Trigger Status: "disable"
-      DNS Footprint Strictness: "medium"
-      DNS Packet Report Status: "enable"
-      DNS Learning Suppression Threshold: "50"
 '''
 
 RETURN = r'''
@@ -101,76 +90,49 @@ debug_info:
   type: dict
 '''
 
-# Mapping user-friendly keys → API keys
-FIELD_MAP = {
-    "DNS Expected Qps": "rsDnsProtProfileExpectedQps",
-    "DNS Action": "rsDnsProtProfileAction",
-    "DNS Max Allow Qps": "rsDnsProtProfileMaxAllowQps",
-    "DNS Manual Trigger Status": "rsDnsProtProfileManualTriggerStatus",
-    "DNS Footprint Strictness": "rsDnsProtProfileFootprintStrictness",
-    "DNS Packet Report Status": "rsDnsProtProfilePacketReportStatus",
-    "DNS Learning Suppression Threshold": "rsDnsProtProfileLearningSuppressionThreshold",
-}
-
-# Numeric mapping for user-friendly values
-NUMERIC_MAPPING = {
-    "DNS Action": {"report": 0, "block & report": 1},
-    "DNS Manual Trigger Status": {"enable": 1, "disable": 2},
-    "DNS Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
-    "DNS Packet Report Status": {"enable": 1, "disable": 2},
-}
-
-def translate_params(params):
-    """Convert user-friendly keys and values to Radware API format."""
-    translated = {}
-    for key, val in params.items():
-        api_key = FIELD_MAP.get(key, key)
-        if key in NUMERIC_MAPPING:
-            val_lower = str(val).lower()
-            if val_lower not in NUMERIC_MAPPING[key]:
-                raise ValueError(f"Invalid value '{val}' for {key}")
-            translated[api_key] = NUMERIC_MAPPING[key][val_lower]
-        else:
-            translated[api_key] = int(val) if str(val).isdigit() else val
-    return translated
-
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+        name=dict(type='str', required=True)
     )
 
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
     profile_name = module.params['name']
-    profile_params = module.params['params']
     log_level = provider.get('log_level', 'disabled')
 
     result = dict(changed=False, response={}, debug_info={})
     logger = Logger(verbosity=log_level)
 
     try:
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+        cc = RadwareCC(
+            provider['cc_ip'],
+            provider['username'],
+            provider['password'],
+            log_level=log_level,
+            logger=logger
+        )
 
         if module.check_mode:
             module.exit_json(**result)
 
         path = f"/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
-        body = {"rsDnsProtProfileName": profile_name}
-        body.update(translate_params(profile_params))
-
         url = f"https://{provider['cc_ip']}{path}"
-        result['debug_info'] = {'method': 'POST', 'url': url, 'body': body}
-        logger.info(f"Creating DNS Protection profile '{profile_name}' on device {dp_ip}")
-        logger.debug(f"Request payload: {body}")
 
-        resp = cc._post(url, json=body)
+        result['debug_info'] = {'method': 'DELETE', 'url': url, 'body': None}
+
+        logger.info(f"Deleting DNS Protection profile '{profile_name}' on device {dp_ip}")
+        logger.debug(f"Request info: {result['debug_info']}")
+
+        resp = cc._delete(url)
+        logger.debug(f"Response status: {resp.status_code}")
+
         try:
             data = resp.json()
         except ValueError:
+            logger.error(f"Invalid JSON response: {resp.text}")
             raise Exception(f"Invalid JSON response: {resp.text}")
 
         result['response'] = data
