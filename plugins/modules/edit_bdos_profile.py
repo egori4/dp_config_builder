@@ -1,68 +1,28 @@
-# plugins/modules/edit_bdos_profile.py
+# plugins/modules/manage_bdos_edit.py
 """
-Ansible module to edit existing BDOS Flood profiles on DefensePro devices via Radware CyberController API.
-
-This module allows you to modify an existing BDOS Flood profile on Radware DefensePro devices
-using the Radware CyberController API. It requires connection parameters for the Radware CyberController,
-the target DefensePro IP, and the BDOS Flood profile parameters to modify.
-
-Classes:
-  None
-
-Functions:
-  run_module():
-    Main logic for the module. Handles argument parsing, logging, API request construction,
-    and response handling. Supports check mode.
-
-  main():
-    Entrypoint for the module execution.
-
-Module Arguments:
-  provider (dict): Connection parameters for Radware CyberController.
-    - cc_ip (str): CyberController IP address.
-    - username (str): Username for authentication.
-    - password (str): Password for authentication.
-    - log_level (str, optional): Logging verbosity (default: 'disabled').
-  dp_ip (str): Target DefensePro device IP address.
-  name (str): Name of the existing BDOS Flood profile.
-  params (dict): Dictionary of BDOS Flood profile attributes to update.
-
-Returns:
-  response (dict): API response from Radware CyberController.
-  changed (bool): Indicates if any change was made.
-  debug_info (dict): Debug information including request and response details.
-
-Exceptions:
-  Raises Exception if API response is invalid or if any error occurs during execution.
-
-References:
-  - Radware CyberController API documentation for BDOS profile management.
-  - AnsibleModule documentation: https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html
-  - RadwareCC utility: ansible.module_utils.radware_cc
-  - Logger utility: ansible.module_utils.logger
-
-Note:
-  The module supports check mode and provides detailed logging if log_level is set.
+Unified Ansible module to edit one or multiple BDOS Flood profiles
+on Radware DefensePro devices via Radware CyberController API.
 """
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: edit_bdos_profile
-short_description: Edit existing BDOS Flood profiles
+module: manage_bdos_edit
+short_description: Edit BDOS Flood profiles on DefensePro
 description:
-  - Modifies an existing BDOS Flood profile on Radware DefensePro via Radware CC API.
+  - Edits one or multiple BDOS Flood profiles on DefensePro devices via Radware CC API.
 options:
   provider:
     description:
-      - Dictionary with connection parameters.
+      - Connection details for Radware CC
     type: dict
     required: true
     suboptions:
       cc_ip:
-        description: CC IP address
+        description: Radware CC IP
         type: str
         required: true
       username:
@@ -72,50 +32,62 @@ options:
         type: str
         required: true
       log_level:
+        description: Logging verbosity (disabled, info, debug)
         type: str
         required: false
         default: disabled
   dp_ip:
+    description: DefensePro device IP
     type: str
     required: true
-  name:
-    type: str
+  bdos_profiles:
+    description:
+      - List of BDOS Flood profiles to edit with their parameters
+    type: list
     required: true
-  params:
-    type: dict
-    required: true
+    elements: dict
+    suboptions:
+      name:
+        type: str
+        required: true
+      params:
+        type: dict
+        required: true
+author:
+  - "Your Name"
 '''
 
 EXAMPLES = r'''
-- name: Edit a BDOS Flood profile
-  edit_bdos_profile:
+- name: Edit multiple BDOS Flood profiles
+  manage_bdos_edit:
     provider:
       cc_ip: 10.105.193.3
       username: radware
       password: mypass
       log_level: debug
     dp_ip: 10.105.192.32
-    name: BDOS_Profile_10
-    params:
-      TCP Status: active
-      UDP Status: inactive
-      ICMP Status: active
-      Bandwidth In: 50000
-      Bandwidth Out: 50000
-      Action: block & report
+    bdos_profiles:
+      - name: BDOS_Profile_10
+        params:
+          TCP Status: active
+          UDP Status: inactive
+      - name: BDOS_Profile_11
+        params:
+          TCP Status: active
+          ICMP Status: active
 '''
 
 RETURN = r'''
 response:
-  description: API response from Radware CC
+  description: API response per profile
   type: dict
 debug_info:
-  description: Debug information about request/response
+  description: Request and response debug details
   type: dict
 '''
 
 # -------------------------------
-# Field Mappings & Numeric Conversions
+# Field Mappings & Conversions
 # -------------------------------
 FIELD_MAP = {
     "TCP Status": "rsNetFloodProfileTcpStatus",
@@ -176,8 +148,8 @@ def translate_params(params):
             translated[api_key] = v
     return translated
 
-def build_api_path(dp_ip, name):
-    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{name}"
+def build_api_path(dp_ip, profile_name):
+    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}"
 
 # -------------------------------
 # Main Logic
@@ -186,57 +158,79 @@ def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
-        params=dict(type='dict', required=True),
+        bdos_profiles=dict(type='list', required=True),
     )
 
-    result = dict(changed=False, response={}, debug_info={})
+    result = dict(changed=False, response=[], debug_info={})
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    name = module.params['name']
+    bdos_profiles = module.params['bdos_profiles']
     log_level = provider.get('log_level', 'disabled')
     logger = Logger(verbosity=log_level)
     debug_info = {}
 
+    # Validate provider fields
+    for key in ('cc_ip', 'username', 'password'):
+        if key not in provider or not provider[key]:
+            module.fail_json(msg=f"Missing required provider field: {key}", **result)
+
     try:
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
-        path = build_api_path(dp_ip, name)
-        url = f"https://{provider['cc_ip']}{path}"
-        body = {"rsNetFloodProfileName": name}
-        body.update(translate_params(module.params['params']))
 
-        debug_info['request'] = {"method": "PUT", "url": url, "body": body}
-        logger.info(f"Editing BDOS Flood profile '{name}' on {dp_ip}")
-        logger.debug(f"Request: {debug_info}")
+        for profile in bdos_profiles:
+            name = profile['name']
+            params = profile['params']
+            path = build_api_path(dp_ip, name)
+            url = f"https://{provider['cc_ip']}{path}"
+            body = {"rsNetFloodProfileName": name}
+            body.update(translate_params(params))
 
-        if module.check_mode:
-            result['changed'] = True
-            result['response'] = {"msg": "Check mode - no changes applied"}
-        else:
-            resp = cc._put(url, json=body)
-            debug_info['response_status'] = resp.status_code
+            debug_info.setdefault('requests', []).append({"method": "PUT", "url": url, "body": body})
+            logger.info(f"Editing BDOS profile '{name}' on {dp_ip}")
+
+            if module.check_mode:
+                result['response'].append({"profile": name, "msg": "Check mode - no changes applied"})
+                continue
+
             try:
-                data = resp.json()
-                debug_info['response_json'] = data
-            except ValueError:
-                raise Exception(f"Invalid JSON response: {resp.text}")
+                resp = cc._put(url, json=body)
+                debug_info.setdefault('responses', []).append({"profile": name, "status_code": resp.status_code})
+                try:
+                    data = resp.json()
+                    debug_info.setdefault('responses_json', []).append({"profile": name, "data": data})
+                except ValueError:
+                    data = {"status": "unknown", "error": resp.text}
 
-            if resp.status_code not in (200, 201):
-                raise Exception(f"Failed to edit BDOS profile: {data}")
+                if resp.status_code not in (200, 201):
+                    result['response'].append({"profile": name, "response": data, "failed": True})
+                    logger.error(f"Failed to edit BDOS profile '{name}': {data}")
+                else:
+                    result['response'].append({"profile": name, "response": data})
+                    result['changed'] = True
 
-            result['changed'] = True
-            result['response'] = data
+            except Exception as ex:
+                result['response'].append({"profile": name, "response": {"error": str(ex)}, "failed": True})
+                logger.error(f"Exception editing BDOS profile '{name}': {ex}")
+
+        # Fail module if all profiles failed
+        if all(p.get('failed') for p in result['response']):
+            module.fail_json(msg="All BDOS profile edits failed", **result)
+
+        result['debug_info'] = debug_info
+        module.exit_json(**result)
 
     except Exception as e:
         module.fail_json(msg=str(e), **result)
 
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
-
+# -------------------------------
+# Entrypoint
+# -------------------------------
 def main():
     run_module()
+
 
 if __name__ == "__main__":
     main()

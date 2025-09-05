@@ -5,31 +5,33 @@
   vars_files:
     - ../vars/cc.yml
     - ../vars/delete_bdos_vars.yml
+
   tasks:
     - block:
-        - name: Lock device(s)
+        - name: 🔒 Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Delete BDOS Flood Profiles
+        - name: 🗑 Delete BDOS Flood Profiles
           vars:
-            bdos_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
-          loop: "{{ bdos_matrix }}"
+            profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
+          loop: "{{ profile_matrix }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
+            label: "Device: {{ item.0 }}/{{ item.1.name }}"
           delete_bdos_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
+            bdos_profiles:
+              - "{{ item.1 }}"   # Pass one profile at a time as a list
           register: bdos_delete_results
           failed_when: >
             bdos_delete_results is failed and
-            ('does not exist' not in (bdos_delete_results.msg | default('')))
+            ("does not exist" not in (bdos_delete_results.msg | default("")))
 
       always:
-        - name: Unlock device(s)
+        - name: 🔓 Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"

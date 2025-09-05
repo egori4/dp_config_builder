@@ -1,41 +1,32 @@
-# plugins/modules/delete_bdos_profile.py
+# plugins/modules/manage_bdos_delete.py
 """
-Ansible module to delete BDOS Flood profiles on Radware DefensePro devices.
+Unified Ansible module to delete one or multiple BDOS Flood profiles
+on Radware DefensePro devices.
 
-This module allows you to delete an existing BDOS Flood profile via the Radware CyberController API.
-It requires connection parameters for the Radware CC, the target DefensePro IP, and the profile name.
-
-Module Arguments:
-  provider (dict): Connection details for Radware CC.
-  dp_ip (str): Target DefensePro IP.
-  name (str): BDOS profile name to delete.
-
-Returns:
-  response (dict): API response from Radware CC.
-  changed (bool): Indicates if deletion was successful.
-  debug_info (dict): Debug info including request/response details.
-
-Supports check mode.
+This module handles deletion of BDOS Flood profiles via the Radware
+CyberController API, supporting multiple profiles per device and
+check mode.
 """
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: delete_bdos_profile
-short_description: Delete BDOS Flood profile
+module: manage_bdos_delete
+short_description: Delete BDOS Flood profiles on DefensePro
 description:
-  - Deletes a BDOS Flood profile on Radware DefensePro via Radware CC API.
+  - Deletes one or more BDOS Flood profiles on DefensePro devices via Radware CC API.
 options:
   provider:
     description:
-      - Dictionary with connection parameters.
+      - Connection details for Radware CC
     type: dict
     required: true
     suboptions:
       cc_ip:
-        description: CC IP address
+        description: Radware CC IP
         type: str
         required: true
       username:
@@ -53,28 +44,32 @@ options:
     description: DefensePro device IP
     type: str
     required: true
-  name:
-    description: Name of the BDOS Flood profile to delete
-    type: str
+  bdos_profiles:
+    description:
+      - List of BDOS Flood profile names to delete
+    type: list
     required: true
 author:
   - "Your Name"
 '''
 
 EXAMPLES = r'''
-- name: Delete BDOS Flood profile
-  delete_bdos_profile:
+- name: Delete multiple BDOS Flood profiles
+  manage_bdos_delete:
     provider:
       cc_ip: 155.1.1.6
       username: radware
       password: mypass
+      log_level: debug
     dp_ip: 155.1.1.7
-    name: "BDOS_Test"
+    bdos_profiles:
+      - BDOS_Test_1
+      - BDOS_Test_2
 '''
 
 RETURN = r'''
 response:
-  description: API response from Radware CC
+  description: API response per profile
   type: dict
 debug_info:
   description: Request and response debug details
@@ -84,10 +79,9 @@ debug_info:
 # -------------------------------
 # Helpers
 # -------------------------------
-def build_api_path(dp_ip, name):
+def build_api_path(dp_ip, profile_name):
     """Construct API endpoint path for BDOS profile deletion."""
-    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{name}/"
-
+    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}/"
 
 # -------------------------------
 # Main Module Logic
@@ -96,7 +90,7 @@ def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
+        bdos_profiles=dict(type='list', required=True),
     )
 
     result = dict(changed=False, response={}, debug_info={})
@@ -104,7 +98,7 @@ def run_module():
 
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    name = module.params['name']
+    bdos_profiles = module.params['bdos_profiles']
     log_level = provider.get('log_level', 'disabled')
     logger = Logger(verbosity=log_level)
     debug_info = {}
@@ -118,41 +112,50 @@ def run_module():
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
 
-        path = build_api_path(dp_ip, name)
-        url = f"https://{provider['cc_ip']}{path}"
-        debug_info['request'] = {"method": "DELETE", "url": url}
-        logger.info(f"Deleting BDOS Flood profile '{name}' on {dp_ip}")
+        profile_responses = []
 
-        if module.check_mode:
-            result['changed'] = True
-            result['response'] = {"msg": "Check mode - no changes applied"}
-        else:
-            resp = cc._delete(url)
-            debug_info['response_status'] = resp.status_code
+        for profile_name in bdos_profiles:
+            path = build_api_path(dp_ip, profile_name)
+            url = f"https://{provider['cc_ip']}{path}"
+            debug_info.setdefault('requests', []).append({"method": "DELETE", "url": url})
+            logger.info(f"Deleting BDOS profile '{profile_name}' on {dp_ip}")
+
+            if module.check_mode:
+                profile_responses.append({"profile": profile_name, "msg": "Check mode - not deleted"})
+                continue
 
             try:
-                data = resp.json() if resp.content else {"status": "deleted"}
+                resp = cc._delete(url)
+                debug_info.setdefault('responses', []).append({"profile": profile_name, "status_code": resp.status_code})
+                try:
+                    data = resp.json() if resp.content else {"status": "deleted"}
+                except Exception as ex:
+                    data = {"status": "deleted", "error": str(ex)}
+
+                if resp.status_code not in (200, 204):
+                    # Include API error but continue with other profiles
+                    data.setdefault('error', f"HTTP {resp.status_code}")
+                    profile_responses.append({"profile": profile_name, "response": data, "failed": True})
+                    logger.error(f"Failed to delete BDOS profile '{profile_name}': {data}")
+                else:
+                    profile_responses.append({"profile": profile_name, "response": data})
+                    result['changed'] = True
+
             except Exception as ex:
-                data = {"status": "deleted", "error": str(ex)}
+                profile_responses.append({"profile": profile_name, "response": {"error": str(ex)}, "failed": True})
+                logger.error(f"Exception deleting BDOS profile '{profile_name}': {ex}")
 
-            debug_info['response_json'] = data
+        result['response'] = profile_responses
+        result['debug_info'] = debug_info
 
-            if resp.status_code not in (200, 204):
-                module.fail_json(
-                    msg=f"Failed to delete BDOS profile '{name}': {data}",
-                    debug_info=debug_info,
-                    **result
-                )
+        # Fail module if all profiles failed
+        if all(p.get('failed') for p in profile_responses):
+            module.fail_json(msg="All BDOS profile deletions failed", **result)
 
-            result['changed'] = True
-            result['response'] = data
+        module.exit_json(**result)
 
     except Exception as e:
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
-
+        module.fail_json(msg=str(e), **result)
 
 # -------------------------------
 # Entrypoint

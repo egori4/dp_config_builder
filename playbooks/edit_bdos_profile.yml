@@ -1,35 +1,39 @@
 ---
-- name: Edit BDOS Flood Profiles on DefensePro devices
+- name: Edit DefensePro BDOS Flood Profiles
   hosts: cc
-  gather_facts: false
+  gather_facts: no
   vars_files:
     - ../vars/cc.yml
     - ../vars/edit_bdos_vars.yml
 
   tasks:
+    - block:
+        - name: 🔒 Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
 
-    - name: Lock all devices
-      dp_lock:
-        provider: "{{ cc }}"
-        dp_ip: "{{ item }}"
-      loop: "{{ dp_ip }}"
-      loop_control:
-        label: "{{ item }}"
+        - name: 📝 Edit BDOS Flood Profiles
+          vars:
+            bdos_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
+          loop: "{{ bdos_matrix }}"
+          loop_control:
+            label: "{{ item.0 }}/{{ item.1.name }}"
+          edit_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item.0 }}"
+            bdos_profiles:
+              - name: "{{ item.1.name }}"
+                params: "{{ item.1.params }}"
+          register: bdos_edit_results
+          failed_when: >
+            bdos_edit_results is failed and
+            ('Entry not found' not in (bdos_edit_results.msg | default('')))
 
-    - name: ✏️ Edit BDOS Flood Profiles
-      edit_bdos_profile:
-        provider: "{{ cc }}"
-        dp_ip: "{{ item.0 }}"
-        name: "{{ item.1.name }}"
-        params: "{{ item.1.params }}"
-      loop: "{{ dp_ip | product(bdos_mappings) | list }}"
-      loop_control:
-        label: "{{ item.1.name }} on {{ item.0 }}"
-
-    - name: Unlock all devices
-      dp_unlock:
-        provider: "{{ cc }}"
-        dp_ip: "{{ item }}"
-      loop: "{{ dp_ip }}"
-      loop_control:
-        label: "{{ item }}"
+      always:
+        - name: 🔓 Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
