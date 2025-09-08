@@ -1,5 +1,5 @@
 ---
-- name: Get network class mapping from all devices
+- name: Get network classes (Unified)
   hosts: cc
   gather_facts: no
   vars_files:
@@ -7,20 +7,55 @@
     - ../vars/get_vars.yml
 
   tasks:
-    - name: Get network class mapping from device
+    - name: Get network class mapping from devices
       get_network_class:
         provider: "{{ cc }}"
         dp_ip: "{{ item }}"
-        filter_class_name: "{{ filter_class_name if filter_class_name else omit }}"
+        filter_class_names: "{{ filter_class_names | default([]) }}"
       loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
       register: network_class_results
 
-
-    - name: Print only device and response (structured)
+    - name: Display network class results (formatted)
+      vars:
+        formatted_output: |
+          Device: {{ item.item }}
+          {% set response = item.response %}
+          {% set summary = response.summary | default({}) %}
+          {% set network_table = response.rsBWMNetworkTable | default([]) %}
+          {% set classes_breakdown = response.classes_breakdown | default({}) %}
+          
+          NETWORK CLASSES SUMMARY:
+          {% if summary.filtered %}
+          Filter Applied: {{ summary.filter_applied | join(', ') }}
+          {% else %}
+          Filter Applied: None (showing all classes)
+          {% endif %}
+          Total Entries: {{ summary.total_entries | default(0) }}
+          Unique Classes: {{ summary.unique_classes | default(0) }}
+          {% if summary.class_names %}
+          Class Names: {{ summary.class_names | join(', ') }}
+          {% else %}
+          Class Names: None found
+          {% endif %}
+          
+          {% if classes_breakdown %}
+          DETAILED BREAKDOWN:
+          {% for class_name, entries in classes_breakdown.items() %}
+          
+          Network Class: {{ class_name }} ({{ entries | length }} groups)
+          {% for entry in entries %}
+            - Index {{ entry.rsBWMNetworkSubIndex }}: {{ entry.rsBWMNetworkAddress }}/{{ entry.rsBWMNetworkMask }}
+              Range: {{ entry.rsBWMNetworkFromIP }} - {{ entry.rsBWMNetworkToIP }}
+          {% endfor %}
+          {% endfor %}
+          {% else %}
+          
+          No network classes found.
+          {% endif %}
       debug:
-        var: network_class_results.results | map(attribute='item') | zip(network_class_results.results | map(attribute='response')) | list
-
-
-    # - name: Print network class mapping for all devices
-    #   debug:
-    #     var: network_class_results
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ network_class_results.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"

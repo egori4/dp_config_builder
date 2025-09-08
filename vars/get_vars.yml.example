@@ -10,16 +10,17 @@ dp_ip:
 
 ########################## Network Class Profile Filter variables ##########################
 
-# Filter by specific network class name, or set to empty string for all classes
-filter_class_name: "egor_test_net"  # Set to a class name to filter, or leave empty/null for all
+# Filter by specific network class names, or leave empty list for all classes
+filter_class_names: ["egor_test_net"]  # Set to list of class names to filter, or leave empty for all
 
 # Alternative examples:
-# filter_class_name: ""           # Get all network classes
-# filter_class_name: "web_servers" # Get only "web_servers" class  
+# filter_class_names: []                    # Get all network classes
+# filter_class_names: ["web_servers"]       # Get only "web_servers" class  
+# filter_class_names: ["web_servers", "db_servers"]  # Get multiple specific classes
 
 # Notes:
 # - dp_ip: List of DefensePro devices to query
-# - filter_class_name: Optional filter to get specific network class (leave empty for all)
+# - filter_class_names: Optional filter to get specific network classes (leave empty for all)
 # - This operation is read-only and safe to run anytime
 # - Use this to discover existing network classes before creating, editing, or deleting
 
