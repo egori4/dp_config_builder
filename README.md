@@ -111,18 +111,22 @@ Todo:
 
     Network classes
         - align simplified architecture logic from cl
+            create_netclass done
         - get netclasses- align formating from cl
         - get netclasses - add filtering as list rather than string - similar to cl
     General
         - make sure all modules use _request error handling so we do not write twice
+            create_netclass done
         - check --check validations works on all playbooks
+            create_netclass done
 
 
 
 | Version | Date | Changes |
 |---------|------|---------|
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 |       | Rerved for Rahul(BDOS)|
+| v0.1.3 |       | Resrved for Rahul(BDOS)|
+| v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
 | v0.1.0 | 2025-08-19 | Initial release with network class create/edit/delete/get operations |

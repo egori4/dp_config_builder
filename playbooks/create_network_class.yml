@@ -1,5 +1,5 @@
 ---
-- name: Create network class
+- name: Create network classes (Unified)
   hosts: cc
   gather_facts: no
   vars_files:
@@ -14,28 +14,67 @@
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: Build all device/class/group combinations (device-major order)
-          set_fact:
-            all_pairs: >-
-              {{
-                dp_ip
-                | product(netclasses | subelements('groups'))
-                | map('flatten')
-                | map('flatten')
-                | list
-              }}
-
-        - name: Create network groups for all netclasses on all devices (device-major order)
-          loop: "{{ all_pairs }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}/{{ item.2.address }}/{{ item.2.mask }}"
+        - name: Create network classes and groups
           create_network_class:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            class_name: "{{ item.1.name }}"
-            address: "{{ item.2.address }}"
-            mask: "{{ item.2.mask }}"
-            index: "{{ (item.1.groups | map(attribute='address') | list).index(item.2.address) }}"
+            dp_ip: "{{ item }}"
+            netclasses: "{{ netclasses | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: create_results
+
+        - name: Display creation results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Network Group Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% else %}
+              
+              No network classes configured for creation.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set created_groups = item.response.created_groups | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% set summary = item.response.summary | default({}) %}
+              {% if created_groups %}
+              
+              Network Groups ({{ summary.successful_groups | default(0) }}/{{ summary.total_groups_attempted | default(0) }} successful):
+              {% for group in created_groups %}
+              {% if group.status == 'success' %}
+                -  {{ group.class_name }}[{{ group.index }}]: {{ group.address }}/{{ group.mask }}
+              {% else %}
+                -  {{ group.class_name }}[{{ group.index }}]: {{ group.address }}/{{ group.mask }} ({{ group.error | default('Unknown error') }})
+              {% endif %}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not created_groups and not errors %}
+              
+              No network classes configured for creation.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
       always:
         - name: Unlock device(s)
           dp_unlock:
