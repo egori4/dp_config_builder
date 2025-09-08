@@ -11,10 +11,10 @@ dp_ip:
 ########################## Network Class Profile Filter variables ##########################
 
 # Filter by specific network class names, or leave empty list for all classes
-filter_class_names: ["egor_test_net"]  # Set to list of class names to filter, or leave empty for all
+filter_class_names: []  # Set to list of class names to filter, or leave empty for all
 
 # Alternative examples:
-# filter_class_names: []                    # Get all network classes
+# filter_class_names: []                    # Get all network classes (default)
 # filter_class_names: ["web_servers"]       # Get only "web_servers" class  
 # filter_class_names: ["web_servers", "db_servers"]  # Get multiple specific classes
 

@@ -24,7 +24,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `create_network_class.yml` | Create new network classes | [USER_GUIDE.md](USER_GUIDE.md#workflow-1-create-new-network-classes) |
 | `edit_network_class.yml` | Modify existing networks | [USER_GUIDE.md](USER_GUIDE.md#workflow-2-modify-existing-networks) |
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
-| `get_network_class.yml` | Query current state | [USER_GUIDE.md](USER_GUIDE.md#common-workflows) |
+| `get_network_class.yml` | Query current state with filtering | [USER_GUIDE.md](USER_GUIDE.md#workflow-6-get-network-classes-with-filtering) |
 
 ### Connection Limit Profiles
 
@@ -106,24 +106,6 @@ ansible-playbook playbooks/delete_cl_profiles.yml --check
 ```
 
 ## Version History
-
-Todo:
-
-    Network classes
-        - align simplified architecture logic from cl
-            create_netclass done
-            edit netclass done
-        - get netclasses- align formating from cl
-        - get netclasses - add filtering as list rather than string - similar to cl
-    General
-        - make sure all modules use _request error handling so we do not write twice
-            create_netclass done
-            edit netclass done
-        - check --check validations works on all playbooks
-            create_netclass done
-            edit netclass done
-
-
 
 | Version | Date | Changes |
 |---------|------|---------|
