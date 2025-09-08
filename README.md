@@ -24,7 +24,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `create_network_class.yml` | Create new network classes | [USER_GUIDE.md](USER_GUIDE.md#workflow-1-create-new-network-classes) |
 | `edit_network_class.yml` | Modify existing networks | [USER_GUIDE.md](USER_GUIDE.md#workflow-2-modify-existing-networks) |
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
-| `get_network_class.yml` | Query current state | [USER_GUIDE.md](USER_GUIDE.md#common-workflows) |
+| `get_network_class.yml` | Query current state with filtering | [USER_GUIDE.md](USER_GUIDE.md#workflow-6-get-network-classes-with-filtering) |
 
 ### Connection Limit Profiles
 
@@ -107,22 +107,11 @@ ansible-playbook playbooks/delete_cl_profiles.yml --check
 
 ## Version History
 
-Todo:
-
-    Network classes
-        - align simplified architecture logic from cl
-        - get netclasses- align formating from cl
-        - get netclasses - add filtering as list rather than string - similar to cl
-    General
-        - make sure all modules use _request error handling so we do not write twice
-        - check --check validations works on all playbooks
-
-
-
 | Version | Date | Changes |
 |---------|------|---------|
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 |       | Rerved for Rahul(BDOS)|
+| v0.1.3 |       | Resrved for Rahul(BDOS)|
+| v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
 | v0.1.0 | 2025-08-19 | Initial release with network class create/edit/delete/get operations |

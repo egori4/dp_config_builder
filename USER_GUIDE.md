@@ -148,7 +148,23 @@ ansible-playbook playbooks/edit_cl_protections.yml
 - **Use only existing protections**: Skip `cl_protections`, define only `cl_profiles` with existing protection names
 - **Mixed approach**: Create some new protections, reference some existing ones in the same profile
 
-### Workflow 6: Get Connection Limit Profiles
+### Workflow 6: Get Network Classes with Filtering
+```bash
+# 1. See all network classes on devices
+ansible-playbook playbooks/get_network_class.yml
+
+# 2. Filter by specific class names (edit get_vars.yml first)
+nano vars/get_vars.yml  # Set filter_class_names: ["web_servers", "db_servers"]
+ansible-playbook playbooks/get_network_class.yml
+
+# 3. Reset to show all classes
+nano vars/get_vars.yml  # Set filter_class_names: []
+ansible-playbook playbooks/get_network_class.yml
+```
+
+**Note**: The get operation shows network classes with detailed breakdown including IP ranges and group information. You can filter by class names or show all classes.
+
+### Workflow 7: Get Connection Limit Profiles
 ```bash
 # 1. See all profiles and protections on devices
 ansible-playbook playbooks/get_cl_profiles.yml
@@ -164,7 +180,7 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 **Note**: The get operation shows profiles with their associated protections and all protection settings. You can filter by profile names or show all profiles.
 
-### Workflow 7: Delete Connection Limit Profiles and Protections
+### Workflow 8: Delete Connection Limit Profiles and Protections
 ```bash
 # 1. Identify what to delete (get current state first)
 ansible-playbook playbooks/get_cl_profiles.yml
@@ -179,7 +195,7 @@ ansible-playbook --check playbooks/delete_cl_profiles.yml
 # - Profile Operations: Which protections will be removed from which profiles
 # - Protection Deletions: Which protections will be deleted entirely (with their indexes)
 # - Validation: Both names and indexes are validated against current device state
-# - Status indicators: ⚠️ NOT FOUND for protections/indexes that don't exist on the device
+# - Status indicators: NOT FOUND for protections/indexes that don't exist on the device
 
 # 4. Apply deletions
 ansible-playbook playbooks/delete_cl_profiles.yml
@@ -204,6 +220,10 @@ ansible-playbook playbooks/delete_cl_profiles.yml
 dp_ip:
   - "10.105.192.32"  # Add your DefensePro IPs here
   - "10.105.192.33"
+
+# For getting network classes (get_vars.yml)
+filter_class_names: []  # Show all classes (default)
+# filter_class_names: ["web_servers", "db_servers"]  # Filter specific classes
 
 # For getting profiles (get_vars.yml)
 filter_cl_profile_names: []  # Show all profiles (default)

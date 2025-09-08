@@ -29,7 +29,6 @@ dp_config_builder/
 
 3. **Network Class Modules** (`plugins/modules/`)
    - CRUD operations for DefensePro network classes
-   - Consistent parameter validation and error handling
 
 4. **Connection Limit Profile Modules** (`plugins/modules/`)
    - Creation and editing of connection limit protection subprofiles
@@ -74,7 +73,57 @@ dp_config_builder/
 
 ## Module Development Pattern
 
-### Standard Module Structure
+### Unified Module Structure (v0.1.2.1+)
+```python
+from ansible.module_utils.basic import AnsibleModule
+
+def run_module():
+    module_args = dict(
+        provider=dict(type='dict', required=True),
+        dp_ip=dict(type='str', required=True),
+        # Operation-specific parameters
+    )
+    
+    result = dict(changed=False, response={})
+    debug_info = {}
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+    
+    # Setup logging and RadwareCC
+    log_level = provider.get('log_level', 'disabled')
+    logger = Logger(verbosity=log_level)
+    cc = RadwareCC(provider['cc_ip'], provider['username'], 
+                  provider['password'], log_level=log_level, logger=logger)
+    
+    # Structured debug info
+    debug_info['input'] = {
+        'dp_ip': dp_ip,
+        'operation_count': len(items_to_process)
+    }
+    
+    try:
+        # Batch processing logic
+        changes_made = False
+        errors = []
+        
+        if module.check_mode:
+            # Preview mode logic
+            pass
+        else:
+            # Actual operations using cc._request methods
+            pass
+            
+        # Structured response
+        result.update({
+            'changed': changes_made,
+            'response': structured_response,
+            'debug_info': debug_info
+        })
+        
+    except Exception as e:
+        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+```
+
+### Legacy Module Structure
 ```python
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
@@ -261,21 +310,53 @@ cl_protection_deletions:
 ### Get Network Classes Response
 ```json
 {
-    "rsBWMNetworkTable": [
-        {
-            "rsBWMNetworkName": "web_servers",
-            "rsBWMNetworkSubIndex": "0",
-            "rsBWMNetworkAddress": "192.168.1.0",
-            "rsBWMNetworkMask": "24",
-            "rsBWMNetworkMode": "1",
-            "rsBWMNetworkFromIP": "192.168.1.0",
-            "rsBWMNetworkToIP": "192.168.1.255"
-        }
-    ]
+    "rsBWMNetworkTable": [...],  // Raw API response
+    "classes_breakdown": {
+        "web_servers": [
+            {
+                "rsBWMNetworkName": "web_servers",
+                "rsBWMNetworkSubIndex": "0",
+                "rsBWMNetworkAddress": "192.168.1.0",
+                "rsBWMNetworkMask": "24",
+                "rsBWMNetworkFromIP": "192.168.1.0",
+                "rsBWMNetworkToIP": "192.168.1.255"
+            }
+        ]
+    },
+    "summary": {
+        "class_names": ["web_servers", "db_servers"],
+        "total_entries": 5,
+        "unique_classes": 2,
+        "filtered": true,
+        "filter_applied": ["web_servers"]
+    }
 }
 ```
 
+**Features**:
+- **List filtering**: `filter_class_names: ["class1", "class2"]`
+- **Structured breakdown**: Groups entries by class name
+- **Enhanced summary**: Statistics and filter information
+- **Formatted output**: Human-readable display in playbooks
+
 ## Error Handling
+
+### Unified Error Handling Pattern (v0.1.2.1+)
+All modules now use consistent `cc._request` methods for HTTP operations:
+
+```python
+try:
+    # Use cc._request methods for consistent error handling
+    resp = cc._post(url, json=body)
+    if resp.status_code == 200:
+        # Success logic
+        pass
+    else:
+        # Error handled by cc._request
+        errors.append(f"Failed operation: {resp.text}")
+except Exception as e:
+    errors.append(f"Request failed: {str(e)}")
+```
 
 ### HTTP Error Patterns
 ```python
