@@ -112,13 +112,16 @@ Todo:
     Network classes
         - align simplified architecture logic from cl
             create_netclass done
+            edit netclass done
         - get netclasses- align formating from cl
         - get netclasses - add filtering as list rather than string - similar to cl
     General
         - make sure all modules use _request error handling so we do not write twice
             create_netclass done
+            edit netclass done
         - check --check validations works on all playbooks
             create_netclass done
+            edit netclass done
 
 
 
