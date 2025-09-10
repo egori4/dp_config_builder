@@ -121,6 +121,12 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
+### Security Policy Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | *See create_vars.yml for configuration* |
+
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
 -  **Flexible creation**: All parameters optional except name (sensible defaults provided)
@@ -130,6 +136,15 @@ dp_config_builder/
 -  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
+
+**Security Policy Features**:
+- **Unified orchestration**: Single playbook creates profiles and security policies
+- **Profile binding**: Bind different protection profile types to security policies
+- **Flexible control**: Individual control flags for each creation stage
+- **Comprehensive configuration**: Full policy parameters (source, destination, direction, priority, actions)
+- **Error handling**: Detailed error reporting and validation
+- **Preview mode**: Check mode support to preview planned operations
+- **Existing profile support**: Use existing profiles without recreating them
 
 **Section Optionality**:
 - **Protections only**: Define `cl_protections`, skip `cl_profiles`
@@ -176,12 +191,23 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 # Delete Connection Limit Profiles (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
+
+# Security Policy Creation (using vars/create_vars.yml configuration)
+ansible-playbook playbooks/create_security_policy.yml
 ```
+
+
+
+todo 
+
+create connlim display result after cl creation
+review holistically best pracice policy creation
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v0.2.0 | 2025-09-10 | Added security policy orchestration with profile binding capabilities, formatting log module |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
 | v0.1.3 |       | Resrved for Rahul(BDOS)|
