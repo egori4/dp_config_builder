@@ -3,6 +3,7 @@ inventory.ini
 ansible.cfg
 playbooks/log
 tmp/
+log/
 
 # User-specific variable files (exclude from Git)
 vars/*_vars.yml

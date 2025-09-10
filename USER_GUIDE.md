@@ -6,13 +6,37 @@
 
 Automate creation, editing, and deletion of DefensePro profiles and policies across multiple devices using Ansible.
 
+## Prerequisites
+
+Before starting, ensure your Ansible environment is properly configured:
+
+### Required Files Setup
+```bash
+# 1. Create Ansible configuration (required)
+cp ansible_example.cfg ansible.cfg
+
+# 2. Create inventory file (required) 
+cp inventory_example.ini inventory.ini
+
+# 3. Create CyberController connection settings (required)
+cd vars/
+cp cc_example.yml cc.yml
+nano cc.yml  # Edit with your CyberController IP, username, password
+
+```
+
+### Verify Setup
+
+# Test inventory
+ansible-inventory --list
+```
+
 ## Quick Start (5 minutes)
 
 ### 1. Setup Your Environment
 ```bash
-# Copy configuration templates
+# Copy configuration templates (after completing Prerequisites above)
 cd vars/
-cp cc_example.yml cc.yml                    # Edit variables as needed
 cp create_vars.yml.example create_vars.yml  # Edit variables as needed
 cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
 cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
@@ -432,6 +456,19 @@ cl_profiles:
 
 ## Troubleshooting
 
+### "No inventory" or "module not found" errors
+```bash
+# Check if required files exist
+ls -la ansible.cfg inventory.ini
+
+# Create if missing (see Prerequisites section)
+cp ansible_example.cfg ansible.cfg
+cp inventory_example.ini inventory.ini
+
+# Verify Ansible can find modules
+ansible-doc -l | grep network_class
+```
+
 ### "File not found" errors
 ```bash
 # Copy the example files
@@ -450,6 +487,16 @@ cat vars/cc.yml
 ```bash
 # Ensure all required variables are set in your vars files
 # Check the .example files for required format
+```
+
+### "ansible-playbook command not found"
+```bash
+# Install Ansible if not already installed
+pip3 install ansible
+
+# Or using package manager
+sudo apt-get install ansible  # Ubuntu/Debian
+sudo yum install ansible      # CentOS/RHEL
 ```
 
 ### "Protection deletion failed" errors
