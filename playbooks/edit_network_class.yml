@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 - name: Edit network class groups on all devices
   hosts: cc
@@ -33,3 +34,88 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+=======
+---
+- name: Edit network classes (Unified)
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Edit network class groups
+          edit_network_class:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            edit_networks: "{{ edit_networks | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: edit_results
+
+        - name: Display edit results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Network Group Edits ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% else %}
+              
+              No network groups configured for editing.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set edited_groups = item.response.edited_groups | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% set summary = item.response.summary | default({}) %}
+              {% if edited_groups %}
+              
+              Network Groups ({{ summary.successful_edits | default(0) }}/{{ summary.total_groups_attempted | default(0) }} successful):
+              {% for group in edited_groups %}
+              {% if group.status == 'success' %}
+                - {{ group.class_name }}[{{ group.index }}]: {{ group.address }}/{{ group.mask }}
+              {% else %}
+                - {{ group.class_name }}[{{ group.index }}]: {{ group.address }}/{{ group.mask }} ({{ group.error | default('Unknown error') }})
+              {% endif %}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not edited_groups and not errors %}
+              
+              No network groups configured for editing.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+>>>>>>> upstream/main

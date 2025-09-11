@@ -295,45 +295,216 @@ logger.error(message)    # Error level
 
 **Technical documentation for developers working on the DefensePro Ansible modules**
 
+## Prerequisites for Development
+
+Before working with the DefensePro Configuration Builder modules:
+
+### Environment Setup
+```bash
+# 1. Ensure basic Ansible configuration exists
+cp ansible_example.cfg ansible.cfg
+cp inventory_example.ini inventory.ini
+
+# 2. Set up connection configuration for testing
+cd vars/
+cp cc_example.yml cc.yml
+# Edit cc.yml with test environment details
+
+
+### Development Environment
+```bash
+# Install development dependencies
+pip3 install ansible requests
+
+# Verify Python module imports
+python3 -c "
+import sys
+sys.path.append('./plugins/module_utils')
+from radware_cc import RadwareCC
+from logger import Logger
+print('Module utils import successful')
+"
+```
+
 ## Architecture Overview
+
+The DefensePro Configuration Builder follows a layered architecture with clear separation of concerns:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    USER INTERACTION LAYER                       │
+├─────────────────────────────────────────────────────────────────┤
+│ ansible-playbook commands → Configuration Files (vars/)         │
+└─────────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────────┐
+│                  ORCHESTRATION LAYER                            │
+├─────────────────────────────────────────────────────────────────┤
+│ Ansible Playbooks (playbooks/)                                  │
+│ • Device iteration • Output formatting • Playbook-level errors  │
+└─────────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────────┐
+│                   BUSINESS LOGIC LAYER                          │
+├─────────────────────────────────────────────────────────────────┤
+│ Custom Ansible Modules (plugins/modules/)                       │
+│ • Parameter validation • Batch processing • State management    │
+│ • Operation error handling • Error collection & aggregation     │
+└─────────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────────┐
+│                 INFRASTRUCTURE LAYER                            │
+├─────────────────────────────────────────────────────────────────┤
+│ Utilities (plugins/module_utils/)                               │
+│ • HTTP client • Session management • Logging                    │
+└─────────────────────────────────────────────────────────────────┘
+                                    │
+┌─────────────────────────────────────────────────────────────────┐
+│                     EXTERNAL SYSTEMS                            │
+├─────────────────────────────────────────────────────────────────┤
+│ Radware CyberController ←→ DefensePro Devices                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Directory Structure Deep Dive
 
 ```
 dp_config_builder/
-├── playbooks/           # Ansible playbooks (orchestration layer)
-├── plugins/
-│   ├── modules/         # Custom Ansible modules (business logic)
-│   └── module_utils/    # Shared utilities (RadwareCC, Logger)
-├── vars/               # Configuration templates and user data
-└── tasks/              # Reusable task fragments
+├── 📁 Configuration Files
+│   ├── ansible.cfg              # Ansible runtime configuration
+│   ├── ansible_example.cfg      # Template for ansible.cfg  
+│   ├── inventory.ini            # Ansible hosts (usually just 'cc')
+│   └── inventory_example.ini    # Template for inventory.ini
+├── 
+├── 📁 Documentation  
+│   ├── README.md                # Project overview and quick start
+│   ├── USER_GUIDE.md           # Step-by-step operational guide
+│   └── DEVELOPER.md            # Technical architecture (this file)
+├── 
+├── 📁 playbooks/               # ORCHESTRATION LAYER
+│   ├── 🎯 Network Class Operations
+│   │   ├── create_network_class.yml    # Create network classes
+│   │   ├── edit_network_class.yml      # Modify network classes  
+│   │   ├── delete_network_class.yml    # Remove network classes
+│   │   └── get_network_class.yml       # Query network classes
+│   ├── 🎯 Connection Limit Operations  
+│   │   ├── create_cl_profiles.yml      # Create CL profiles/protections
+│   │   ├── edit_cl_protections.yml     # Edit CL protections
+│   │   ├── get_cl_profiles.yml         # Query CL profiles
+│   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
+│   ├── 📊 Runtime Data (auto-created)
+│   │   ├── log/                        # Execution logs by date
+│   │   │   └── log_YYYYMMDD.log       # Daily log files
+│   │   └── tmp/                        # Temporary files  
+│   │       └── radware_cc_sessions/    # Session cache files
+├── 
+├── 📁 plugins/                 # BUSINESS LOGIC & UTILITIES
+│   ├── 📁 modules/             # BUSINESS LOGIC LAYER
+│   │   ├── 🔧 Network Class Modules (Unified Architecture v0.1.2.2+)
+│   │   │   ├── create_network_class.py  # Batch creation with error collection
+│   │   │   ├── edit_network_class.py    # Batch editing with preview mode
+│   │   │   ├── delete_network_class.py  # Batch deletion with validation  
+│   │   │   └── get_network_class.py     # Enhanced querying with filtering
+│   │   ├── 🔧 Connection Limit Modules (v0.1.4+)
+│   │   │   ├── create_cl_configuration.py  # Create protections & profiles
+│   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
+│   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
+│   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
+│   │   └── 🔧 Device Management
+│   │       ├── dp_lock.py              # Device configuration lock
+│   │       └── dp_unlock.py            # Device configuration unlock
+│   └── 📁 module_utils/        # INFRASTRUCTURE LAYER
+│       ├── radware_cc.py              # HTTP client with session management
+│       └── logger.py                  # Structured logging with rotation
+├── 
+├── 📁 vars/                    # CONFIGURATION & DATA LAYER
+│   ├── 🔗 Connection Configuration
+│   │   ├── cc.yml                     # CyberController connection (git-ignored)
+│   │   └── cc_example.yml             # Template for cc.yml
+│   ├── 🎯 Operation Variables (git-ignored)
+│   │   ├── create_vars.yml            # Variables for creation operations
+│   │   ├── edit_vars.yml              # Variables for editing operations  
+│   │   ├── delete_vars.yml            # Variables for deletion operations
+│   │   └── get_vars.yml               # Variables for query operations
+│   └── 📋 Variable Templates (in git)
+│       ├── create_vars.yml.example    # Template for create_vars.yml
+│       ├── edit_vars.yml.example      # Template for edit_vars.yml
+│       ├── delete_vars.yml.example    # Template for delete_vars.yml
+│       └── get_vars.yml.example       # Template for get_vars.yml 
+└── 
+
 ```
+
+### Data Flow Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   vars/*.yml    │───▶│ playbooks/*.yml │───▶│ plugins/modules │
+│   (Parameters)  │    │  (Orchestration)│    │ (Business Logic)│
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+┌─────────────────┐    ┌─────────────────┐             │
+│ CyberController │◀───│module_utils/*.py│◀────────────┘
+│   (DefensePro)  │    │ (Infrastructure)│
+└─────────────────┘    └─────────────────┘
+```
+
+### Error Handling Distribution
+
+| Layer | Error Handling Responsibilities | Examples |
+|-------|--------------------------------|----------|
+| **Orchestration** | Playbook-level failures, display formatting | Ansible task failures, missing variables |
+| **Business Logic** | Operation errors, parameter validation, batch error collection | Invalid network ranges, API operation failures |
+| **Infrastructure** | HTTP errors, authentication, session management | Connection timeouts, 403 authentication errors |
+| **External Systems** | API responses, device availability | DefensePro device errors, malformed responses |
 
 ## Module Architecture
 
-### Core Components
+### Core Components (Infrastructure Layer)
 
 1. **RadwareCC** (`plugins/module_utils/radware_cc.py`)
-   - HTTP client with session management
-   - Automatic re-authentication on 403 errors
-   - Request/response logging and error handling
+   - **Purpose**: HTTP client with intelligent session management
+   - **Features**: 
+     - Automatic re-authentication on 403 errors
+     - Session persistence with configurable lifetime
+     - Request/response logging and error handling
+     - SSL verification control (disabled by default for internal networks)
+   - **Session Storage**: `./tmp/radware_cc_sessions/` or system temp directory
 
 2. **Logger** (`plugins/module_utils/logger.py`)
-   - Structured logging with verbosity levels
-   - File-based logging with rotation
+   - **Purpose**: Structured logging with verbosity levels
+   - **Features**:
+     - File-based logging with rotation (`playbooks/log/log_YYYYMMDD.log`)
+     - Configurable levels: `disabled`, `info`, `debug`
+     - Timestamp and module identification
+     - Safe credential handling (no passwords in logs)
+
+### Business Logic Modules (Business Logic Layer)
 
 3. **Network Class Modules** (`plugins/modules/`)
-   - CRUD operations for DefensePro network classes
-   - Consistent parameter validation and error handling
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_network_class.py`, `edit_network_class.py`, `delete_network_class.py`, `get_network_class.py`
 
-4. **Connection Limit Profile Modules** (`plugins/modules/`)
-   - Creation and editing of connection limit protection subprofiles
-   - Profile creation and protection attachment
-   - **New Architecture (v1.0.4+)**:
+4. **Connection Limit Profile Modules** (`plugins/modules/`) - **Architecture v0.1.4+**
+   - **Purpose**: Creation and editing of connection limit protection subprofiles
+   - **Features**: Profile creation, protection attachment, filtering, deletion
+   - **Architecture Highlights**:
      - Creation: `create_cl_configuration.py` (loops/mapping in Python)
-     - Editing: `edit_cl_configuration.py` (loops/mapping in Python, per-device call, internal protection loop)
+     - Editing: `edit_cl_configuration.py` (per-device call, internal protection loop)
      - Getting: `get_cl_configuration.py` (fetches profiles+protections, maps values, supports filtering)
-     - Playbooks: `create_cl_profiles.yml`, `edit_cl_protections.yml`, and `get_cl_profiles.yml` use per-device loop, pass list of protections to module
-     - **Note**: Both `cl_protections` and `cl_profiles` sections are optional for creation; for editing, only specify parameters to change (partial update)
-     - **Comparison to Previous**: Old edit logic used complex YAML loops and mapping; new logic centralizes all mapping and error handling in Python for maintainability and consistency.
+     - Deleting: `delete_cl_configuration.py` (flexible removal with dependency handling)
+   - **Key Improvements**: 
+     - Both `cl_protections` and `cl_profiles` sections are optional for creation
+     - For editing: only specify parameters to change (partial update)
+     - Centralized mapping and error handling in Python vs. complex YAML loops
+
 
 ## API Endpoints
 
@@ -367,7 +538,57 @@ dp_config_builder/
 
 ## Module Development Pattern
 
-### Standard Module Structure
+### Unified Module Structure (v0.1.2.1+)
+```python
+from ansible.module_utils.basic import AnsibleModule
+
+def run_module():
+    module_args = dict(
+        provider=dict(type='dict', required=True),
+        dp_ip=dict(type='str', required=True),
+        # Operation-specific parameters
+    )
+    
+    result = dict(changed=False, response={})
+    debug_info = {}
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+    
+    # Setup logging and RadwareCC
+    log_level = provider.get('log_level', 'disabled')
+    logger = Logger(verbosity=log_level)
+    cc = RadwareCC(provider['cc_ip'], provider['username'], 
+                  provider['password'], log_level=log_level, logger=logger)
+    
+    # Structured debug info
+    debug_info['input'] = {
+        'dp_ip': dp_ip,
+        'operation_count': len(items_to_process)
+    }
+    
+    try:
+        # Batch processing logic
+        changes_made = False
+        errors = []
+        
+        if module.check_mode:
+            # Preview mode logic
+            pass
+        else:
+            # Actual operations using cc._request methods
+            pass
+            
+        # Structured response
+        result.update({
+            'changed': changes_made,
+            'response': structured_response,
+            'debug_info': debug_info
+        })
+        
+    except Exception as e:
+        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+```
+
+### Legacy Module Structure
 ```python
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
@@ -496,24 +717,111 @@ Response (mapped and combined):
 - All API mappings handled internally (reverse of create/edit logic)
 - Returns nested structure: profiles -> protections -> subsettings
 
+### Delete Connection Limit Profiles and Protections (`delete_cl_configuration`)
+
+**Purpose**: Delete connection limit protections and profiles with flexible options.
+
+**Module**: `plugins/modules/delete_cl_configuration.py`
+
+**API Endpoints**:
+- Remove protection from profile: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}`
+- Delete protection entirely: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{protection_id}`
+
+**Input Parameters**:
+```yaml
+# OPTIONAL: Remove protections from profiles (profile auto-deleted when last protection removed)
+cl_profile_deletions:
+  - profile_name: "cl_prof_egor_test10"
+    protections:
+      - "cl_prot_egor_test10"
+      - "cl_prot_egor_test11"
+      - "cl_prot_egor_test12"
+  
+  - profile_name: "another_profile"
+    protections:
+      - "protection_to_remove"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+# The format supporting both names and indexes:
+cl_protection_deletions:
+  - protections_to_delete:
+      - "protection_name_1"      # Delete by name (module looks up index)
+      - "protection_name_2"      # Delete by name (module looks up index)
+      - 450001                   # Delete by index directly
+      - 450002                   # Delete by index directly
+```
+
+**Key Features**:
+- Protection cannot be deleted if still associated with any profile
+- Profile is automatically deleted when last protection is removed
+- Both sections are optional - define based on your needs
+- Order: profile deletions processed first, then protection deletions
+- **Format**: Single list supporting both names (strings) and indexes (integers)
+- **Smart processing**: Module fetches current protections only when string names are used
+- **Enhanced validation**: Check mode validates both names and indexes against device state
+
+**API Endpoints**:
+- Get current protections (conditional): `GET /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable`
+- Remove protection from profile: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}`
+- Delete protection entirely: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{protection_id}`
+
+**Usage:**
+- Call `delete_cl_configuration` once per device
+- Both `cl_profile_deletions` and `cl_protection_deletions` are optional
+- Module handles error reporting for failed operations
+- **No need to know indexes**: Just specify protection names, module handles name-to-index mapping
+- Configure deletions in `delete_vars.yml` (consolidated with network class deletions)
+
 ### Get Network Classes Response
 ```json
 {
-    "rsBWMNetworkTable": [
-        {
-            "rsBWMNetworkName": "web_servers",
-            "rsBWMNetworkSubIndex": "0",
-            "rsBWMNetworkAddress": "192.168.1.0",
-            "rsBWMNetworkMask": "24",
-            "rsBWMNetworkMode": "1",
-            "rsBWMNetworkFromIP": "192.168.1.0",
-            "rsBWMNetworkToIP": "192.168.1.255"
-        }
-    ]
+    "rsBWMNetworkTable": [...],  // Raw API response
+    "classes_breakdown": {
+        "web_servers": [
+            {
+                "rsBWMNetworkName": "web_servers",
+                "rsBWMNetworkSubIndex": "0",
+                "rsBWMNetworkAddress": "192.168.1.0",
+                "rsBWMNetworkMask": "24",
+                "rsBWMNetworkFromIP": "192.168.1.0",
+                "rsBWMNetworkToIP": "192.168.1.255"
+            }
+        ]
+    },
+    "summary": {
+        "class_names": ["web_servers", "db_servers"],
+        "total_entries": 5,
+        "unique_classes": 2,
+        "filtered": true,
+        "filter_applied": ["web_servers"]
+    }
 }
 ```
 
+**Features**:
+- **List filtering**: `filter_class_names: ["class1", "class2"]`
+- **Structured breakdown**: Groups entries by class name
+- **Enhanced summary**: Statistics and filter information
+- **Formatted output**: Human-readable display in playbooks
+
 ## Error Handling
+
+### Unified Error Handling Pattern (v0.1.2.1+)
+All modules now use consistent `cc._request` methods for HTTP operations:
+
+```python
+try:
+    # Use cc._request methods for consistent error handling
+    resp = cc._post(url, json=body)
+    if resp.status_code == 200:
+        # Success logic
+        pass
+    else:
+        # Error handled by cc._request
+        errors.append(f"Failed operation: {resp.text}")
+except Exception as e:
+    errors.append(f"Request failed: {str(e)}")
+```
 
 ### HTTP Error Patterns
 ```python

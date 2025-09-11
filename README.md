@@ -104,6 +104,92 @@ Automate configuration of DefensePro security profiles, policies, and network se
 
 **For Developers**: See [DEVELOPER.md](DEVELOPER.md) for technical architecture and API details
 
+## Prerequisites
+
+Before using the DefensePro Configuration Builder, you need to set up the basic Ansible environment:
+
+### 1. Create Ansible Configuration
+```bash
+# Copy the example Ansible configuration
+cp ansible_example.cfg ansible.cfg
+
+# Edit if needed (default settings work for most cases)
+nano ansible.cfg
+```
+
+### 2. Create Inventory File  
+```bash
+# Copy the example inventory
+cp inventory_example.ini inventory.ini
+
+# Edit the inventory (usually no changes needed)
+nano inventory.ini
+```
+
+### 3. Setup Variable Files
+```bash
+# Copy configuration templates
+cd vars/
+cp cc_example.yml cc.yml                    # CyberController connection settings
+cp create_vars.yml.example create_vars.yml  # For creating resources  
+cp edit_vars.yml.example edit_vars.yml      # For editing resources
+cp delete_vars.yml.example delete_vars.yml  # For deleting resources
+cp get_vars.yml.example get_vars.yml        # For querying resources
+
+# Edit connection settings
+nano cc.yml  # Add your CyberController IP, username, password
+
+# Edit other vars files referenced above as needed
+```
+
+### 4. Verify Setup
+```bash
+
+# Test inventory configuration  
+ansible-inventory --list
+
+## Repository Structure
+
+```
+dp_config_builder/
+├── README.md                 # Project overview and quick start
+├── USER_GUIDE.md            # Step-by-step user instructions  
+├── DEVELOPER.md             # Technical documentation for developers
+├── 
+├── ansible.cfg              # Ansible configuration (create from ansible_example.cfg)
+├── ansible_example.cfg      # Template for Ansible configuration
+├── inventory.ini            # Ansible inventory (create from inventory_example.ini)
+├── inventory_example.ini    # Template for Ansible inventory
+├── 
+├── playbooks/               # Ansible playbooks for automation
+│   ├── create_*.yml         # Creation playbooks
+│   ├── edit_*.yml           # Editing playbooks  
+│   ├── delete_*.yml         # Deletion playbooks
+│   ├── get_*.yml            # Query/retrieval playbooks
+│   ├── log/                 # Execution logs (auto-created)
+│   └── tmp/                 # Temporary files (auto-created)
+├── 
+├── plugins/                 # Custom Ansible modules and utilities
+│   ├── modules/             # Custom modules 
+│   │   ├── create_*.py      # Creation modules
+│   │   ├── edit_*.py        # Editing modules
+│   │   ├── delete_*.py      # Deletion modules
+│   │   ├── get_*.py         # Query modules
+│   │   └── dp_*.py          # Device lock/unlock utilities
+│   └── module_utils/        # Shared utilities
+│       ├── radware_cc.py    # HTTP client with session management
+│       └── logger.py        # Structured logging utility
+├── 
+├── vars/                    # Configuration files and templates
+│   ├── cc.yml               # CyberController connection (create from cc_example.yml)
+│   ├── cc_example.yml       # Template for CC connection settings
+│   ├── *_vars.yml          # Your configuration files (git-ignored)
+│   └── *_vars.yml.example  # Safe templates (in git)
+└── 
+└── tasks/                   # Reusable task fragments (advanced usage)
+    └── cl_profile_tasks/    # Connection limit profile task components
+```
+
 ## What This Does
 
 - Create, edit, delete, and query DefensePro security profile and policy configurations
@@ -118,7 +204,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `create_network_class.yml` | Create new network classes | [USER_GUIDE.md](USER_GUIDE.md#workflow-1-create-new-network-classes) |
 | `edit_network_class.yml` | Modify existing networks | [USER_GUIDE.md](USER_GUIDE.md#workflow-2-modify-existing-networks) |
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
-| `get_network_class.yml` | Query current state | [USER_GUIDE.md](USER_GUIDE.md#common-workflows) |
+| `get_network_class.yml` | Query current state with filtering | [USER_GUIDE.md](USER_GUIDE.md#workflow-6-get-network-classes-with-filtering) |
 
 ### Connection Limit Profiles
 
@@ -127,6 +213,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 | `create_cl_profiles.yml` | Create connection limit profiles and protections | *See create_vars.yml for configuration* |
 | `edit_cl_protections.yml` | Edit existing connection limit protections | *See edit_vars.yml for configuration* |
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
+| `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
@@ -134,6 +221,7 @@ Automate configuration of DefensePro security profiles, policies, and network se
 -  **Optional sections**: Both `cl_protections` and `cl_profiles` sections are optional
 -  **Partial editing**: Only specify parameters you want to change
 -  **Profile querying**: Get all profiles and protections with optional filtering by profile names
+-  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
 
@@ -147,21 +235,6 @@ Automate configuration of DefensePro security profiles, policies, and network se
 - **OPTIONAL**: All other parameters have defaults and can be omitted
 
 
-
-## Repository Structure
-
-```
-dp_config_builder/
-├── USER_GUIDE.md             # Start here for operations
-├── DEVELOPER.md              # Technical documentation  
-├── playbooks/                # Ansible playbooks
-├── plugins/
-│   ├── modules/              # Custom Ansible modules
-│   └── module_utils/         # Shared utilities
-└── vars/                     # Configuration templates
-    ├── *.yml.example         # Safe templates (in Git)
-    └── *.yml                 # Your configs (git-ignored)
-```
 
 ## Documentation by Audience
 
@@ -177,6 +250,8 @@ dp_config_builder/
 
 ## Super Quick Example
 
+**Note**: Complete the [Prerequisites](#prerequisites) first, then:
+
 ```bash
 # Network Classes Example
 cd vars/
@@ -185,29 +260,26 @@ cp create_vars.yml.example create_vars.yml
 ansible-playbook playbooks/create_network_class.yml
 
 # Connection Limit Profiles Example
-ansible-playbook playbooks/create_cl_profiles.yml --check
+ansible-playbook playbooks/create_cl_profiles.yml
 
 # Edit Connection Limit Protections (uses edit_cl_configuration module)
-ansible-playbook playbooks/edit_cl_protections.yml --check
+ansible-playbook playbooks/edit_cl_protections.yml
 
 # Get Connection Limit Profiles (uses get_cl_configuration module)
 ansible-playbook playbooks/get_cl_profiles.yml
+
+# Delete Connection Limit Profiles (uses delete_cl_configuration module)
+ansible-playbook playbooks/delete_cl_profiles.yml
 ```
 
 ## Version History
 
-Todo:
-
-Network classes
-    - align simplified architecture logic from cl
-    - get netclasses- align formating from cl
-    - get netclasses - add filtering as list rather than string - similar to cl
-
-
 | Version | Date | Changes |
 |---------|------|---------|
+| v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 |       | Rerved for Rahul(BDOS)|
+| v0.1.3 |       | Resrved for Rahul(BDOS)|
+| v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
 | v0.1.0 | 2025-08-19 | Initial release with network class create/edit/delete/get operations |

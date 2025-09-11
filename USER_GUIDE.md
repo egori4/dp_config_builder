@@ -10,17 +10,49 @@ Automate creation, editing, and deletion of DefensePro BdoS Profile across multi
 Automate creation, editing, and deletion of DefensePro profiles and policies across multiple devices using Ansible.
 >>>>>>> upstream/CL_profile_Egor_v1.0.4
 
+## Prerequisites
+
+Before starting, ensure your Ansible environment is properly configured:
+
+### Required Files Setup
+```bash
+# 1. Create Ansible configuration (required)
+cp ansible_example.cfg ansible.cfg
+
+# 2. Create inventory file (required) 
+cp inventory_example.ini inventory.ini
+
+# 3. Create CyberController connection settings (required)
+cd vars/
+cp cc_example.yml cc.yml
+nano cc.yml  # Edit with your CyberController IP, username, password
+
+```
+
+### Verify Setup
+
+# Test inventory
+ansible-inventory --list
+```
+
 ## Quick Start (5 minutes)
 
 ### 1. Setup Your Environment
 ```bash
-# Copy configuration templates
+# Copy configuration templates (after completing Prerequisites above)
 cd vars/
+<<<<<<< HEAD
 cp cc_example.yml cc.yml                  # Edit credentials as needed
 cp create_bdos_vars.yml.example create_bdos_vars.yml
 cp edit_bdos_vars.yml.example edit_bdos_vars.yml
 cp delete_bdos_vars.yml.example delete_bdos_vars.yml
 cp get_bdos_vars.yml.example get_bdos_vars.yml
+=======
+cp create_vars.yml.example create_vars.yml  # Edit variables as needed
+cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
+cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
+cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+>>>>>>> upstream/main
 ```
 
 ### 2. Run Operations
@@ -48,7 +80,13 @@ ansible-playbook playbooks/edit_cl_protections.yml
 
 # Get connection limit profiles and protections (uses get_cl_configuration module)
 ansible-playbook playbooks/get_cl_profiles.yml
+<<<<<<< HEAD
 >>>>>>> upstream/CL_profile_Egor_v1.0.4
+=======
+
+# Delete connection limit profiles and protections (uses delete_cl_configuration module)
+ansible-playbook playbooks/delete_cl_profiles.yml
+>>>>>>> upstream/main
 ```
 
 ## Common Workflows
@@ -150,7 +188,23 @@ ansible-playbook playbooks/edit_cl_protections.yml
 - **Use only existing protections**: Skip `cl_protections`, define only `cl_profiles` with existing protection names
 - **Mixed approach**: Create some new protections, reference some existing ones in the same profile
 
-### Workflow 6: Get Connection Limit Profiles
+### Workflow 6: Get Network Classes with Filtering
+```bash
+# 1. See all network classes on devices
+ansible-playbook playbooks/get_network_class.yml
+
+# 2. Filter by specific class names (edit get_vars.yml first)
+nano vars/get_vars.yml  # Set filter_class_names: ["web_servers", "db_servers"]
+ansible-playbook playbooks/get_network_class.yml
+
+# 3. Reset to show all classes
+nano vars/get_vars.yml  # Set filter_class_names: []
+ansible-playbook playbooks/get_network_class.yml
+```
+
+**Note**: The get operation shows network classes with detailed breakdown including IP ranges and group information. You can filter by class names or show all classes.
+
+### Workflow 7: Get Connection Limit Profiles
 ```bash
 # 1. See all profiles and protections on devices
 ansible-playbook playbooks/get_cl_profiles.yml
@@ -166,6 +220,39 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 **Note**: The get operation shows profiles with their associated protections and all protection settings. You can filter by profile names or show all profiles.
 
+### Workflow 8: Delete Connection Limit Profiles and Protections
+```bash
+# 1. Identify what to delete (get current state first)
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 2. Configure your deletions
+nano vars/delete_vars.yml
+
+# 3. Test first (dry run) - shows exactly what will be deleted
+ansible-playbook --check playbooks/delete_cl_profiles.yml
+
+# The check mode will show:
+# - Profile Operations: Which protections will be removed from which profiles
+# - Protection Deletions: Which protections will be deleted entirely (with their indexes)
+# - Validation: Both names and indexes are validated against current device state
+# - Status indicators: NOT FOUND for protections/indexes that don't exist on the device
+
+# 4. Apply deletions
+ansible-playbook playbooks/delete_cl_profiles.yml
+```
+
+**Important Rules for Deletion**:
+- **Profile deletions**: Remove protections from profiles (profile auto-deleted when last protection removed)
+- **Protection deletions**: Delete protections entirely (protection must not be in any profile)
+- **Order matters**: Profile deletions are processed before protection deletions
+- **Dependencies**: Cannot delete protection if it's still associated with any profile
+- **Preview mode**: Use `--check` flag to see exactly what would be deleted before applying changes
+
+**Usage patterns**:
+- **Remove from profiles only**: Define `cl_profile_deletions` section, skip `cl_protection_deletions`
+- **Delete protections only**: Skip `cl_profile_deletions`, define `cl_protection_deletions` with standalone protections
+- **Complete cleanup**: Define both sections - remove from profiles first, then delete protections
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)
@@ -173,6 +260,10 @@ ansible-playbook playbooks/get_cl_profiles.yml
 dp_ip:
   - "10.105.192.32"  # Add your DefensePro IPs here
   - "10.105.192.33"
+
+# For getting network classes (get_vars.yml)
+filter_class_names: []  # Show all classes (default)
+# filter_class_names: ["web_servers", "db_servers"]  # Filter specific classes
 
 # For getting profiles (get_vars.yml)
 filter_cl_profile_names: []  # Show all profiles (default)
@@ -300,6 +391,28 @@ filter_cl_profile_names: ["profile1", "profile2"]  # Show only these profiles
 # filter_cl_profile_names: []                      # Show all profiles (default)
 ```
 
+#### Deleting Connection Limit Profiles and Protections
+```yaml
+# OPTIONAL: Remove protections from profiles (without deleting protection itself)
+cl_profile_deletions:
+  - profile_name: "profile_to_modify"
+    protections:
+      - "protection1"
+      - "protection2"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+cl_protection_deletions:
+  - protections_to_delete:
+      - "standalone_protection"      # Delete by name (module looks up index)
+      - "another_protection"         # Delete by name (module looks up index)
+      - "old_protection"             # Delete by name (module looks up index)
+      - 450001                       # Delete by index directly
+      - 450002                       # Delete by index directly
+
+# Important: Both sections are optional - define based on your needs
+# Order: Profile deletions processed first, then protection deletions
+```
+
 **Parameter Reference for Connection Limit Protections**:
 
 | Parameter | Status | Options | Default | Description |
@@ -387,6 +500,19 @@ cl_profiles:
 
 ## Troubleshooting
 
+### "No inventory" or "module not found" errors
+```bash
+# Check if required files exist
+ls -la ansible.cfg inventory.ini
+
+# Create if missing (see Prerequisites section)
+cp ansible_example.cfg ansible.cfg
+cp inventory_example.ini inventory.ini
+
+# Verify Ansible can find modules
+ansible-doc -l | grep network_class
+```
+
 ### "File not found" errors
 ```bash
 # Copy the example files
@@ -405,6 +531,25 @@ cat vars/cc.yml
 ```bash
 # Ensure all required variables are set in your vars files
 # Check the .example files for required format
+```
+
+### "ansible-playbook command not found"
+```bash
+# Install Ansible if not already installed
+pip3 install ansible
+
+# Or using package manager
+sudo apt-get install ansible  # Ubuntu/Debian
+sudo yum install ansible      # CentOS/RHEL
+```
+
+### "Protection deletion failed" errors
+```bash
+# Check if protection is still associated with any profile
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Remove protection from profiles first, then delete protection
+# Edit delete_vars.yml - define both sections if doing complete cleanup
 ```
 
 ## Best Practices

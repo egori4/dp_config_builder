@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ---
 - name: Delete network class on all devices
   hosts: cc
@@ -31,3 +32,88 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+=======
+---
+- name: Delete network classes (Unified)
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete network class groups
+          delete_network_class:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            delete_networks: "{{ delete_networks | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Network Group Deletions ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% else %}
+              
+              No network groups configured for deletion.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set deleted_groups = item.response.deleted_groups | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% set summary = item.response.summary | default({}) %}
+              {% if deleted_groups %}
+              
+              Network Groups ({{ summary.successful_deletions | default(0) }}/{{ summary.total_groups_attempted | default(0) }} successful):
+              {% for group in deleted_groups %}
+              {% if group.status == 'success' %}
+                - Deleted {{ group.class_name }}[{{ group.index }}]
+              {% else %}
+                - Failed {{ group.class_name }}[{{ group.index }}] ({{ group.error | default('Unknown error') }})
+              {% endif %}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not deleted_groups and not errors %}
+              
+              No network groups configured for deletion.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+>>>>>>> upstream/main
