@@ -94,6 +94,7 @@ security_policy_config:
   create_network_classes: true      # Set false if network classes already exist
   create_cl_profiles: true          # Set false if CL profiles already exist  
   create_security_policies: true    # Set false to skip policy creation (dry-run mode)
+  apply_policies_after_creation: false  # Set false to skip automatic policy updates (requires manual update_policies.yml run)
 
 # Security policies with comprehensive profile bindings
 security_policies:

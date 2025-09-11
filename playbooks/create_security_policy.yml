@@ -72,6 +72,16 @@
               when: 
                 - security_policy_results is defined
                 - security_policy_results.results is defined
+
+            - name: "Apply policy updates per device"
+              update_policies:
+                provider: "{{ cc }}"
+                dp_ip: "{{ item }}"
+              loop: "{{ dp_ip }}"
+              loop_control:
+                label: "Applying policies: {{ item }}"
+              register: policy_update_results
+              when: security_policy_config.apply_policies_after_creation | default(true)
           when: security_policy_config.create_security_policies | default(false)
 
       always:

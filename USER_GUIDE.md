@@ -269,6 +269,28 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
+### Workflow 10: Apply DefensePro Policy Updates
+```bash
+# Option A: Automatic policy updates (during orchestration)
+# 1. Enable automatic policy application in create_vars.yml
+security_policy_config:
+  apply_policies_after_creation: true  # Automatically apply policies after creation
+
+# 2. Run orchestration - policies will be applied automatically
+ansible-playbook playbooks/create_security_policy.yml
+
+# Option B: Manual policy updates after the change (standalone)
+# 1. Run the standalone policy update playbook after the change
+ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.32','10.105.192.33']"
+```
+
+**Policy Update Features**:
+- **Automatic integration**: Policies applied automatically during orchestration
+- **Manual control**: Standalone playbook for manual policy updates  
+- **Safety confirmation**: Optional Interactive prompts to prevent accidental updates
+- **Per-device processing**: Updates applied individually with proper locking
+
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)

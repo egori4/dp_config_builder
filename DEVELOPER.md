@@ -266,6 +266,44 @@ dp_config_builder/
 **Profile Bindings**: different protection profile types supported
 **Response**: Policy creation status with error details
 
+### Policy Update Management
+
+| Operation | HTTP Method | API Endpoint |
+|-----------|-------------|--------------|
+| Apply Policy Updates | POST | `/mgmt/device/byip/{dp_ip}/config/updatepolicies` |
+
+**Purpose**: Apply pending DefensePro configuration changes (commit configurations)
+
+**Module**: `plugins/modules/update_policies.py`
+
+**Payload**: None (DefensePro IP specified in URL path)
+
+**API Pattern**:
+```
+POST /mgmt/device/byip/10.105.192.32/config/updatepolicies
+# No request body needed
+```
+
+**Key Features**:
+- Must be called while device is locked
+- Commits ALL pending configuration changes
+
+**Integration Options**:
+- **Automatic**: Integrated into orchestration playbooks with `apply_policies_after_creation: true`
+- **Manual**: Standalone `update_policies.yml` playbook for selective updates
+- **Safety**: Optional Interactive confirmation prompts in standalone mode
+
+
+**Usage Pattern**:
+```python
+# In orchestration workflow
+- name: "Apply policy updates per device"
+  update_policies:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  when: security_policy_config.apply_policies_after_creation | default(true)
+```
+
 ## Module Development Pattern
 
 ### Unified Module Structure (v0.1.2.1+)
