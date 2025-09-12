@@ -2,22 +2,6 @@
 # Security Policy Creation Orchestrator Playbook
 # This playbook creates all prerequisite components then creates security policies with profile bindings
 
-- name: "DefensePro Security Policy Creation Orchestrator"
-  hosts: cc
-  gather_facts: no
-  vars_files:
-    - ../vars/cc.yml
-    - ../vars/create_vars.yml
-  
-  tasks:
-    - name: "Display orchestration plan"
-      format_display:
-        format_type: "orchestration_plan"
-        data:
-          devices: "{{ dp_ip }}"
-          config: "{{ security_policy_config }}"
-          policies: "{{ security_policies }}"
-
 # Import existing playbooks for prerequisite components
 - import_playbook: create_network_class.yml
   when: security_policy_config.create_network_classes | default(false)
@@ -34,55 +18,92 @@
     - ../vars/create_vars.yml
   
   tasks:
-    - name: "Display security policies to be created"
-      format_display:
-        format_type: "policy_summary"
-        data:
-          devices: "{{ dp_ip }}"
-          policies: "{{ security_policies }}"
-          config: "{{ security_policy_config }}"
-
     - block:
-        - block:
-            - name: "Lock device(s) for security policy creation"
-              dp_lock:
-                provider: "{{ cc }}"
-                dp_ip: "{{ item }}"
-              loop: "{{ dp_ip }}"
-
-            - name: "Create DefensePro security policies"
-              create_security_policy:
-                provider: "{{ cc }}"
-                dp_ip: "{{ item }}"
-                security_policies: "{{ security_policies }}"
-              loop: "{{ dp_ip }}"
-              loop_control:
-                label: "Device: {{ item }}"
-              register: security_policy_results
-
-            - name: "Display security policy creation results (formatted)"
-              format_display:
-                format_type: "creation_results"
-                data:
-                  device: "{{ item.item }}"
-                  response: "{{ item.response }}"
-              loop: "{{ security_policy_results.results }}"
-              loop_control:
-                label: "Results for: {{ item.item }}"
-              when: 
-                - security_policy_results is defined
-                - security_policy_results.results is defined
-
-            - name: "Apply policy updates per device"
-              update_policies:
-                provider: "{{ cc }}"
-                dp_ip: "{{ item }}"
-              loop: "{{ dp_ip }}"
-              loop_control:
-                label: "Applying policies: {{ item }}"
-              register: policy_update_results
-              when: security_policy_config.apply_policies_after_creation | default(true)
+        - name: "Lock device(s) for security policy creation"
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
           when: security_policy_config.create_security_policies | default(false)
+
+        - name: "Create DefensePro security policies"
+          create_security_policy:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            security_policies: "{{ security_policies }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: security_policy_results
+          when: security_policy_config.create_security_policies | default(false)
+
+        - name: "Display security policy creation results"
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Security Policy Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - Policy: {{ op.policy_name }} ({{ op.src_network }} -> {{ op.dst_network }})
+              {% if op.connection_limit_profile %}
+                  CL Profile: {{ op.connection_limit_profile }}
+              {% endif %}
+              {% endfor %}
+              {% else %}
+              
+              No security policies configured for creation.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set created_policies = item.response.created_policies | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% set summary = item.response.summary | default({}) %}
+              {% if created_policies %}
+              
+              Security Policies ({{ summary.successful_policies | default(0) }}/{{ summary.total_policies_attempted | default(0) }} successful):
+              {% for policy in created_policies %}
+                - {{ policy.policy_name }}: {{ policy.src_network }} -> {{ policy.dst_network }} ({{ policy.direction }}, Priority: {{ policy.priority }})
+              {% if policy.connection_limit_profile %}
+                  CL Profile: {{ policy.connection_limit_profile }}
+              {% endif %}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not created_policies and not errors %}
+              
+              No security policies configured for creation.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ security_policy_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+          when: 
+            - security_policy_config.create_security_policies | default(false)
+            - security_policy_results is defined
+            - security_policy_results.results is defined
+
+        - name: "Apply policy updates per device"
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - security_policy_config.create_security_policies | default(false)
+            - security_policy_config.apply_policies_after_creation | default(true)
 
       always:
         - name: "Unlock device(s)"
@@ -93,5 +114,5 @@
 
     - name: "Display security policy creation status"
       debug:
-        msg: "Security policy creation completed. No policies were configured because creation is disabled."
+        msg: "No policies were configured - creation is disabled (create_security_policies variable is set to false)."
       when: not (security_policy_config.create_security_policies | default(false))
