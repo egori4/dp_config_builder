@@ -13,6 +13,7 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
         - name: Create network classes and groups
           create_network_class:
@@ -93,3 +94,4 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

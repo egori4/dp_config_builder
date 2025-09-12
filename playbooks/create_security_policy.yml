@@ -2,13 +2,33 @@
 # Security Policy Creation Orchestrator Playbook
 # This playbook creates all prerequisite components then creates security policies with profile bindings
 
+# Device locking at the beginning for orchestrated flows
+- name: "Centralized Device Locking for Orchestration"
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+  
+  tasks:
+    - name: "Lock device(s) for orchestrated creation"
+      dp_lock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      when: security_policy_config.create_security_policies | default(false)
+
 # Import existing playbooks for prerequisite components
 - import_playbook: create_network_class.yml
   vars:
     skip_policy_updates: true  # Orchestrator will handle policy updates at the end
+    skip_device_lock: true     # Orchestrator handles device locking centrally
   when: security_policy_config.create_network_classes | default(false)
 
 - import_playbook: create_cl_profiles.yml
+  vars:
+    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
+    skip_device_lock: true     # Orchestrator handles device locking centrally
   when: security_policy_config.create_cl_profiles | default(false)
 
 # Main security policy creation playbook
@@ -21,13 +41,6 @@
   
   tasks:
     - block:
-        - name: "Lock device(s) for security policy creation"
-          dp_lock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-          when: security_policy_config.create_security_policies | default(false) 
-
         - name: "Create DefensePro security policies"
           create_security_policy:
             provider: "{{ cc }}"
@@ -68,7 +81,7 @@
               
               Security Policies ({{ summary.successful_policies | default(0) }}/{{ summary.total_policies_attempted | default(0) }} successful):
               {% for policy in created_policies %}
-                - {{ policy.policy_name }}: {{ policy.src_network }} -> {{ policy.dst_network }} ({{ policy.direction }}, Priority: {{ policy.priority }})
+                - {{ policy.policy_name }}: {{ policy.src_network }} -> {{ policy.dst_network }} ({{ policy.direction }}{% if policy.priority is defined %}, Priority: {{ policy.priority }}{% endif %})
               {% if policy.connection_limit_profile %}
                   CL Profile: {{ policy.connection_limit_profile }}
               {% endif %}

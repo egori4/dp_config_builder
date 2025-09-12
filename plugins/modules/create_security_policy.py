@@ -85,20 +85,36 @@ def run_module():
                         logger.error(error_msg)
                         continue
                     
-                    # Map user-friendly values to API values
+                    # Map user-friendly values to API values (only for provided parameters)
                     api_params = map_security_policy_parameters(policy)
                     
-                    # Construct API request body following DefensePro API format
+                    # Construct API request body with only policy name as mandatory
                     request_body = {
-                        "rsIDSNewRulesName": policy_name,
-                        "rsIDSNewRulesSource": policy.get('src_network', 'any'),
-                        "rsIDSNewRulesDestination": policy.get('dst_network', 'any'),
-                        "rsIDSNewRulesDirection": api_params['direction'],
-                        "rsIDSNewRulesState": api_params['state'],
-                        "rsIDSNewRulesAction": api_params['action'],
-                        "rsIDSNewRulesPacketReportingStatus": api_params['packet_reporting_status'],
-                        "rsIDSNewRulesPriority": str(policy.get('priority', '100'))
+                        "rsIDSNewRulesName": policy_name
                     }
+                    
+                    # Add optional parameters only if specified by user
+                    if 'src_network' in policy and policy['src_network'] is not None:
+                        request_body["rsIDSNewRulesSource"] = policy['src_network']
+                    
+                    if 'dst_network' in policy and policy['dst_network'] is not None:
+                        request_body["rsIDSNewRulesDestination"] = policy['dst_network']
+                    
+                    # Use mapped values for the following parameters if they were provided
+                    if 'direction' in api_params:
+                        request_body["rsIDSNewRulesDirection"] = api_params['direction']
+                    
+                    if 'state' in api_params:
+                        request_body["rsIDSNewRulesState"] = api_params['state']
+                    
+                    if 'action' in api_params:
+                        request_body["rsIDSNewRulesAction"] = api_params['action']
+                    
+                    if 'packet_reporting_status' in api_params:
+                        request_body["rsIDSNewRulesPacketReportingStatus"] = api_params['packet_reporting_status']
+                    
+                    if 'priority' in policy and policy['priority'] is not None:
+                        request_body["rsIDSNewRulesPriority"] = str(policy['priority'])
                     
                     # Add profile bindings (only non-empty values)
                     profile_mappings = {
@@ -132,15 +148,20 @@ def run_module():
                             logger.info(f"Successfully created security policy: {policy_name}")
                             changes_made = True
                             
-                            created_policies.append({
+                            policy_result = {
                                 'policy_name': policy_name,
                                 'src_network': policy.get('src_network', 'any'),
                                 'dst_network': policy.get('dst_network', 'any'),
                                 'direction': policy.get('direction', 'oneway'),
-                                'priority': policy.get('priority', '100'),
                                 'connection_limit_profile': policy.get('connection_limit_profile', ''),
                                 'status': 'success'
-                            })
+                            }
+                            
+                            # Only include priority in result if it was specified
+                            if 'priority' in policy and policy['priority'] is not None:
+                                policy_result['priority'] = policy['priority']
+                                
+                            created_policies.append(policy_result)
                         else:
                             error_msg = f"Failed to create security policy {policy_name}: HTTP {resp.status_code} - {resp.text}"
                             errors.append(error_msg)
@@ -211,12 +232,30 @@ def map_security_policy_parameters(policy):
         'disable': '2', 'disabled': '2', 'off': '2'
     }
     
-    return {
-        'direction': DIRECTION_MAP.get(str(policy.get('direction', 'oneway')).lower(), '1'),
-        'state': STATE_MAP.get(str(policy.get('state', 'enable')).lower(), '1'),
-        'action': ACTION_MAP.get(str(policy.get('action', 'block')).lower(), '1'),
-        'packet_reporting_status': PACKET_REPORTING_MAP.get(str(policy.get('packet_reporting_status', 'disable')).lower(), '2')
-    }
+    # Only map values that are explicitly provided by user
+    result = {}
+    
+    # Direction - only map if provided
+    if 'direction' in policy and policy['direction'] is not None:
+        direction_value = str(policy['direction']).lower()
+        result['direction'] = DIRECTION_MAP.get(direction_value, '1')
+    
+    # State - only map if provided  
+    if 'state' in policy and policy['state'] is not None:
+        state_value = str(policy['state']).lower()
+        result['state'] = STATE_MAP.get(state_value, '1')
+    
+    # Action - only map if provided
+    if 'action' in policy and policy['action'] is not None:
+        action_value = str(policy['action']).lower()
+        result['action'] = ACTION_MAP.get(action_value, '1')
+    
+    # Packet reporting - only map if provided
+    if 'packet_reporting_status' in policy and policy['packet_reporting_status'] is not None:
+        packet_reporting_value = str(policy['packet_reporting_status']).lower()
+        result['packet_reporting_status'] = PACKET_REPORTING_MAP.get(packet_reporting_value, '2')
+    
+    return result
 
 def main():
     run_module()

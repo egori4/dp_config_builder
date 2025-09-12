@@ -132,12 +132,14 @@ dp_config_builder/
 │   │   ├── create_vars.yml            # Variables for creation operations
 │   │   ├── edit_vars.yml              # Variables for editing operations  
 │   │   ├── delete_vars.yml            # Variables for deletion operations
-│   │   └── get_vars.yml               # Variables for query operations
+│   │   ├── get_vars.yml               # Variables for query operations
+│   │   └── update_vars.yml            # Variables for policy update operations
 │   └── 📋 Variable Templates (in git)
 │       ├── create_vars.yml.example    # Template for create_vars.yml
 │       ├── edit_vars.yml.example      # Template for edit_vars.yml
 │       ├── delete_vars.yml.example    # Template for delete_vars.yml
-│       └── get_vars.yml.example       # Template for get_vars.yml 
+│       ├── get_vars.yml.example       # Template for get_vars.yml
+│       └── update_vars_example.yml    # Template for update_vars.yml 
 └── 
 
 ```
@@ -262,9 +264,15 @@ dp_config_builder/
 |-----------|-------------|--------------|
 | Create Security Policy | POST | `/mgmt/device/byip/{ip}/config/rsIDSNewRulesTable/{policy_name}` |
 
-**Parameters**: policy configuration parameters including profile bindings
-**Profile Bindings**: different protection profile types supported
+**Parameters**: Minimal required parameters with optional advanced configuration
+**Profile Bindings**: Different protection profile types supported
 **Response**: Policy creation status with error details
+
+**Key Features**:
+- **Minimal Parameters**: Only `policy_name` is mandatory - DefensePro provides defaults
+- **Conditional Parameter Sending**: Only user-specified parameters sent to API
+- **User-Friendly Value Mapping**: Automatic conversion of human-readable values to API codes
+- **Flexible Configuration**: Full parameter support when needed
 
 ### Policy Update Management
 
@@ -278,6 +286,8 @@ dp_config_builder/
 
 **Payload**: None (DefensePro IP specified in URL path)
 
+**Configuration**: `vars/update_vars.yml` and `vars/update_vars_example.yml`
+
 **API Pattern**:
 ```
 POST /mgmt/device/byip/10.105.192.32/config/updatepolicies
@@ -287,21 +297,48 @@ POST /mgmt/device/byip/10.105.192.32/config/updatepolicies
 **Key Features**:
 - Must be called while device is locked
 - Commits ALL pending configuration changes
+- Supports both standalone and orchestrated execution modes
 
-**Integration Options**:
+**Conditional Execution Modes**:
 - **Automatic**: Integrated into orchestration playbooks with `apply_policies_after_creation: true`
 - **Manual**: Standalone `update_policies.yml` playbook for selective updates
-- **Safety**: Optional Interactive confirmation prompts in standalone mode
+- **Conditional**: Controlled by `skip_policy_updates` variable in orchestrated flows
+- **Safety**: Optional interactive confirmation prompts in standalone mode
+
+**Device Lock/Unlock Integration**:
+- **Centralized Locking**: Orchestration playbook "create_security_policy.yml" handle device locking centrally
+- **Always Unlock**: Devices are unlocked even if operations fail
 
 
 **Usage Pattern**:
 ```python
-# In orchestration workflow
+# In orchestration workflow - centralized locking with conditional skipping
+- name: "Centralized Device Locking for Orchestration"
+  dp_lock:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  loop: "{{ dp_ip }}"
+
+# Import sub-playbooks with conditional variables
+- import_playbook: create_network_class.yml
+  vars:
+    skip_policy_updates: true  # Orchestrator handles policy updates
+    skip_device_lock: true     # Orchestrator handles locking centrally
+
+# Individual playbook conditional logic  
+- name: "Lock device(s)"
+  dp_lock:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  when: not (skip_device_lock | default(false))
+
 - name: "Apply policy updates per device"
   update_policies:
     provider: "{{ cc }}"
     dp_ip: "{{ item }}"
-  when: security_policy_config.apply_policies_after_creation | default(true)
+  when: 
+    - not (skip_policy_updates | default(false))
+    - apply_policies_after_creation | default(true)
 ```
 
 ## Module Development Pattern

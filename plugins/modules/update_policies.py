@@ -98,7 +98,7 @@ def run_module():
                         )
                     else:
                         status = "success"
-                        message = f"Policy updates applied successfully to {dp_ip}"
+                        message = f"Policy updates applied successfully on {dp_ip}"
                         
                         # Add warning about API response reliability
                         if not any(pattern in response_str for pattern in ['success', 'completed', 'applied', 'updated']):

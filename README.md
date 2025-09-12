@@ -41,6 +41,7 @@ cp create_vars.yml.example create_vars.yml  # For creating resources
 cp edit_vars.yml.example edit_vars.yml      # For editing resources
 cp delete_vars.yml.example delete_vars.yml  # For deleting resources
 cp get_vars.yml.example get_vars.yml        # For querying resources
+cp update_vars_example.yml update_vars.yml  # For policy updates
 
 # Edit connection settings
 nano cc.yml  # Add your CyberController IP, username, password
@@ -142,7 +143,9 @@ dp_config_builder/
 - **Unified orchestration**: Single playbook creates profiles and security policies
 - **Profile binding**: Bind different protection profile types to security policies
 - **Flexible control**: Individual control flags for each creation stage
-- **Comprehensive configuration**: Full policy parameters (source, destination, direction, priority, actions)
+- **Conditional execution**: Centralized device locking and policy updates during orchestration
+- **Minimal parameters**: Only policy name required - DefensePro provides sensible defaults
+- **Comprehensive configuration**: Full policy parameters when needed (source, destination, direction, priority, actions)
 - **Error handling**: Detailed error reporting and validation
 - **Preview mode**: Check mode support to preview planned operations
 - **Existing profile support**: Use existing profiles without recreating them
@@ -201,14 +204,24 @@ ansible-playbook playbooks/create_security_policy.yml
 
 todo 
 
-create connlim display result after cl creation
-review holistically best pracice policy creation
+
+add edit policy
+add delete policy
+add get policy
+add conditional lock unlock and policy update on edit, delete profiles (netclass, connlim)
+documentation
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v0.2.0 | 2025-09-10 | Added security policy orchestration with profile binding capabilities, formatting log module |
+| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities, formatting log module
+<br>• Added update policies playbook
+<br>• Enhanced Policy creation module logic, effectiveness holistically
+<br>• Added conditional Update policies and conditional lock/unlock when creating profiles/policies
+<br>• Updated create security module to send only parameters defined by user
+<br>• Added summary log after creating connection limit profile
+<br>• Optimized/standardized the format of update policies playbook |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
 | v0.1.3 |       | Resrved for Rahul(BDOS)|

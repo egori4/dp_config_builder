@@ -41,6 +41,7 @@ cp create_vars.yml.example create_vars.yml  # Edit variables as needed
 cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
 cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
 cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp update_vars_example.yml update_vars.yml  # Edit variables as needed
 ```
 
 ### 2. Run Operations
@@ -279,15 +280,22 @@ security_policy_config:
 # 2. Run orchestration - policies will be applied automatically
 ansible-playbook playbooks/create_security_policy.yml
 
-# Option B: Manual policy updates after the change (standalone)
-# 1. Run the standalone policy update playbook after the change
+# Option B: Manual policy updates (standalone)
+# 1. Configure target devices in update_vars.yml
+nano vars/update_vars.yml  # Set target_devices list
+
+# 2. Run the standalone policy update playbook
+ansible-playbook playbooks/update_policies.yml
+
+# Option C: Override target devices (alternative to editing vars file)
 ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.32','10.105.192.33']"
 ```
 
 **Policy Update Features**:
 - **Automatic integration**: Policies applied automatically during orchestration
-- **Manual control**: Standalone playbook for manual policy updates  
-- **Safety confirmation**: Optional Interactive prompts to prevent accidental updates
+- **Manual control**: Standalone playbook for manual policy updates using `vars/update_vars.yml`
+- **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
+- **Safety confirmation**: Optional interactive prompts to prevent accidental updates
 - **Per-device processing**: Updates applied individually with proper locking
 
 
