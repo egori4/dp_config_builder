@@ -4,6 +4,8 @@
 
 # Import existing playbooks for prerequisite components
 - import_playbook: create_network_class.yml
+  vars:
+    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
   when: security_policy_config.create_network_classes | default(false)
 
 - import_playbook: create_cl_profiles.yml
@@ -24,7 +26,7 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-          when: security_policy_config.create_security_policies | default(false)
+          when: security_policy_config.create_security_policies | default(false) 
 
         - name: "Create DefensePro security policies"
           create_security_policy:
