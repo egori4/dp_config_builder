@@ -13,6 +13,7 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
         - name: Create network classes and groups
           create_network_class:
@@ -75,9 +76,22 @@
           loop_control:
             label: "Device: {{ item.item }}"
 
+        - name: "Apply policy updates per device"
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - create_results is defined
+            - create_results.changed | default(false)
+
       always:
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

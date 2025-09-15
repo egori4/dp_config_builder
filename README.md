@@ -41,6 +41,7 @@ cp create_vars.yml.example create_vars.yml  # For creating resources
 cp edit_vars.yml.example edit_vars.yml      # For editing resources
 cp delete_vars.yml.example delete_vars.yml  # For deleting resources
 cp get_vars.yml.example get_vars.yml        # For querying resources
+cp update_vars_example.yml update_vars.yml  # For policy updates
 
 # Edit connection settings
 nano cc.yml  # Add your CyberController IP, username, password
@@ -121,6 +122,13 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
+### Security Policy Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-9-create-security-policies-with-profile-bindings) |
+| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-10-apply-defensepro-policy-updates) |
+
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
 -  **Flexible creation**: All parameters optional except name (sensible defaults provided)
@@ -130,6 +138,17 @@ dp_config_builder/
 -  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
+
+**Security Policy Features**:
+- **Unified orchestration**: Single playbook creates profiles and security policies
+- **Profile binding**: Bind different protection profile types to security policies
+- **Flexible control**: Individual control flags for each creation stage
+- **Conditional execution**: Centralized device locking and policy updates during orchestration
+- **Minimal parameters**: Only policy name required - DefensePro provides sensible defaults
+- **Comprehensive configuration**: Full policy parameters when needed (source, destination, direction, priority, actions)
+- **Error handling**: Detailed error reporting and validation
+- **Preview mode**: Check mode support to preview planned operations
+- **Existing profile support**: Use existing profiles without recreating them
 
 **Section Optionality**:
 - **Protections only**: Define `cl_protections`, skip `cl_profiles`
@@ -176,12 +195,33 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 # Delete Connection Limit Profiles (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
+
+# Security Policy Creation (using vars/create_vars.yml configuration)
+ansible-playbook playbooks/create_security_policy.yml
 ```
+
+
+
+todo 
+
+
+add edit policy
+add delete policy
+add get policy
+add conditional lock unlock and policy update on edit, delete profiles (netclass, connlim)
+documentation
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities, formatting log module
+<br>• Added update policies playbook
+<br>• Enhanced Policy creation module logic, effectiveness holistically
+<br>• Added conditional Update policies and conditional lock/unlock when creating profiles/policies
+<br>• Updated create security module to send only parameters defined by user
+<br>• Added summary log after creating connection limit profile
+<br>• Optimized/standardized the format of update policies playbook |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
 | v0.1.3 |       | Resrved for Rahul(BDOS)|

@@ -132,12 +132,14 @@ dp_config_builder/
 │   │   ├── create_vars.yml            # Variables for creation operations
 │   │   ├── edit_vars.yml              # Variables for editing operations  
 │   │   ├── delete_vars.yml            # Variables for deletion operations
-│   │   └── get_vars.yml               # Variables for query operations
+│   │   ├── get_vars.yml               # Variables for query operations
+│   │   └── update_vars.yml            # Variables for policy update operations
 │   └── 📋 Variable Templates (in git)
 │       ├── create_vars.yml.example    # Template for create_vars.yml
 │       ├── edit_vars.yml.example      # Template for edit_vars.yml
 │       ├── delete_vars.yml.example    # Template for delete_vars.yml
-│       └── get_vars.yml.example       # Template for get_vars.yml 
+│       ├── get_vars.yml.example       # Template for get_vars.yml
+│       └── update_vars_example.yml    # Template for update_vars.yml 
 └── 
 
 ```
@@ -212,6 +214,19 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
+5. **Security Policy Modules** (`plugins/modules/`)
+   - **Purpose**: Unified orchestration for security policy creation with profile bindings
+   - **Features**: Policy creation, profile binding, orchestration control
+   - **Architecture Highlights**:
+     - Creation: `create_security_policy.py` ( API call with profile bindings)
+     - Orchestration: `create_security_policy.yml` (coordinates profiles creation, and policies)
+   - **Key Features**:
+     - Unified orchestration with control flags for each creation stage
+     - Different protection profile types bindable to policies
+     - User-friendly parameter mapping (e.g., "block" → "1", "inbound" → "1")
+     - Comprehensive error handling with detailed failure reporting
+     - Preview mode support for orchestration planning
+
 
 ## API Endpoints
 
@@ -242,6 +257,89 @@ dp_config_builder/
 - Optional in variables (defaults to 0)
 - Valid values: 0 or next available starting from 450001+
 - Used in URL path for both creation and editing operations
+
+### Security Policy Management
+
+| Operation | HTTP Method | API Endpoint |
+|-----------|-------------|--------------|
+| Create Security Policy | POST | `/mgmt/device/byip/{ip}/config/rsIDSNewRulesTable/{policy_name}` |
+
+**Parameters**: Minimal required parameters with optional advanced configuration
+**Profile Bindings**: Different protection profile types supported
+**Response**: Policy creation status with error details
+
+**Key Features**:
+- **Minimal Parameters**: Only `policy_name` is mandatory - DefensePro provides defaults
+- **Conditional Parameter Sending**: Only user-specified parameters sent to API
+- **User-Friendly Value Mapping**: Automatic conversion of human-readable values to API codes
+- **Flexible Configuration**: Full parameter support when needed
+
+### Policy Update Management
+
+| Operation | HTTP Method | API Endpoint |
+|-----------|-------------|--------------|
+| Apply Policy Updates | POST | `/mgmt/device/byip/{dp_ip}/config/updatepolicies` |
+
+**Purpose**: Apply pending DefensePro configuration changes (commit configurations)
+
+**Module**: `plugins/modules/update_policies.py`
+
+**Payload**: None (DefensePro IP specified in URL path)
+
+**Configuration**: `vars/update_vars.yml` and `vars/update_vars_example.yml`
+
+**API Pattern**:
+```
+POST /mgmt/device/byip/10.105.192.32/config/updatepolicies
+# No request body needed
+```
+
+**Key Features**:
+- Must be called while device is locked
+- Commits ALL pending configuration changes
+- Supports both standalone and orchestrated execution modes
+
+**Conditional Execution Modes**:
+- **Automatic**: Integrated into orchestration playbooks with `apply_policies_after_creation: true`
+- **Manual**: Standalone `update_policies.yml` playbook for selective updates
+- **Conditional**: Controlled by `skip_policy_updates` variable in orchestrated flows
+- **Safety**: Optional interactive confirmation prompts in standalone mode
+
+**Device Lock/Unlock Integration**:
+- **Centralized Locking**: Orchestration playbook "create_security_policy.yml" handle device locking centrally
+- **Always Unlock**: Devices are unlocked even if operations fail
+
+
+**Usage Pattern**:
+```python
+# In orchestration workflow - centralized locking with conditional skipping
+- name: "Centralized Device Locking for Orchestration"
+  dp_lock:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  loop: "{{ dp_ip }}"
+
+# Import sub-playbooks with conditional variables
+- import_playbook: create_network_class.yml
+  vars:
+    skip_policy_updates: true  # Orchestrator handles policy updates
+    skip_device_lock: true     # Orchestrator handles locking centrally
+
+# Individual playbook conditional logic  
+- name: "Lock device(s)"
+  dp_lock:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  when: not (skip_device_lock | default(false))
+
+- name: "Apply policy updates per device"
+  update_policies:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  when: 
+    - not (skip_policy_updates | default(false))
+    - apply_policies_after_creation | default(true)
+```
 
 ## Module Development Pattern
 
@@ -528,6 +626,32 @@ try:
         errors.append(f"Failed operation: {resp.text}")
 except Exception as e:
     errors.append(f"Request failed: {str(e)}")
+```
+
+### Create Security Policy
+```python
+# Request
+url = f"/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}"
+body = {
+    "rsIDSNewRulesDirection": "1",           # Mapped from "inbound"
+    "rsIDSNewRulesAction": "1",              # Mapped from "block"
+    "rsIDSNewRulesPriority": "100", 
+    "rsIDSNewRulesProfileConlmt": "web_cl_profile",  # Profile binding
+    # ... additional profile bindings
+}
+resp = cc._post(url, json=body)
+
+# Response (Success)
+{
+    "status": "success",
+    "message": "Policy created successfully"
+}
+
+# Response (Error) 
+{
+    "status": "error", 
+    "message": "M_00386: An entry with same key already exists."
+}
 ```
 
 ### HTTP Error Patterns
