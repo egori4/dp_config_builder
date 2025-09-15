@@ -505,6 +505,19 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
+5. **Security Policy Modules** (`plugins/modules/`)
+   - **Purpose**: Unified orchestration for security policy creation with profile bindings
+   - **Features**: Policy creation, profile binding, orchestration control
+   - **Architecture Highlights**:
+     - Creation: `create_security_policy.py` ( API call with profile bindings)
+     - Orchestration: `create_security_policy.yml` (coordinates profiles creation, and policies)
+   - **Key Features**:
+     - Unified orchestration with control flags for each creation stage
+     - Different protection profile types bindable to policies
+     - User-friendly parameter mapping (e.g., "block" → "1", "inbound" → "1")
+     - Comprehensive error handling with detailed failure reporting
+     - Preview mode support for orchestration planning
+
 
 ## API Endpoints
 
@@ -535,6 +548,16 @@ dp_config_builder/
 - Optional in variables (defaults to 0)
 - Valid values: 0 or next available starting from 450001+
 - Used in URL path for both creation and editing operations
+
+### Security Policy Management
+
+| Operation | HTTP Method | API Endpoint |
+|-----------|-------------|--------------|
+| Create Security Policy | POST | `/mgmt/device/byip/{ip}/config/rsIDSNewRulesTable/{policy_name}` |
+
+**Parameters**: policy configuration parameters including profile bindings
+**Profile Bindings**: different protection profile types supported
+**Response**: Policy creation status with error details
 
 ## Module Development Pattern
 
@@ -821,6 +844,32 @@ try:
         errors.append(f"Failed operation: {resp.text}")
 except Exception as e:
     errors.append(f"Request failed: {str(e)}")
+```
+
+### Create Security Policy
+```python
+# Request
+url = f"/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}"
+body = {
+    "rsIDSNewRulesDirection": "1",           # Mapped from "inbound"
+    "rsIDSNewRulesAction": "1",              # Mapped from "block"
+    "rsIDSNewRulesPriority": "100", 
+    "rsIDSNewRulesProfileConlmt": "web_cl_profile",  # Profile binding
+    # ... additional profile bindings
+}
+resp = cc._post(url, json=body)
+
+# Response (Success)
+{
+    "status": "success",
+    "message": "Policy created successfully"
+}
+
+# Response (Error) 
+{
+    "status": "error", 
+    "message": "M_00386: An entry with same key already exists."
+}
 ```
 
 ### HTTP Error Patterns

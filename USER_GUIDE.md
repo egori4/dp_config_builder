@@ -253,6 +253,38 @@ ansible-playbook playbooks/delete_cl_profiles.yml
 - **Delete protections only**: Skip `cl_profile_deletions`, define `cl_protection_deletions` with standalone protections
 - **Complete cleanup**: Define both sections - remove from profiles first, then delete protections
 
+### Workflow 9: Create Security Policies with Profile Bindings
+```bash
+# 1. Configure your orchestration settings  
+nano vars/create_vars.yml
+
+# Edit the security_policy_config section:
+security_policy_config:
+  create_network_classes: true    # Create network classes first
+  create_cl_profiles: true        # Create CL profiles next  
+  create_security_policies: true  # Create security policies last
+
+# 2. Configure your security policies
+# Add policies to the security_policies section with profile bindings
+
+# 3. Test orchestration plan (preview mode)
+ansible-playbook --check playbooks/create_security_policy.yml
+
+# 4. Execute full orchestration
+ansible-playbook playbooks/create_security_policy.yml
+```
+
+**Security Policy Features**:
+- **Unified orchestration**: Creates profiles and security policies in sequence
+- **Profile binding**: Binds protection profiles to policies
+- **Flexible control**: Enable/disable each creation stage independently
+- **Existing resource support**: Use existing profiles without recreating them
+
+**Common scenarios**:
+- **Full setup**: Enable all flags to create everything from scratch
+- **Policies only**: Disable network and profile creation, use existing resources
+- **Partial creation**: Mix and match what gets created vs. using existing resources
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)
@@ -497,6 +529,48 @@ cl_profiles:
       - "new_custom_protection"      # Newly created above
       - "legacy_protection"          # Already exists on device
 ```
+
+### Security Policy Configuration
+
+Configure security policies with profile bindings in `vars/create_vars.yml`:
+
+```yaml
+# Orchestration control flags
+security_policy_config:
+  create_network_classes: true     # Create network classes first
+  create_cl_profiles: true         # Create CL profiles next
+  create_security_policies: true   # Create security policies last
+
+# Security policies with profile bindings
+security_policies:
+  - policy_name: "web_server_protection"
+    state: "enable"                        # enable, disable
+    action: "block"                        # block, report_only
+    src_network: "any"                     # Source network class
+    dst_network: "web_servers"             # Destination network class  
+    direction: "oneway"                    # oneway, twoway
+    priority: "100"                        # Policy priority (lower = higher precedence)
+    packet_reporting_status: "enable"      # enable, disable
+    
+    # Profile bindings (all optional)
+    connection_limit_profile: "web_cl_profile"
+    bdos_profile: "default_netflood_profile"
+    syn_protection_profile: "default_syn_profile"
+    dns_flood_profile: ""                  # Empty = no binding
+    https_flood_profile: ""
+    traffic_filters_profile: ""
+    signature_protection_profile: "web_appsec_profile"
+    ert_attackers_feed_profile: ""
+    geo_feed_profile: ""
+    out_of_state_profile: ""
+```
+
+**Security Policy Configuration Notes**:
+- **policy_name**: MANDATORY - Unique policy name
+- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
+- **direction**: MANDATORY - Traffic direction to match
+- **Profile bindings**: All optional - leave empty string for no binding
+- **Control flags**: Use to enable/disable each creation stage independently
 
 ## Troubleshooting
 
