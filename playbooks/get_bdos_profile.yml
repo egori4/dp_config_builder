@@ -4,7 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/create_bdos_vars.yml  # Contains dp_ip list and profile_names list
+    - ../vars/get_vars.yml  # Contains dp_ip list and profile_names list
 
   tasks:
     - block:

@@ -1,9 +1,9 @@
 # plugins/modules/create_bdos_profile.py
 """
-Unified Ansible module to create/update BDOS (Network Flood) profiles on DefensePro devices.
+Unified Ansible module to create BDOS profiles on DefensePro devices.
 
 This module follows the same unified architecture pattern as create_security_policy.py.
-- Accepts a list of BDoS profiles to create/update in a single device.
+- Accepts a list of BDoS profiles to create in a single/multiple device.
 - Supports check mode, logging, error handling, and parameter mapping with inline validation.
 """
 

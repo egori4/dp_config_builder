@@ -1,4 +1,4 @@
-# plugins/modules/manage_bdos_edit.py
+# plugins/modules/edit_bdos_profile.py
 """
 Unified Ansible module to edit one or multiple BDOS Flood profiles
 on Radware DefensePro devices via Radware CyberController API.
@@ -151,7 +151,7 @@ def run_module():
 
 def map_netflood_profile_parameters(params):
     """
-    Map user-friendly NetFlood parameters to DefensePro API values.
+    Map user-friendly BDoS parameters to DefensePro API values.
     """
 
     ENUM_MAPS = {

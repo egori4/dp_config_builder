@@ -1,4 +1,4 @@
-# plugins/modules/get_bdos_profiles.py
+# plugins/modules/get_bdos_profile.py
 """
 Ansible module to fetch one or more BDOS Flood profiles from Radware DefensePro devices via Radware CyberController API.
 
@@ -12,7 +12,7 @@ from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: get_bdos_profiles
+module: get_bdos_profile
 short_description: Fetch one or more BDOS Flood profiles from DefensePro
 description:
   - Retrieves one or more BDOS Flood profiles from DefensePro devices via Radware CC API.

@@ -4,7 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/create_bdos_vars.yml
+    - ../vars/edit_vars.yml
 
   tasks:
     - block:

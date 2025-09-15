@@ -4,8 +4,7 @@ Unified Ansible module to delete one or multiple BDOS Flood profiles
 on Radware DefensePro devices.
 
 Handles deletion via the Radware CyberController API,
-supports multiple profiles per device, check mode, and
-skips non-existent profiles without failing.
+supports multiple profiles per device, check mode, and skips non-existent profiles without failing.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -14,7 +13,7 @@ from ansible.module_utils.logger import Logger
 
 DOCUMENTATION = r'''
 ---
-module: manage_bdos_delete
+module: delete_bdos_profile
 short_description: Delete BDOS Flood profiles on DefensePro
 description:
   - Deletes one or more BDOS Flood profiles on DefensePro devices via Radware CC API.
