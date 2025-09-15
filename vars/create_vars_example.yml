@@ -102,7 +102,7 @@ security_policies:
   # Example Policy 1: Web server protection policy
   - policy_name: "web_server_security_policy"
     state: "enable"                           # enable | disable (or 1 | 2)
-    action: "block"                           # block | report_only
+    action: "block_and_report"                           # block_and_report | report_only
     priority: "100"                           # Priority (1-1000, lower = higher priority)
     src_network: "any"                        # Source network class or "any"
     dst_network: "web_servers"                # Destination network class or "any"

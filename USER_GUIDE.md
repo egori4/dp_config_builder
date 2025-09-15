@@ -69,6 +69,12 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 # Delete connection limit profiles and protections (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
+
+# Create security policies with orchestration (includes network classes, CL profiles, and policies)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Edit existing security policies (partial updates and profile management)
+ansible-playbook playbooks/edit_security_policy.yml
 ```
 
 ## Common Workflows
@@ -531,7 +537,7 @@ security_policy_config:
 security_policies:
   - policy_name: "web_server_protection"
     state: "enable"                        # enable, disable
-    action: "block"                        # block, report_only
+    action: "block_and_report"                        # block_and_report, report_only
     src_network: "any"                     # Source network class
     dst_network: "web_servers"             # Destination network class  
     direction: "oneway"                    # oneway, twoway
@@ -557,6 +563,62 @@ security_policies:
 - **direction**: MANDATORY - Traffic direction to match
 - **Profile bindings**: All optional - leave empty string for no binding
 - **Control flags**: Use to enable/disable each creation stage independently
+
+### Editing Security Policies
+
+Modify existing security policies using partial updates in `vars/edit_vars.yml`:
+
+```yaml
+# Target DefensePro devices
+dp_ip:
+  - "10.105.192.32"
+
+# Security policies to edit
+edit_security_policies:
+  - policy_name: "web_server_protection"    # MANDATORY: Policy name to edit
+    # Basic configuration parameters (all optional)
+    src_network: "internal_networks"        # Source network class name or "any"
+    dst_network: "web_servers"              # Destination network class name or "any"
+    direction: "twoway"                     # oneway, twoway, bidirectional
+    state: "enable"                         # enable, disable, active, inactive
+    action: "block_and_report"              # block_and_report, report_only
+    priority: "750"                         # Priority value (1-1000)
+    packet_reporting_status: "enable"       # enable, disable
+    
+    # Profile bindings (all optional - use empty string to remove binding)
+    connection_limit_profile: "web_limits"  # Connection limit profile name
+    bdos_profile: ""                        # BDOS profile name (empty = detach)
+    syn_protection_profile: "syn_limits"    # SYN protection profile name
+    dns_flood_profile: ""                   # DNS flood profile name
+    https_flood_profile: ""                 # HTTPS flood profile name
+    traffic_filters_profile: ""             # Traffic filters profile name
+    signature_protection_profile: "app_sec" # Application security profile name
+    ert_attackers_feed_profile: ""          # ERT attackers feed profile name
+    geo_feed_profile: ""                    # Geo feed profile name
+    out_of_state_profile: ""                # Out of state profile name
+
+  # Edit another policy - minimal changes
+  - policy_name: "database_protection"
+    action: "report_only"                   # Change to monitoring mode
+    connection_limit_profile: ""            # Remove connection limit protection
+```
+
+**Run the playbook**:
+```bash
+# Preview changes (check mode)
+ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml --check
+
+# Execute changes
+ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml
+```
+
+**Security Policy Editing Notes**:
+- **policy_name**: MANDATORY - Must be an existing security policy name
+- **Partial Updates**: Only specify parameters you want to change - unspecified parameters remain unchanged
+- **Profile Detachment**: Use empty string ("") to remove profile bindings
+- **Profile Attachment**: Specify profile name to attach/change binding  
+- **Preview Mode**: Use `--check` flag to see planned changes before execution
+- **Control Flags**: Device locking can be skipped with `skip_device_lock: true` in vars
 
 ## Troubleshooting
 
