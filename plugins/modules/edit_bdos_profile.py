@@ -177,7 +177,7 @@ def map_netflood_profile_parameters(params):
     FIELD_MAP = {
         "status": "rsNetFloodProfileStatus",
         "tcp_status": "rsNetFloodProfileTcpStatus",
-        "tcp_syn_flood": "rsNetFloodProfileTcpSynStatus",
+        "syn_flood": "rsNetFloodProfileTcpSynStatus",
         "udp_flood": "rsNetFloodProfileUdpStatus",
         "igmp_flood": "rsNetFloodProfileIgmpStatus",
         "icmp_flood": "rsNetFloodProfileIcmpStatus",

@@ -159,7 +159,7 @@ def map_netflood_profile_parameters(params):
     Map user-friendly NetFlood parameters to DefensePro API values.
     """
 
-    ENUM_MAPS = {
+    ENUM_MAPS = {       
         "syn_flood": {"enable": "1", "disable": "2"},
         "udp_flood": {"enable": "1", "disable": "2"},
         "igmp_flood": {"enable": "1", "disable": "2"},
@@ -182,7 +182,7 @@ def map_netflood_profile_parameters(params):
     FIELD_MAP = {
         "status": "rsNetFloodProfileStatus",
         "tcp_status": "rsNetFloodProfileTcpStatus",
-        "tcp_syn_flood": "rsNetFloodProfileTcpSynStatus",
+        "syn_flood": "rsNetFloodProfileTcpSynStatus",
         "udp_flood": "rsNetFloodProfileUdpStatus",
         "igmp_flood": "rsNetFloodProfileIgmpStatus",
         "icmp_flood": "rsNetFloodProfileIcmpStatus",
@@ -193,7 +193,7 @@ def map_netflood_profile_parameters(params):
         "tcp_frag_flood": "rsNetFloodProfileTcpFragStatus",
         "udp_frag_flood": "rsNetFloodProfileUdpFragStatus",
 
-        # Bandwidth / quotas
+        # Bandwidth / quota
         "inbound_traffic": "rsNetFloodProfileBandwidthIn",
         "outbound_traffic": "rsNetFloodProfileBandwidthOut",
         "tcp_in_quota": "rsNetFloodProfileTcpInQuota",

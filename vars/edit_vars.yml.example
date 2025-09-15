@@ -51,7 +51,6 @@ bdos_profiles:
       icmp_flood: "enable"                   # enable/disable
       tcp_ack_fin_flood: "disable"          # enable/disable
       tcp_rst_flood: "disable"              # enable/disable
-      tcp_psh_ack_flood: "disable"          # enable/disable
       tcp_syn_ack_flood: "disable"          # enable/disable
       tcp_frag_flood: "disable"             # enable/disable
       udp_frag_flood: "disable"             # enable/disable

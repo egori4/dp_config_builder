@@ -85,10 +85,10 @@ dp_config_builder/
 ├── 
 ├── 📁 Documentation  
 │   ├── README.md                # Project overview and quick start
-│   ├── USER_GUIDE.md           # Step-by-step operational guide
-│   └── DEVELOPER.md            # Technical architecture (this file)
+│   ├── USER_GUIDE.md            # Step-by-step operational guide
+│   └── DEVELOPER.md             # Technical architecture (this file)
 ├── 
-├── 📁 playbooks/               # ORCHESTRATION LAYER
+├── 📁 playbooks/                # ORCHESTRATION LAYER
 │   ├── 🎯 Network Class Operations
 │   │   ├── create_network_class.yml    # Create network classes
 │   │   ├── edit_network_class.yml      # Modify network classes  
@@ -99,9 +99,14 @@ dp_config_builder/
 │   │   ├── edit_cl_protections.yml     # Edit CL protections
 │   │   ├── get_cl_profiles.yml         # Query CL profiles
 │   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
+│   ├── 🎯 BDoS Flood Profile Operations
+│   │   ├── create_bdos_profile.yml     # Create BDoS Flood profiles
+│   │   ├── edit_bdos_profile.yml       # Modify BDoS Flood profiles
+│   │   ├── delete_bdos_profile.yml     # Remove BDoS Flood profiles
+│   │   └── get_bdos_profile.yml       # Query BDoS Flood profiles
 │   ├── 📊 Runtime Data (auto-created)
 │   │   ├── log/                        # Execution logs by date
-│   │   │   └── log_YYYYMMDD.log       # Daily log files
+│   │   │   └── log_YYYYMMDD.log        # Daily log files
 │   │   └── tmp/                        # Temporary files  
 │   │       └── radware_cc_sessions/    # Session cache files
 ├── 
@@ -117,12 +122,17 @@ dp_config_builder/
 │   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
 │   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
 │   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
+│   │   ├── 🔧 BDoS Flood Profile Modules (v0.1.5+)
+│   │   │   ├── create_bdos_profile.py      # Batch creation with validation
+│   │   │   ├── edit_bdos_profile.py        # Modify existing BDoS profiles
+│   │   │   ├── delete_bdos_profile.py      # Batch deletion with error handling
+│   │   │   └── get_bdos_profile.py        # Query BDoS Flood profiles
 │   │   └── 🔧 Device Management
-│   │       ├── dp_lock.py              # Device configuration lock
-│   │       └── dp_unlock.py            # Device configuration unlock
+│   │       ├── dp_lock.py                  # Device configuration lock
+│   │       └── dp_unlock.py                # Device configuration unlock
 │   └── 📁 module_utils/        # INFRASTRUCTURE LAYER
-│       ├── radware_cc.py              # HTTP client with session management
-│       └── logger.py                  # Structured logging with rotation
+│       ├── radware_cc.py                # HTTP client with session management
+│       └── logger.py                    # Structured logging with rotation
 ├── 
 ├── 📁 vars/                    # CONFIGURATION & DATA LAYER
 │   ├── 🔗 Connection Configuration
