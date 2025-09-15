@@ -128,6 +128,7 @@ dp_config_builder/
 |----------|---------|---------------|
 | `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-9-create-security-policies-with-profile-bindings) |
 | `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
+| `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
 | `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-10-apply-defensepro-policy-updates) |
 
 **Connection Limit Protection Features**:
@@ -143,12 +144,15 @@ dp_config_builder/
 **Security Policy Features**:
 - **Unified orchestration**: Single playbook creates profiles and security policies
 - **Policy editing**: Modify existing policies with partial updates and profile management
+- **Policy deletion**: Remove policies with dual deletion modes (policy-only vs policy+profiles)
 - **Profile binding**: Bind different protection profile types to security policies
 - **Profile management**: Attach/detach profiles using names or empty strings
 - **Flexible control**: Individual control flags for each creation stage
 - **Conditional execution**: Centralized device locking and policy updates during orchestration
 - **Minimal parameters**: Only policy name required - DefensePro provides sensible defaults
 - **Partial updates**: For editing, only specify parameters to change - others remain unchanged
+- **Safe deletion**: Default policy-only deletion preserves profiles for other policies
+- **Advanced cleanup**: Optional policy+profiles deletion for comprehensive cleanup
 - **Comprehensive configuration**: Full policy parameters when needed (source, destination, direction, priority, actions)
 - **Error handling**: Detailed error reporting and validation
 - **Preview mode**: Check mode support to preview planned operations
@@ -202,13 +206,18 @@ ansible-playbook playbooks/delete_cl_profiles.yml
 
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_security_policy.yml
+
+# Security Policy Editing (using vars/edit_vars.yml configuration)  
+ansible-playbook playbooks/edit_security_policy.yml
+
+# Security Policy Deletion (using vars/delete_vars.yml configuration)
+ansible-playbook playbooks/delete_security_policy.yml
 ```
 
 
 
 todo 
 
-add delete policy
 add get policy
 documentation
 

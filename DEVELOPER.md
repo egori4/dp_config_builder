@@ -101,7 +101,8 @@ dp_config_builder/
 │   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
 │   ├── 🎯 Security Policy Operations
 │   │   ├── create_security_policy.yml  # Create security policies with orchestration
-│   │   └── edit_security_policy.yml    # Edit existing security policies
+│   │   ├── edit_security_policy.yml    # Edit existing security policies
+│   │   └── delete_security_policy.yml  # Delete security policies with cleanup options
 │   ├── 📊 Runtime Data (auto-created)
 │   │   ├── log/                        # Execution logs by date
 │   │   │   └── log_YYYYMMDD.log       # Daily log files
@@ -122,7 +123,8 @@ dp_config_builder/
 │   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
 │   │   │   ├── create_security_policy.py   # Create policies with profile bindings
-│   │   │   └── edit_security_policy.py     # Edit policies (partial updates)
+│   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
+│   │   │   └── delete_security_policy.py   # Delete policies (dual deletion modes)
 │   │   └── 🔧 Device Management
 │   │       ├── dp_lock.py              # Device configuration lock
 │   │       └── dp_unlock.py            # Device configuration unlock
@@ -221,17 +223,21 @@ dp_config_builder/
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
 5. **Security Policy Modules** (`plugins/modules/`)
-   - **Purpose**: Unified orchestration for security policy creation and editing with profile bindings
-   - **Features**: Policy creation, policy editing, profile binding, orchestration control
+   - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
+   - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
      - Creation: `create_security_policy.py` (API call with profile bindings)
      - Editing: `edit_security_policy.py` (partial updates with profile attachment/detachment)
+     - Deletion: `delete_security_policy.py` (dual deletion modes with optional profile cleanup)
      - Orchestration: `create_security_policy.yml` (coordinates profiles creation, and policies)
      - Editing: `edit_security_policy.yml` (modifies existing policies with conditional locking)
+     - Deletion: `delete_security_policy.yml` (removes policies with flexible cleanup options)
    - **Key Features**:
      - Unified orchestration with control flags for each creation stage
      - Partial updates for editing (only specify parameters to change)
      - Profile attachment and detachment (empty string to detach)
+     - Dual deletion modes (policy-only vs policy+profiles cleanup)
+     - Preview mode for all operations to validate changes before execution
      - Different protection profile types bindable to policies
      - User-friendly parameter mapping (e.g., "block_and_report" → "1", "inbound" → "1")
      - Comprehensive error handling with detailed failure reporting
@@ -776,6 +782,65 @@ except Exception as e:
         **result
     )
 ```
+
+### Delete Security Policy
+
+**Module**: `delete_security_policy.py`  
+**Playbook**: `delete_security_policy.yml`  
+**Variables**: `delete_vars.yml` (delete_security_policies section)
+
+**Purpose**: Remove security policies with optional profile cleanup
+
+**Key Features**:
+- **Dual Deletion Modes**: Simple policy deletion or complex policy+profiles deletion
+- **Safe Default**: Policy-only deletion preserves profiles for other policies
+- **Batch Processing**: Delete multiple policies in a single operation
+- **Preview Mode**: Check mode shows planned deletions before execution
+- **Conditional Execution**: Device locking/unlocking can be skipped with control flags
+
+**Deletion Modes**:
+1. **`policy_only` (default/recommended)**:
+   - Endpoint: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}`
+   - Safe deletion - only removes the policy
+   - Associated profiles remain available for other policies
+   - Use for most deletion scenarios
+
+2. **`policy_and_profiles` (advanced)**:
+   - Endpoint: `DELETE /mgmt/device/byip/{dp_ip}/config/deletenetworktemplatelist`
+   - May remove associated profiles if no longer used by other policies
+   - Use with caution - may affect other policies
+   - Only use when certain about profile cleanup requirements
+
+**Variables Structure** (`delete_vars.yml`):
+```yaml
+delete_security_policies:
+  - policy_name: "test_security_policy"     # MANDATORY: Policy name to delete
+    deletion_mode: "policy_only"            # OPTIONAL: policy_only | policy_and_profiles
+  
+  - policy_name: "old_security_policy"     # MANDATORY: Policy name to delete  
+    deletion_mode: "policy_and_profiles"    # OPTIONAL: Advanced cleanup mode
+    
+  # deletion_mode defaults to "policy_only" if not specified
+  - policy_name: "another_policy"           # Uses default safe deletion mode
+```
+
+**API Endpoints**:
+```python
+# Policy-only deletion (safe, default)
+url = f"{config.BASE_URL}/config/rsIDSNewRulesTable/{policy_name}"
+resp = cc._delete(url)
+
+# Policy and profiles deletion (advanced)
+url = f"{config.BASE_URL}/config/deletenetworktemplatelist"
+body = {"rsIDSNewRulesTable": [{"Name": policy_name}]}
+resp = cc._delete(url, json=body)
+```
+
+**Usage Recommendations**:
+- Use `policy_only` mode for shared environments where profiles may be used by multiple policies
+- Use `policy_and_profiles` mode only when certain that associated profiles should be cleaned up
+- Always test in preview mode first with `policy_and_profiles` to understand impact
+- Consider manual profile cleanup after policy deletion for better control
 
 ## Session Management
 
