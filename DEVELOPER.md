@@ -1,296 +1,3 @@
-<<<<<<< HEAD
-# DefensePro Configuration Builder - Developer Guide
-
-**Technical documentation for developers working on the DefensePro Ansible modules**
-
-## Architecture Overview
-
-```
-dp_config_builder/
-├── playbooks/           # Ansible playbooks (orchestration layer)
-├── plugins/
-│   ├── modules/         # Custom Ansible modules (business logic)
-│   └── module_utils/    # Shared utilities (RadwareCC, Logger)
-├── vars/               # Configuration templates and user data
-└── tasks/              # Reusable task fragments
-```
-
-## Module Architecture
-
-### Core Components
-
-1. **RadwareCC** (`plugins/module_utils/radware_cc.py`)
-   - HTTP client with session management
-   - Automatic re-authentication on 403 errors
-   - Request/response logging and error handling
-
-2. **Logger** (`plugins/module_utils/logger.py`)
-   - Structured logging with verbosity levels
-   - File-based logging with rotation
-
-3. **Network Class Modules** (`plugins/modules/`)
-   - CRUD operations for DefensePro network classes
-   - Consistent parameter validation and error handling
-
-## API Endpoints
-
-### Network Class Management
-| Operation | Method | Endpoint |
-|-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
-| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
-
-### Device Locking
-| Operation | Method | Endpoint |
-|-----------|--------|----------|
-| **Lock** | POST | `/mgmt/device/byip/{dp_ip}/config/lock` |
-| **Unlock** | POST | `/mgmt/device/byip/{dp_ip}/config/unlock` |
-
-## Module Development Pattern
-
-### Standard Module Structure
-```python
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
-
-def run_module():
-    module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        # Operation-specific parameters
-    )
-    
-    result = dict(changed=False, response={})
-    debug_info = {}
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    
-    # Extract provider and setup logging
-    provider = module.params['provider']
-    log_level = provider.get('log_level', 'disabled')
-    from ansible.module_utils.logger import Logger
-    logger = Logger(verbosity=log_level)
-    
-    try:
-        # Initialize RadwareCC client
-        cc = RadwareCC(provider['cc_ip'], provider['username'], 
-                      provider['password'], log_level=log_level, logger=logger)
-        
-        if not module.check_mode:
-            # Construct API request
-            # Execute operation
-            # Handle response
-            pass
-            
-    except Exception as e:
-        logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-    
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
-```
-
-## Request/Response Patterns
-
-### Create bdos profile
-```json
-POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/BDOS_Profile_10
-
-{
-    "rsNetFloodProfileName": "BDOS_Profile_10",
-    "rsNetFloodProfileTcpStatus": 1,
-    "rsNetFloodProfileUdpStatus": 2,
-    "rsNetFloodProfileIcmpStatus": 1,
-    "rsNetFloodProfileTcpSynAckStatus": 2,
-    "rsNetFloodProfileTcpFragStatus": 1,
-    "rsNetFloodProfileBandwidthIn": "30000",
-    "rsNetFloodProfileBandwidthOut": "30000",
-    "rsNetFloodProfileTransparentOptimization": 2,
-    "rsNetFloodProfileAction": 0,
-    "rsNetFloodProfileBurstEnabled": 2,
-    "rsNetFloodProfileFootprintStrictness": 0,
-    "rsNetFloodProfilePacketReportStatus": 2,
-    "rsNetFloodProfilePacketTraceStatus": 2
-}
-```
-
-### Edit bdos profile
-```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/BDOS_Profile_10
-
-{
-    "rsNetFloodProfileName": "BDOS_Profile_10",
-    "rsNetFloodProfileBandwidthIn": "40000",
-    "rsNetFloodProfileBandwidthOut": "30000"
-}
-```
-
-### Get bdos profile Response
-```json
-{
-    "rsNetFloodProfileTable": [
-        {
-            "rsNetFloodProfileName": "BDOS_Profile_10",
-            "rsNetFloodProfileTcpStatus": 1,
-            "rsNetFloodProfileUdpStatus": 2,
-            "rsNetFloodProfileIcmpStatus": 1
-        }
-    ]
-}
-```
-
-## Error Handling
-
-### HTTP Error Patterns
-```python
-try:
-    resp = cc._post(url, json=body)
-    data = resp.json()
-except requests.exceptions.HTTPError as err:
-    if err.response.status_code == 403:
-        # Re-authentication handled automatically by RadwareCC
-        pass
-    elif err.response.status_code == 404:
-        # Resource not found
-        pass
-except ValueError:
-    # Invalid JSON response
-    raise Exception(f"Invalid JSON response: {resp.text}")
-```
-
-### Module Error Reporting
-```python
-try:
-    # Operation logic
-    pass
-except Exception as e:
-    logger.error(f"Operation failed: {str(e)}")
-    module.fail_json(
-        msg=str(e), 
-        debug_info=debug_info,
-        **result
-    )
-```
-
-## Session Management
-
-### Session Persistence
-- Sessions stored in `./tmp/radware_cc_sessions/` (preferred) or system temp
-- Session lifetime: 600 seconds (configurable)
-- Automatic cleanup of expired sessions
-- Hash-based session keys for multi-user environments
-
-### Session File Format
-```
-session_{md5_hash}.pkl    # Pickled cookies
-session_{md5_hash}.time   # Creation timestamp
-```
-
-## Logging
-
-### Log Levels
-- `disabled`: No logging
-- `info`: Operational messages
-- `debug`: Detailed request/response data
-
-### Log Location
-- File: `playbooks/log/log_YYYYMMDD.log`
-- Format: `[TIMESTAMP] [LEVEL] [MODULE] Message`
-
-### Example Log Output
-```
-[2025-08-28 17:30:45] [INFO] [RadwareCC] Logging in to Radware CC at 10.105.193.3 as radware
-[2025-08-28 17:30:45] [INFO] [create_network_class] Creating network class web_servers at index 0
-[2025-08-28 17:30:46] [DEBUG] [RadwareCC] Response status: 200
-```
-
-## Testing
-
-### Unit Testing
-```bash
-# Syntax validation
-python3 -m py_compile plugins/modules/create_bdos_profile.py
-
-# YAML validation  
-python3 -c "import yaml; yaml.safe_load(open('vars/create_vars.yml'))"
-
-# Ansible module testing
-ansible-doc -t module plugins/modules/create_bdos_profile.py
-```
-
-### Integration Testing
-```bash
-# Check mode (dry run)
-ansible-playbook --check playbooks/create_bdos_profile.yml
-
-# Single device testing
-# Edit vars file to target one device, then run normally
-ansible-playbook playbooks/create_bdos_profile.yml
-```
-
-## Extending the Modules
-
-### Adding New Operations
-
-1. **Create Module** (`plugins/modules/new_operation.py`)
-   - Follow the standard module pattern
-   - Add proper documentation strings
-   - Implement error handling
-
-2. **Create Playbook** (`playbooks/new_operation.yml`)
-   - Use external variable files
-   - Include device locking/unlocking
-   - Add descriptive loop labels
-
-3. **Create Variables** (`vars/new_operation_vars.yml.example`)
-   - Document all parameters
-   - Provide usage examples
-   - Add to .gitignore pattern
-
-### Adding New Endpoints
-
-1. **Research API** - Use CyberController API documentation
-2. **Add to RadwareCC** - If new HTTP methods needed
-3. **Test Manually** - Use curl/postman first
-4. **Implement Module** - Following existing patterns
-
-## API Reference
-
-### RadwareCC Class Methods
-```python
-cc._get(url)                          # GET request
-cc._post(url, data=None, json=None)   # POST request  
-cc._put(url, data=None, json=None)    # PUT request
-cc._delete(url)                       # DELETE request
-```
-
-### Logger Class Methods
-```python
-logger.info(message)     # Info level
-logger.debug(message)    # Debug level
-logger.error(message)    # Error level
-```
-
-
-## Security Considerations
-
-- **Credential Storage**: Variables in git-ignored files
-- **Session Security**: Temporary session storage with cleanup
-- **SSL Verification**: Configurable (disabled by default for internal networks)
-- **Error Sanitization**: No credentials in error messages or logs
-
-## Contributing
-
-1. **Follow Patterns**: Use existing modules as templates
-2. **Test Thoroughly**: Unit tests + integration tests + manual testing
-3. **Document**: Update both user and developer documentation
-4. **Version Control**: Feature branches with descriptive names
-
----
-
-**Need user instructions?** See [USER_GUIDE.md](USER_GUIDE.md) for operational procedures and configuration examples.
-=======
 # DefensePro Configuration Builder - Developer Guide
 
 **Technical documentation for developers working on the DefensePro Ansible modules**
@@ -425,12 +132,14 @@ dp_config_builder/
 │   │   ├── create_vars.yml            # Variables for creation operations
 │   │   ├── edit_vars.yml              # Variables for editing operations  
 │   │   ├── delete_vars.yml            # Variables for deletion operations
-│   │   └── get_vars.yml               # Variables for query operations
+│   │   ├── get_vars.yml               # Variables for query operations
+│   │   └── update_vars.yml            # Variables for policy update operations
 │   └── 📋 Variable Templates (in git)
 │       ├── create_vars.yml.example    # Template for create_vars.yml
 │       ├── edit_vars.yml.example      # Template for edit_vars.yml
 │       ├── delete_vars.yml.example    # Template for delete_vars.yml
-│       └── get_vars.yml.example       # Template for get_vars.yml 
+│       ├── get_vars.yml.example       # Template for get_vars.yml
+│       └── update_vars_example.yml    # Template for update_vars.yml 
 └── 
 
 ```
@@ -549,15 +258,97 @@ dp_config_builder/
 - Valid values: 0 or next available starting from 450001+
 - Used in URL path for both creation and editing operations
 
+### BDoS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+
+
 ### Security Policy Management
 
 | Operation | HTTP Method | API Endpoint |
 |-----------|-------------|--------------|
 | Create Security Policy | POST | `/mgmt/device/byip/{ip}/config/rsIDSNewRulesTable/{policy_name}` |
 
-**Parameters**: policy configuration parameters including profile bindings
-**Profile Bindings**: different protection profile types supported
+**Parameters**: Minimal required parameters with optional advanced configuration
+**Profile Bindings**: Different protection profile types supported
 **Response**: Policy creation status with error details
+
+**Key Features**:
+- **Minimal Parameters**: Only `policy_name` is mandatory - DefensePro provides defaults
+- **Conditional Parameter Sending**: Only user-specified parameters sent to API
+- **User-Friendly Value Mapping**: Automatic conversion of human-readable values to API codes
+- **Flexible Configuration**: Full parameter support when needed
+
+### Policy Update Management
+
+| Operation | HTTP Method | API Endpoint |
+|-----------|-------------|--------------|
+| Apply Policy Updates | POST | `/mgmt/device/byip/{dp_ip}/config/updatepolicies` |
+
+**Purpose**: Apply pending DefensePro configuration changes (commit configurations)
+
+**Module**: `plugins/modules/update_policies.py`
+
+**Payload**: None (DefensePro IP specified in URL path)
+
+**Configuration**: `vars/update_vars.yml` and `vars/update_vars_example.yml`
+
+**API Pattern**:
+```
+POST /mgmt/device/byip/10.105.192.32/config/updatepolicies
+# No request body needed
+```
+
+**Key Features**:
+- Must be called while device is locked
+- Commits ALL pending configuration changes
+- Supports both standalone and orchestrated execution modes
+
+**Conditional Execution Modes**:
+- **Automatic**: Integrated into orchestration playbooks with `apply_policies_after_creation: true`
+- **Manual**: Standalone `update_policies.yml` playbook for selective updates
+- **Conditional**: Controlled by `skip_policy_updates` variable in orchestrated flows
+- **Safety**: Optional interactive confirmation prompts in standalone mode
+
+**Device Lock/Unlock Integration**:
+- **Centralized Locking**: Orchestration playbook "create_security_policy.yml" handle device locking centrally
+- **Always Unlock**: Devices are unlocked even if operations fail
+
+
+**Usage Pattern**:
+```python
+# In orchestration workflow - centralized locking with conditional skipping
+- name: "Centralized Device Locking for Orchestration"
+  dp_lock:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  loop: "{{ dp_ip }}"
+
+# Import sub-playbooks with conditional variables
+- import_playbook: create_network_class.yml
+  vars:
+    skip_policy_updates: true  # Orchestrator handles policy updates
+    skip_device_lock: true     # Orchestrator handles locking centrally
+
+# Individual playbook conditional logic  
+- name: "Lock device(s)"
+  dp_lock:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  when: not (skip_device_lock | default(false))
+
+- name: "Apply policy updates per device"
+  update_policies:
+    provider: "{{ cc }}"
+    dp_ip: "{{ item }}"
+  when: 
+    - not (skip_policy_updates | default(false))
+    - apply_policies_after_creation | default(true)
+```
 
 ## Module Development Pattern
 
@@ -870,7 +661,99 @@ resp = cc._post(url, json=body)
     "status": "error", 
     "message": "M_00386: An entry with same key already exists."
 }
-```
+
+################ Create BDoS Profile #################
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
+
+{
+    "rsIDSNewRulesName": "BDOS_Profile_5",
+    "rsIDSNewRulesAction": "2",
+    "rsIDSNewRulesSynFlood": "1",
+    "rsIDSNewRulesUdpFlood": "1",
+    "rsIDSNewRulesIgmpFlood": "0",
+    "rsIDSNewRulesIcmpFlood": "1",
+    "rsIDSNewRulesTcpAckFinFlood": "0",
+    "rsIDSNewRulesTcpRstFlood": "0",
+    "rsIDSNewRulesTcpPshAckFlood": "0",
+    "rsIDSNewRulesTcpSynAckFlood": "0",
+    "rsIDSNewRulesTcpFragFlood": "0",
+    "rsIDSNewRulesUdpFragFlood": "0",
+    "rsIDSNewRulesInboundTraffic": 1000000,
+    "rsIDSNewRulesOutboundTraffic": 500000,
+    "rsIDSNewRulesTcpInQuota": 50,
+    "rsIDSNewRulesUdpInQuota": 50,
+    "rsIDSNewRulesIcmpInQuota": 50,
+    "rsIDSNewRulesIgmpInQuota": 50,
+    "rsIDSNewRulesTcpOutQuota": 50,
+    "rsIDSNewRulesUdpOutQuota": 50,
+    "rsIDSNewRulesIcmpOutQuota": 50,
+    "rsIDSNewRulesIgmpOutQuota": 50,
+    "rsIDSNewRulesTransparentOptimization": "1",
+    "rsIDSNewRulesPacketReport": "1",
+    "rsIDSNewRulesBurstAttack": "0",
+    "rsIDSNewRulesMaxIntervalBetweenBursts": 60,
+    "rsIDSNewRulesLearningSuppressionThreshold": 10,
+    "rsIDSNewRulesFootprintStrictness": 2,
+    "rsIDSNewRulesRateLimit": 3,
+    "rsIDSNewRulesUserDefinedRateLimit": 500,
+    "rsIDSNewRulesUserDefinedRateLimitUnit": 2,
+    "rsIDSNewRulesAdvancedUdpDetection": "1"
+}
+
+##################### Edit BDoS Profile #########################
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
+
+{
+    "rsIDSNewRulesName": "BDOS_Profile_5",
+    "rsIDSNewRulesAction": "1",
+    "rsIDSNewRulesSynFlood": "0",
+    "rsIDSNewRulesUdpFlood": "0",
+    "rsIDSNewRulesIcmpFlood": "0",
+    "rsIDSNewRulesInboundTraffic": 2000000,
+    "rsIDSNewRulesOutboundTraffic": 1000000
+}
+
+Usage:
+Call edit_bdos_configuration once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+####################### Get BDoS Profile ##########################
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable
+
+Response:
+{
+    "profiles": [
+        {
+            "profile_name": "BDOS_Profile_5",
+            "action": "report_only",
+            "syn_flood": "enable",
+            "udp_flood": "enable",
+            "icmp_flood": "enable",
+            "inbound_traffic": 1000000,
+            "outbound_traffic": 500000,
+            "footprint_strictness": "medium"
+        }
+    ]
+}
+
+#Usage:-
+#Call get_bdos_configuration once per device
+#Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+############## Delete BDoS Profile #########################
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}
+# Profiles to delete
+bdos_profile_deletions:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"
+
+Key Features:
+- Profiles cannot be deleted if still associated with any dependent settings
+- Module validates existence before deletion
+- Order of deletion handled automatically
+- Both names and indexes supported internally (no need to provide    index)
 
 ### HTTP Error Patterns
 ```python
@@ -1021,4 +904,3 @@ logger.error(message)    # Error level
 ---
 
 **Need user instructions?** See [USER_GUIDE.md](USER_GUIDE.md) for operational procedures and configuration examples.
->>>>>>> upstream/CL_profile_Egor_v1.0.4

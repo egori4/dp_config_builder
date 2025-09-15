@@ -5,232 +5,280 @@ on Radware DefensePro devices via Radware CyberController API.
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
-from ansible.module_utils.logger import Logger
 
-DOCUMENTATION = r'''
----
-module: manage_bdos_edit
-short_description: Edit BDOS Flood profiles on DefensePro
-description:
-  - Edits one or multiple BDOS Flood profiles on DefensePro devices via Radware CC API.
-options:
-  provider:
-    description:
-      - Connection details for Radware CC
-    type: dict
-    required: true
-    suboptions:
-      cc_ip:
-        description: Radware CC IP
-        type: str
-        required: true
-      username:
-        type: str
-        required: true
-      password:
-        type: str
-        required: true
-      log_level:
-        description: Logging verbosity (disabled, info, debug)
-        type: str
-        required: false
-        default: disabled
-  dp_ip:
-    description: DefensePro device IP
-    type: str
-    required: true
-  bdos_profiles:
-    description:
-      - List of BDOS Flood profiles to edit with their parameters
-    type: list
-    required: true
-    elements: dict
-    suboptions:
-      name:
-        type: str
-        required: true
-      params:
-        type: dict
-        required: true
-author:
-  - "Your Name"
-'''
-
-EXAMPLES = r'''
-- name: Edit multiple BDOS Flood profiles
-  manage_bdos_edit:
-    provider:
-      cc_ip: 10.105.193.3
-      username: radware
-      password: mypass
-      log_level: debug
-    dp_ip: 10.105.192.32
-    bdos_profiles:
-      - name: BDOS_Profile_10
-        params:
-          TCP Status: active
-          UDP Status: inactive
-      - name: BDOS_Profile_11
-        params:
-          TCP Status: active
-          ICMP Status: active
-'''
-
-RETURN = r'''
-response:
-  description: API response per profile
-  type: dict
-debug_info:
-  description: Request and response debug details
-  type: dict
-'''
-
-# -------------------------------
-# Field Mappings & Conversions
-# -------------------------------
-FIELD_MAP = {
-    "TCP Status": "rsNetFloodProfileTcpStatus",
-    "UDP Status": "rsNetFloodProfileUdpStatus",
-    "ICMP Status": "rsNetFloodProfileIcmpStatus",
-    "TCP SYN/ACK Status": "rsNetFloodProfileTcpSynAckStatus",
-    "TCP Frag Status": "rsNetFloodProfileTcpFragStatus",
-    "Bandwidth In": "rsNetFloodProfileBandwidthIn",
-    "Bandwidth Out": "rsNetFloodProfileBandwidthOut",
-    "Transparent Optimization": "rsNetFloodProfileTransparentOptimization",
-    "Action": "rsNetFloodProfileAction",
-    "Burst Enabled": "rsNetFloodProfileBurstEnabled",
-    "Learning Suppression Threshold": "rsNetFloodProfileLearningSuppressionThreshold",
-    "Footprint Strictness": "rsNetFloodProfileFootprintStrictness",
-    "Rate Limit": "rsNetFloodProfileRateLimit",
-    "Packet Report Status": "rsNetFloodProfilePacketReportStatus",
-    "Packet Trace Status": "rsNetFloodProfilePacketTraceStatus",
-}
-
-NUMERIC_MAPPING = {
-    "TCP Status": {"active": 1, "inactive": 2},
-    "UDP Status": {"active": 1, "inactive": 2},
-    "ICMP Status": {"active": 1, "inactive": 2},
-    "TCP SYN/ACK Status": {"active": 1, "inactive": 2},
-    "TCP Frag Status": {"active": 1, "inactive": 2},
-    "Transparent Optimization": {"yes": 1, "no": 2},
-    "Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
-    "Packet Report Status": {"enable": 1, "disable": 2},
-    "Packet Trace Status": {"enable": 1, "disable": 2},
-    "Action": {"report only": 0, "block & report": 1},
-    "Burst Enabled": {"enable": 1, "disable": 2},
-}
-
-FIELD_RANGES = {
-    "Learning Suppression Threshold": (0, 50),
-}
-
-# -------------------------------
-# Helpers
-# -------------------------------
-def translate_params(params):
-    translated = {}
-    for k, v in params.items():
-        api_key = FIELD_MAP.get(k, k)
-        mapping = NUMERIC_MAPPING.get(k)
-        if mapping:
-            val = str(v).lower()
-            if val not in mapping:
-                raise ValueError(f"Invalid value '{v}' for '{k}'. Allowed: {list(mapping.keys())}")
-            translated[api_key] = mapping[val]
-        elif k in FIELD_RANGES:
-            min_val, max_val = FIELD_RANGES[k]
-            num_val = int(v)
-            if not (min_val <= num_val <= max_val):
-                raise ValueError(f"Field '{k}' must be in range [{min_val}..{max_val}]")
-            translated[api_key] = num_val
-        else:
-            translated[api_key] = v
-    return translated
-
-def build_api_path(dp_ip, profile_name):
-    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}"
-
-# -------------------------------
-# Main Logic
-# -------------------------------
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        bdos_profiles=dict(type='list', required=True),
+        bdos_profiles=dict(type='list', required=False, default=[])
     )
 
-    result = dict(changed=False, response=[], debug_info={})
+    result = dict(changed=False, response={})
+    debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
+    # Extract provider and params
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
     bdos_profiles = module.params['bdos_profiles']
-    log_level = provider.get('log_level', 'disabled')
-    logger = Logger(verbosity=log_level)
-    debug_info = {}
 
-    # Validate provider fields
-    for key in ('cc_ip', 'username', 'password'):
-        if key not in provider or not provider[key]:
-            module.fail_json(msg=f"Missing required provider field: {key}", **result)
+    log_level = provider.get('log_level', 'disabled')
+    from ansible.module_utils.logger import Logger
+    logger = Logger(verbosity=log_level)
+
+    debug_info['input'] = {
+        'dp_ip': dp_ip,
+        'profiles_count': len(bdos_profiles)
+    }
 
     try:
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
-                       log_level=log_level, logger=logger)
+        from ansible.module_utils.radware_cc import RadwareCC
+        cc = RadwareCC(provider['cc_ip'], provider['username'],
+                       provider['password'], log_level=log_level, logger=logger)
 
-        for profile in bdos_profiles:
-            name = profile['name']
-            params = profile['params']
-            path = build_api_path(dp_ip, name)
-            url = f"https://{provider['cc_ip']}{path}"
-            body = {"rsNetFloodProfileName": name}
-            body.update(translate_params(params))
+        changes_made = False
+        edited_profiles = []
+        errors = []
 
-            debug_info.setdefault('requests', []).append({"method": "PUT", "url": url, "body": body})
-            logger.info(f"Editing BDOS profile '{name}' on {dp_ip}")
+        if module.check_mode:
+            if bdos_profiles:
+                planned_operations = [
+                    {
+                        'profile_name': profile.get('name', 'unnamed_profile'),
+                        'params': profile.get('params', {})
+                    }
+                    for profile in bdos_profiles
+                ]
+                result.update({
+                    'changed': True,
+                    'response': {
+                        'preview_mode': True,
+                        'planned_operations': planned_operations
+                    }
+                })
+            else:
+                result.update({
+                    'changed': False,
+                    'response': {
+                        'preview_mode': True,
+                        'message': 'No BDoS profiles configured for editing'
+                    }
+                })
+        else:
+            if bdos_profiles:
+                logger.info(f"Editing {len(bdos_profiles)} BDoS profiles on {dp_ip}")
 
-            if module.check_mode:
-                result['response'].append({"profile": name, "msg": "Check mode - no changes applied"})
-                continue
+                for profile in bdos_profiles:
+                    profile_name = profile.get('name')
+                    if not profile_name:
+                        error_msg = "Profile name is required (use 'name' field)"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+                        continue
 
-            try:
-                resp = cc._put(url, json=body)
-                debug_info.setdefault('responses', []).append({"profile": name, "status_code": resp.status_code})
-                try:
-                    data = resp.json()
-                    debug_info.setdefault('responses_json', []).append({"profile": name, "data": data})
-                except ValueError:
-                    data = {"status": "unknown", "error": resp.text}
+                    # Map params to API format
+                    try:
+                        api_params = map_netflood_profile_parameters(profile.get('params', {}))
+                    except ValueError as e:
+                        error_msg = f"Validation failed for profile {profile_name}: {str(e)}"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+                        continue
 
-                if resp.status_code not in (200, 201):
-                    result['response'].append({"profile": name, "response": data, "failed": True})
-                    logger.error(f"Failed to edit BDOS profile '{name}': {data}")
-                else:
-                    result['response'].append({"profile": name, "response": data})
-                    result['changed'] = True
+                    request_body = {"rsNetFloodProfileName": profile_name}
+                    request_body.update(api_params)
 
-            except Exception as ex:
-                result['response'].append({"profile": name, "response": {"error": str(ex)}, "failed": True})
-                logger.error(f"Exception editing BDOS profile '{name}': {ex}")
+                    url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}"
 
-        # Fail module if all profiles failed
-        if all(p.get('failed') for p in result['response']):
-            module.fail_json(msg="All BDOS profile edits failed", **result)
+                    logger.info(f"Editing BDoS profile: {profile_name}")
+                    logger.debug(f"Request URL: {url}")
+                    logger.debug(f"Request body: {request_body}")
 
-        result['debug_info'] = debug_info
-        module.exit_json(**result)
+                    try:
+                        resp = cc._put(url, json=request_body)
+                        if resp.status_code in (200, 201):
+                            logger.info(f"Successfully edited NetFlood profile: {profile_name}")
+                            changes_made = True
+                            edited_profiles.append({
+                                'profile_name': profile_name,
+                                'status': 'success',
+                                'params_applied': api_params
+                            })
+                        else:
+                            error_msg = f"Failed to edit NetFlood profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                            errors.append(error_msg)
+                            logger.error(error_msg)
+
+                    except Exception as e:
+                        error_msg = f"Error editing NetFlood profile {profile_name}: {str(e)}"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+
+            else:
+                logger.info(f"No NetFlood profiles configured for editing on {dp_ip}")
+
+            result.update({
+                'changed': changes_made,
+                'response': {
+                    'edited_profiles': edited_profiles,
+                    'errors': errors,
+                    'summary': {
+                        'successful_profiles': len(edited_profiles),
+                        'total_profiles_attempted': len(bdos_profiles),
+                        'errors_count': len(errors)
+                    }
+                }
+            })
+
+            debug_info['summary'] = {
+                'profiles_edited': len(edited_profiles),
+                'profiles_failed': len(errors),
+                'operations_completed': changes_made
+            }
+
+            if errors:
+                module.fail_json(msg=f"BdoS profile editing completed with {len(errors)} error(s).", **result)
 
     except Exception as e:
-        module.fail_json(msg=str(e), **result)
+        error_msg = f"BDoS profile editing failed: {str(e)}"
+        logger.error(error_msg)
+        debug_info['error'] = error_msg
+        module.fail_json(msg=error_msg, debug_info=debug_info, **result)
 
-# -------------------------------
-# Entrypoint
-# -------------------------------
+    result['debug_info'] = debug_info
+    module.exit_json(**result)
+
+
+def map_netflood_profile_parameters(params):
+    """
+    Map user-friendly NetFlood parameters to DefensePro API values.
+    """
+
+    ENUM_MAPS = {
+        "syn_flood": {"enable": "1", "disable": "2"},
+        "udp_flood": {"enable": "1", "disable": "2"},
+        "igmp_flood": {"enable": "1", "disable": "2"},
+        "icmp_flood": {"enable": "1", "disable": "2"},
+        "tcp_ack_fin_flood": {"enable": "1", "disable": "2"},
+        "tcp_rst_flood": {"enable": "1", "disable": "2"},
+        "tcp_psh_ack_flood": {"enable": "1", "disable": "2"},
+        "tcp_syn_ack_flood": {"enable": "1", "disable": "2"},
+        "tcp_frag_flood": {"enable": "1", "disable": "2"},
+        "udp_frag_flood": {"enable": "1", "disable": "2"},
+        "transparent_optimization": {"enable": "1", "disable": "2"},
+        "action": {"report_only": "0", "block_report": "1"},
+        "burst_attack": {"enable": "1", "disable": "2"},
+        "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
+        "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
+        "packet_report": {"enable": "1", "disable": "2"},
+        "adv_udp_detection": {"enable": "1", "disable": "2"}
+    }
+
+    FIELD_MAP = {
+        "status": "rsNetFloodProfileStatus",
+        "tcp_status": "rsNetFloodProfileTcpStatus",
+        "tcp_syn_flood": "rsNetFloodProfileTcpSynStatus",
+        "udp_flood": "rsNetFloodProfileUdpStatus",
+        "igmp_flood": "rsNetFloodProfileIgmpStatus",
+        "icmp_flood": "rsNetFloodProfileIcmpStatus",
+        "tcp_ack_fin_flood": "rsNetFloodProfileTcpFinAckStatus",
+        "tcp_rst_flood": "rsNetFloodProfileTcpRstStatus",
+        "tcp_psh_ack_flood": "rsNetFloodProfileTcpPshAckStatus",
+        "tcp_syn_ack_flood": "rsNetFloodProfileTcpSynAckStatus",
+        "tcp_frag_flood": "rsNetFloodProfileTcpFragStatus",
+        "udp_frag_flood": "rsNetFloodProfileUdpFragStatus",
+
+        # Bandwidth / quotas
+        "inbound_traffic": "rsNetFloodProfileBandwidthIn",
+        "outbound_traffic": "rsNetFloodProfileBandwidthOut",
+        "tcp_in_quota": "rsNetFloodProfileTcpInQuota",
+        "udp_in_quota": "rsNetFloodProfileUdpInQuota",
+        "icmp_in_quota": "rsNetFloodProfileIcmpInQuota",
+        "igmp_in_quota": "rsNetFloodProfileIgmpInQuota",
+        "tcp_out_quota": "rsNetFloodProfileTcpOutQuota",
+        "udp_out_quota": "rsNetFloodProfileUdpOutQuota",
+        "icmp_out_quota": "rsNetFloodProfileIcmpOutQuota",
+        "igmp_out_quota": "rsNetFloodProfileIgmpOutQuota",
+
+        # Other parameters
+        "transparent_optimization": "rsNetFloodProfileTransparentOptimization",
+        "packet_report": "rsNetFloodProfilePacketReportStatus",
+        "action": "rsNetFloodProfileAction",
+        "burst_attack": "rsNetFloodProfileBurstEnabled",
+        "maximum_interval_between_bursts": "rsNetFloodProfileBurstAttackPeriod",
+        "learning_suppression_threshold": "rsNetFloodProfileLearningSuppressionThreshold",
+        "footprint_strictness": "rsNetFloodProfileFootprintStrictness",
+        "bdos_rate_limit": "rsNetFloodProfileRateLimit",
+        "user_defined_rate_limit": "rsNetFloodProfileUserDefinedRateLimit",
+        "user_defined_rate_limit_unit": "rsNetFloodProfileUserDefinedRateLimitUnit",
+        "adv_udp_detection": "rsNetFloodProfileAdvUdpDetection",
+        "udp_excluded_ports": "rsNetFloodProfileUdpExcludedPorts"
+    }
+
+    mapped = {}
+    for key, value in params.items():
+        if key not in FIELD_MAP:
+            continue
+
+        mapped_key = FIELD_MAP[key]
+
+        # Enum mapping
+        if key in ENUM_MAPS:
+            mapped_value = ENUM_MAPS[key].get(str(value).lower())
+            if mapped_value is None:
+                raise ValueError(f"Invalid value '{value}' for {key}. Allowed: {list(ENUM_MAPS[key].keys())}")
+            mapped[mapped_key] = mapped_value
+            continue
+
+        # Range validations
+        if key in ["inbound_traffic", "outbound_traffic"]:
+            ivalue = int(value)
+            if not (1 <= ivalue <= 1342177280):
+                raise ValueError(f"{key} must be between 1 and 1342177280")
+            mapped[mapped_key] = str(ivalue)
+            continue
+
+        if key.endswith("_in_quota") or key.endswith("_out_quota"):
+            ivalue = int(value)
+            if not (0 <= ivalue <= 100):
+                raise ValueError(f"{key} must be between 0 and 100")
+            mapped[mapped_key] = str(ivalue)
+            continue
+
+        # User-defined rate limit
+        if key == "user_defined_rate_limit":
+            ivalue = int(value)
+            if not (0 <= ivalue <= 40000):
+                raise ValueError(f"{key} must be between 0 and 400000000")
+            mapped[mapped_key] = str(ivalue)
+            continue
+
+        # User-defined rate limit unit
+        if key == "user_defined_rate_limit_unit":
+            UNIT_MAP = {"kbps": "0", "mbps": "1", "gbps": "2"}
+            mapped_value = UNIT_MAP.get(str(value).lower())
+            if mapped_value is None:
+                raise ValueError(f"{key} must be one of {list(UNIT_MAP.keys())}")
+            mapped[mapped_key] = mapped_value
+            continue
+
+        # Learning suppression threshold validation (0-50)
+        if key == "learning_suppression_threshold":
+            ivalue = int(value)
+            if not (0 <= ivalue <= 50):
+                raise ValueError(f"{key} must be between 0 and 50")
+            mapped[mapped_key] = str(ivalue)
+            continue
+
+        # Direct mapping
+        mapped[mapped_key] = str(value)
+
+    return mapped
+
+
 def main():
     run_module()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

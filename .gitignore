@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 vars/cc.yml
 inventory.ini
 ansible.cfg
@@ -11,17 +10,3 @@ vars/*_vars.yml
 # Keep templates in Git (don't ignore these)
 !vars/*_vars.yml.example
 .vscode/
-=======
-vars/cc.yml
-inventory.ini
-ansible.cfg
-playbooks/log
-tmp/
-log/
-
-# User-specific variable files (exclude from Git)
-vars/*_vars.yml
-
-# Keep templates in Git (don't ignore these)
-!vars/*_vars.yml.example
->>>>>>> upstream/main

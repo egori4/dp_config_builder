@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ---
 # get_vars.yml.example - Template for getting network class variables
 # Copy this file to get_vars.yml and customize with your environment details
@@ -16,44 +15,23 @@ filter_class_name: "egor_test_net"  # Set to a class name to filter, or leave em
 # filter_class_name: ""           # Get all network classes
 # filter_class_name: "web_servers" # Get only "web_servers" class  
 
+######################## Get BDoS Profile ##############################
+# get_vars.yml.example - Template for getting network class variables
+# Copy this file to get_vars.yml and customize with your environment details
+# List of BDOS profiles to fetch
+bdos_profiles:
+  - "BDOS_Profile_5"
+  #- "BDOS_Profile_2"
+  #- "BDOS_Profile_3"
+
+# Optional flags
+skip_device_lock: false     # Set true to skip device lock/unlock
+
+
+##########################################################################
+
 # Notes:
 # - dp_ip: List of DefensePro devices to query
 # - filter_class_name: Optional filter to get specific network class (leave empty for all)
 # - This operation is read-only and safe to run anytime
 # - Use this to discover existing network classes before creating, editing, or deleting
-=======
----
-# get_vars.yml.example - Template for getting network class variables
-# Copy this file to get_vars.yml and customize with your environment details
-
-# Target DefensePro devices - add or remove IP addresses as needed
-dp_ip:
-  - "10.105.192.32"
-  # - "10.105.192.33"
-  # - "10.105.192.34"
-
-########################## Network Class Profile Filter variables ##########################
-
-# Filter by specific network class names, or leave empty list for all classes
-filter_class_names: []  # Set to list of class names to filter, or leave empty for all
-
-# Alternative examples:
-# filter_class_names: []                    # Get all network classes (default)
-# filter_class_names: ["web_servers"]       # Get only "web_servers" class  
-# filter_class_names: ["web_servers", "db_servers"]  # Get multiple specific classes
-
-# Notes:
-# - dp_ip: List of DefensePro devices to query
-# - filter_class_names: Optional filter to get specific network classes (leave empty for all)
-# - This operation is read-only and safe to run anytime
-# - Use this to discover existing network classes before creating, editing, or deleting
-
-
-########################## Connection Limit Profile Filter variables ##########################
-# Filter by specific profile names, or leave empty list for all profiles
-filter_cl_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names to filter, or leave empty for all
-# Examples:
-# filter_cl_profile_names: ["cl_prof_egor_test10"]  # Show only one profile
-# filter_cl_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
-# filter_cl_profile_names: []  # Show all profiles (default)
->>>>>>> upstream/CL_profile_Egor_v1.0.4

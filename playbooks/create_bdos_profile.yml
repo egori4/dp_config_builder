@@ -1,38 +1,91 @@
 ---
-- name: Create BDOS Flood Profiles
+- name: Create BDOS profiles
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/create_bdos_vars.yml
+    - ../vars/create_vars.yml
 
   tasks:
     - block:
-        - name: 🔒 Lock device(s)
+        - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
-        - name: 🚀 Create BDOS Flood profiles
-          vars:
-            profile_matrix: "{{ dp_ip | product(bdos_mappings) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "Device: {{ item.0 }}/{{ item.1.name }}"
+        - name: Configure BDOS profiles
           create_bdos_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            bdos_profiles: 
-              - "{{ item.1 }}"   # Pass one profile at a time as a list
-          register: bdos_create_results
-          failed_when: >
-            bdos_create_results is failed and
-            ('already exists' not in (bdos_create_results.msg | default('')))
+            dp_ip: "{{ item }}"
+            bdos_profiles: "{{ bdos_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: BDoS_create_results
+
+        - name: Display BDoS creation results
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              BDoS Profile Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.profile_name }}
+              {% endfor %}
+              {% else %}
+              
+              No BDoS profiles configured for creation.
+              {% endif %}
+              {% elif ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed:
+              
+              BDoS Configurations ({{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) would be created
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              
+              Error occurred during creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.debug_info.input.profiles_count | default(0) > 0 %}
+              
+              BDoS Profiles created successfully:
+                - {{ item.debug_info.input.profiles_count }} profile(s) created
+              {% else %}
+              
+              No BDoS profiles were created.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ BDoS_create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - BDoS_create_results is defined
+            - BDoS_create_results.changed | default(false)
 
       always:
-        - name: 🔓 Unlock device(s)
+        - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
