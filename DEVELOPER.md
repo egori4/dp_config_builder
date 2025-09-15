@@ -85,10 +85,10 @@ dp_config_builder/
 ├── 
 ├── 📁 Documentation  
 │   ├── README.md                # Project overview and quick start
-│   ├── USER_GUIDE.md           # Step-by-step operational guide
-│   └── DEVELOPER.md            # Technical architecture (this file)
+│   ├── USER_GUIDE.md            # Step-by-step operational guide
+│   └── DEVELOPER.md             # Technical architecture (this file)
 ├── 
-├── 📁 playbooks/               # ORCHESTRATION LAYER
+├── 📁 playbooks/                # ORCHESTRATION LAYER
 │   ├── 🎯 Network Class Operations
 │   │   ├── create_network_class.yml    # Create network classes
 │   │   ├── edit_network_class.yml      # Modify network classes  
@@ -99,9 +99,14 @@ dp_config_builder/
 │   │   ├── edit_cl_protections.yml     # Edit CL protections
 │   │   ├── get_cl_profiles.yml         # Query CL profiles
 │   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
+│   ├── 🎯 BDoS Flood Profile Operations
+│   │   ├── create_bdos_profile.yml     # Create BDoS Flood profiles
+│   │   ├── edit_bdos_profile.yml       # Modify BDoS Flood profiles
+│   │   ├── delete_bdos_profile.yml     # Remove BDoS Flood profiles
+│   │   └── get_bdos_profile.yml       # Query BDoS Flood profiles
 │   ├── 📊 Runtime Data (auto-created)
 │   │   ├── log/                        # Execution logs by date
-│   │   │   └── log_YYYYMMDD.log       # Daily log files
+│   │   │   └── log_YYYYMMDD.log        # Daily log files
 │   │   └── tmp/                        # Temporary files  
 │   │       └── radware_cc_sessions/    # Session cache files
 ├── 
@@ -117,12 +122,17 @@ dp_config_builder/
 │   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
 │   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
 │   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
+│   │   ├── 🔧 BDoS Flood Profile Modules (v0.1.5+)
+│   │   │   ├── create_bdos_profile.py      # Batch creation with validation
+│   │   │   ├── edit_bdos_profile.py        # Modify existing BDoS profiles
+│   │   │   ├── delete_bdos_profile.py      # Batch deletion with error handling
+│   │   │   └── get_bdos_profile.py        # Query BDoS Flood profiles
 │   │   └── 🔧 Device Management
-│   │       ├── dp_lock.py              # Device configuration lock
-│   │       └── dp_unlock.py            # Device configuration unlock
+│   │       ├── dp_lock.py                  # Device configuration lock
+│   │       └── dp_unlock.py                # Device configuration unlock
 │   └── 📁 module_utils/        # INFRASTRUCTURE LAYER
-│       ├── radware_cc.py              # HTTP client with session management
-│       └── logger.py                  # Structured logging with rotation
+│       ├── radware_cc.py                # HTTP client with session management
+│       └── logger.py                    # Structured logging with rotation
 ├── 
 ├── 📁 vars/                    # CONFIGURATION & DATA LAYER
 │   ├── 🔗 Connection Configuration
@@ -257,6 +267,15 @@ dp_config_builder/
 - Optional in variables (defaults to 0)
 - Valid values: 0 or next available starting from 450001+
 - Used in URL path for both creation and editing operations
+
+### BDoS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+
 
 ### Security Policy Management
 
@@ -652,7 +671,99 @@ resp = cc._post(url, json=body)
     "status": "error", 
     "message": "M_00386: An entry with same key already exists."
 }
-```
+
+################ Create BDoS Profile #################
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
+
+{
+    "rsIDSNewRulesName": "BDOS_Profile_5",
+    "rsIDSNewRulesAction": "2",
+    "rsIDSNewRulesSynFlood": "1",
+    "rsIDSNewRulesUdpFlood": "1",
+    "rsIDSNewRulesIgmpFlood": "0",
+    "rsIDSNewRulesIcmpFlood": "1",
+    "rsIDSNewRulesTcpAckFinFlood": "0",
+    "rsIDSNewRulesTcpRstFlood": "0",
+    "rsIDSNewRulesTcpPshAckFlood": "0",
+    "rsIDSNewRulesTcpSynAckFlood": "0",
+    "rsIDSNewRulesTcpFragFlood": "0",
+    "rsIDSNewRulesUdpFragFlood": "0",
+    "rsIDSNewRulesInboundTraffic": 1000000,
+    "rsIDSNewRulesOutboundTraffic": 500000,
+    "rsIDSNewRulesTcpInQuota": 50,
+    "rsIDSNewRulesUdpInQuota": 50,
+    "rsIDSNewRulesIcmpInQuota": 50,
+    "rsIDSNewRulesIgmpInQuota": 50,
+    "rsIDSNewRulesTcpOutQuota": 50,
+    "rsIDSNewRulesUdpOutQuota": 50,
+    "rsIDSNewRulesIcmpOutQuota": 50,
+    "rsIDSNewRulesIgmpOutQuota": 50,
+    "rsIDSNewRulesTransparentOptimization": "1",
+    "rsIDSNewRulesPacketReport": "1",
+    "rsIDSNewRulesBurstAttack": "0",
+    "rsIDSNewRulesMaxIntervalBetweenBursts": 60,
+    "rsIDSNewRulesLearningSuppressionThreshold": 10,
+    "rsIDSNewRulesFootprintStrictness": 2,
+    "rsIDSNewRulesRateLimit": 3,
+    "rsIDSNewRulesUserDefinedRateLimit": 500,
+    "rsIDSNewRulesUserDefinedRateLimitUnit": 2,
+    "rsIDSNewRulesAdvancedUdpDetection": "1"
+}
+
+##################### Edit BDoS Profile #########################
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
+
+{
+    "rsIDSNewRulesName": "BDOS_Profile_5",
+    "rsIDSNewRulesAction": "1",
+    "rsIDSNewRulesSynFlood": "0",
+    "rsIDSNewRulesUdpFlood": "0",
+    "rsIDSNewRulesIcmpFlood": "0",
+    "rsIDSNewRulesInboundTraffic": 2000000,
+    "rsIDSNewRulesOutboundTraffic": 1000000
+}
+
+Usage:
+Call edit_bdos_configuration once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+####################### Get BDoS Profile ##########################
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable
+
+Response:
+{
+    "profiles": [
+        {
+            "profile_name": "BDOS_Profile_5",
+            "action": "report_only",
+            "syn_flood": "enable",
+            "udp_flood": "enable",
+            "icmp_flood": "enable",
+            "inbound_traffic": 1000000,
+            "outbound_traffic": 500000,
+            "footprint_strictness": "medium"
+        }
+    ]
+}
+
+#Usage:-
+#Call get_bdos_configuration once per device
+#Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+############## Delete BDoS Profile #########################
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}
+# Profiles to delete
+bdos_profile_deletions:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"
+
+Key Features:
+- Profiles cannot be deleted if still associated with any dependent settings
+- Module validates existence before deletion
+- Order of deletion handled automatically
+- Both names and indexes supported internally (no need to provide    index)
 
 ### HTTP Error Patterns
 ```python
