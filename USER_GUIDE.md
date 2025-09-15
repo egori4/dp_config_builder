@@ -620,6 +620,67 @@ ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml
 - **Preview Mode**: Use `--check` flag to see planned changes before execution
 - **Control Flags**: Device locking can be skipped with `skip_device_lock: true` in vars
 
+### Deleting Security Policies
+
+Remove security policies with optional profile cleanup using `vars/delete_vars.yml`:
+
+```yaml
+# Target DefensePro devices
+dp_ip:
+  - "10.105.192.32"
+
+# Security policies to delete
+delete_security_policies:
+  - policy_name: "test_security_policy"     # MANDATORY: Policy name to delete
+    deletion_mode: "policy_only"            # OPTIONAL: policy_only | policy_and_profiles
+  
+  - policy_name: "old_security_policy"     # MANDATORY: Policy name to delete  
+    deletion_mode: "policy_and_profiles"    # OPTIONAL: Advanced cleanup mode
+    
+  # deletion_mode defaults to "policy_only" if not specified
+  - policy_name: "another_policy"           # Uses default safe deletion mode
+```
+
+**Deletion Modes**:
+
+1. **`policy_only` (default)**:
+   - Safe deletion - only removes the security policy
+   - Associated profiles remain available for other policies
+   - Use for most deletion scenarios
+
+2. **`policy_and_profiles` (advanced)**:
+   - May remove associated profiles if no longer used by other policies
+   - Use with caution - may affect other policies
+   - Only use when certain about profile cleanup requirements
+
+**Usage Examples**:
+```bash
+# Delete policies with preview mode (recommended first step)
+ansible-playbook playbooks/delete_security_policy.yml --check
+
+# Delete policies (actual execution)
+ansible-playbook playbooks/delete_security_policy.yml
+
+# Delete with verbose output
+ansible-playbook playbooks/delete_security_policy.yml -v
+```
+
+**Security Policy Deletion Notes**:
+- **policy_name**: MANDATORY - Must be an existing security policy name
+- **deletion_mode**: OPTIONAL - Defaults to "policy_only" for safety
+- **Safe Default**: Always use "policy_only" unless certain about profile cleanup needs
+- **Preview Mode**: Use `--check` flag to see planned deletions before execution
+- **Batch Processing**: Multiple policies can be deleted in a single operation
+- **Profile Safety**: "policy_only" mode preserves profiles for other policies to use
+- **Advanced Cleanup**: "policy_and_profiles" mode should only be used when profiles are policy-specific
+
+**Recommended Workflow**:
+1. Use preview mode first: `ansible-playbook playbooks/delete_security_policy.yml --check`
+2. Review planned deletions carefully
+3. For shared environments, prefer "policy_only" mode
+4. For standalone policies with unique profiles, consider "policy_and_profiles" mode
+5. Execute deletion: `ansible-playbook playbooks/delete_security_policy.yml`
+
 ## Troubleshooting
 
 ### "No inventory" or "module not found" errors
