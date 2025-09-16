@@ -1,0 +1,100 @@
+---
+- name: Delete connection limit protections and profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete connection limit protections and profiles
+          delete_cl_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            cl_profile_deletions: "{{ cl_profile_deletions | default([]) }}"
+            cl_protection_deletions: "{{ cl_protection_deletions | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set profile_ops = item.response.profile_operations | default([]) %}
+              {% set protection_ops = item.response.protection_operations | default([]) %}
+              {% if profile_ops %}
+              
+              Profile Operations ({{ profile_ops | length }} planned):
+              {% for op in profile_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% endif %}
+              {% if protection_ops %}
+              
+              Protection Deletions ({{ protection_ops | length }} planned):
+              {% for op in protection_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% endif %}
+              {% if not profile_ops and not protection_ops %}
+              
+              No operations configured for deletion.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set profile_dels = item.response.deleted_from_profiles | default([]) %}
+              {% set protection_dels = item.response.deleted_protections | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% if profile_dels %}
+              
+              Profile Operations ({{ profile_dels | length }} completed):
+              {% for del in profile_dels %}
+                - Profile: {{ del.profile_name }}
+                  Protection Removed: {{ del.protection_name }}
+                  Status: {{ del.status }}
+              {% endfor %}
+              {% endif %}
+              {% if protection_dels %}
+              
+              Protection Deletions ({{ protection_dels | length }} completed):
+              {% for del in protection_dels %}
+                - Protection: {{ del.protection_name }}
+                  Index: {{ del.protection_index }}
+                  Status: {{ del.status }}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not profile_dels and not protection_dels and not errors %}
+              
+              No operations performed (no deletions configured).
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"

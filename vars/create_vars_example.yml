@@ -1,0 +1,171 @@
+---
+# create_vars_example.yml - Template for creating DefensePro configurations
+# Copy this file to create_vars.yml and customize for your environment
+# Note: create_vars.yml is ignored by Git for security
+
+########################## Basic Configuration ##########################
+
+# Target DefensePro devices (REQUIRED)
+dp_ip:
+  - "10.105.192.32"    # Replace with your DefensePro IP addresses
+  - "10.105.192.33"    # Add additional devices as needed
+
+########################## Network Classes (Optional) ##########################
+# Define network classes to create - only needed if creating new ones
+
+netclasses:
+  # Example 1: Web server networks
+  - name: "web_servers"
+    groups:
+      - { address: "10.1.1.0", mask: "255.255.255.0" }      # DMZ web servers
+      - { address: "10.1.2.0", mask: "255.255.255.0" }      # Additional web tier
+  
+  # Example 2: Database networks  
+  - name: "database_servers"
+    groups:
+      - { address: "10.2.1.0", mask: "255.255.255.0" }      # Primary DB subnet
+      - { address: "10.2.2.0", mask: "255.255.255.0" }      # Secondary DB subnet
+  
+  # Example 3: Internal networks
+  - name: "internal_networks"
+    groups:
+      - { address: "192.168.10.0", mask: "255.255.255.0" }  # Office network
+      - { address: "192.168.20.0", mask: "255.255.255.0" }  # Guest network
+
+########################## Connection Limit Protections (Optional) ##########################
+# Define CL protections - only needed if creating new ones
+
+cl_protections:
+  # Example 1: Web server CPS protection
+  - name: "web_cps_protection"
+    protection_type: "cps"                    # cps | concurrent_connections
+    protocol: "tcp"                          # tcp | udp
+    threshold: "1000"                        # Connections per second limit
+    app_port_group: "http"                   # http | https | dns | ftp | (empty for all)
+    tracking_type: "dst_ip"                  # src_ip | dst_ip | src_and_dest_ip | dst_ip_and_port
+    action: "drop"                           # drop | report_only
+    packet_report: "enable"                  # enable | disable
+    # index: 450001                          # Optional: specific index (omit for auto-allocation)
+  
+  # Example 2: Database concurrent connections
+  - name: "db_concurrent_protection"
+    protection_type: "concurrent_connections"
+    protocol: "tcp"
+    threshold: "500"
+    tracking_type: "src_and_dest_ip"
+    action: "report_only"
+    packet_report: "enable"
+    # index: 450002
+  
+  # Example 3: DNS protection
+  - name: "dns_protection"
+    protection_type: "cps"
+    protocol: "udp"
+    threshold: "200"
+    app_port_group: "dns"
+    tracking_type: "src_ip"
+    action: "drop"
+    packet_report: "enable"
+
+########################## Connection Limit Profiles (Optional) ##########################
+# Define CL profiles that use the protections above
+
+cl_profiles:
+  # Example 1: Web server profile (uses multiple protections)
+  - name: "web_server_profile"
+    protections:
+      - "web_cps_protection"           # References protection defined above
+      # - "existing_protection_name"   # Could also reference existing protections
+  
+  # Example 2: Database profile
+  - name: "database_profile"
+    protections:
+      - "db_concurrent_protection"
+  
+  # Example 3: DNS profile
+  - name: "dns_profile"
+    protections:
+      - "dns_protection"
+
+########################## Security Policy Configuration ##########################
+
+# Control flags for orchestration workflow
+security_policy_config:
+  create_network_classes: true      # Set false if network classes already exist
+  create_cl_profiles: true          # Set false if CL profiles already exist  
+  create_security_policies: true    # Set false to skip policy creation (dry-run mode)
+  apply_policies_after_creation: false  # Set false to skip automatic policy updates (requires manual update_policies.yml run)
+
+# Security policies with comprehensive profile bindings
+security_policies:
+  
+  # Example Policy 1: Web server protection policy
+  - policy_name: "web_server_security_policy"
+    state: "enable"                           # enable | disable (or 1 | 2)
+    action: "block_and_report"                           # block_and_report | report_only
+    priority: "100"                           # Priority (1-1000, lower = higher priority)
+    src_network: "any"                        # Source network class or "any"
+    dst_network: "web_servers"                # Destination network class or "any"
+    direction: "oneway"                       # oneway | twoway (or 1 | 2)
+    packet_reporting_status: "enable"         # enable | disable (or 1 | 2)
+    
+    # Profile bindings (all optional - reference created or existing profiles)
+    connection_limit_profile: "web_server_profile"    # CL profile name
+    bdos_profile: "BDOS1"                                  # BDOS profile (if available)
+    syn_protection_profile: ""                        # SYN protection profile
+    dns_flood_profile: ""                             # DNS flood profile
+    https_flood_profile: ""                           # HTTPS flood profile
+    traffic_filters_profile: ""                       # Traffic filters profile
+    signature_protection_profile: "DoS-All"                  # Signature protection profile
+    ert_attackers_feed_profile: ""                    # ERT attackers feed profile
+    geo_feed_profile: ""                              # Geographic feed profile
+    out_of_state_profile: ""                          # Out of state profile
+
+  # Example Policy 2: Database protection (minimal profile bindings)
+  - policy_name: "database_security_policy"
+    state: "enable"
+    action: "report_only"                     # Report only for monitoring
+    priority: "200"
+    src_network: "internal_networks"          # Only allow internal access
+    dst_network: "database_servers"
+    direction: "oneway"
+    packet_reporting_status: "disable"       # Reduce log volume
+    
+    # Only CL profile binding for database
+    connection_limit_profile: "database_profile"
+    bdos_profile: ""
+    syn_protection_profile: ""
+    dns_flood_profile: ""
+    https_flood_profile: ""
+    traffic_filters_profile: ""
+    signature_protection_profile: ""
+    ert_attackers_feed_profile: ""
+    geo_feed_profile: ""
+    out_of_state_profile: ""
+
+########################## Usage Notes ##########################
+
+# 1. Copy this file to create_vars.yml and modify for your environment
+# 2. Update dp_ip with your actual DefensePro device IP addresses
+# 3. Define only the profiles you need to create (omit if using existing ones)
+# 4. Configure security_policy_config flags based on what you want to create
+# 5. Define your security policies with appropriate profile bindings
+# 6. Leave profile fields empty ("") if you don't want to bind that type of profile
+# 7. Priority values: higher numbers = higher priority
+
+# Security Policy Creation Order:
+# 1. Network classes (if create_network_classes: true)
+# 2. Other protections and profiles
+# 3. Security policies (if create_security_policies: true)
+
+# Profile Binding Notes:
+# - connection_limit_profile: controls connection rate limiting
+# - bdos_profile: Behavioral DDoS protection
+# - syn_protection_profile: SYN flood protection  
+# - dns_flood_profile: DNS flood protection
+# - https_flood_profile: HTTPS flood protection
+# - traffic_filters_profile: Custom traffic filtering rules
+# - signature_protection_profile: Security signatures
+# - ert_attackers_feed_profile: ERT Active Attackers Feed profile
+# - geo_feed_profile: Geolocation profile
+# - out_of_state_profile: Out-of-state profile

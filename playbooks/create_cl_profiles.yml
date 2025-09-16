@@ -1,0 +1,100 @@
+---
+- name: Create connection limit protections and profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Configure connection limit protections and profiles
+          create_cl_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            cl_protections: "{{ cl_protections | default([]) }}"
+            cl_profiles: "{{ cl_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: cl_create_results
+
+        - name: Display CL creation results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Connection Limit Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% else %}
+              
+              No connection limit protections/profiles configured for creation.
+              {% endif %}
+              {% elif ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed:
+              
+              Connection Limit Configurations ({{ item.debug_info.input.protections_count | default(0) }} protections + {{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              {% if item.debug_info.input.protections_count | default(0) > 0 %}
+                - {{ item.debug_info.input.protections_count }} protection(s) would be created
+              {% endif %}
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) would be created
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              
+              Error occurred during creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.debug_info.input.protections_count | default(0) > 0 or item.debug_info.input.profiles_count | default(0) > 0 %}
+              
+              Connection Limit Configurations created successfully:
+              {% if item.debug_info.input.protections_count | default(0) > 0 %}
+                - {{ item.debug_info.input.protections_count }} protection(s) created
+              {% endif %}
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) created
+              {% endif %}
+              {% else %}
+              
+              No connection limit protections/profiles were created.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ cl_create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: "Apply policy updates per device"
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - cl_create_results is defined
+            - cl_create_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

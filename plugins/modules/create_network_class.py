@@ -1,186 +1,203 @@
-# plugins/modules/create_dns_profile.py
+
+# plugins/modules/create_network_class.py
 """
-Ansible module to create or manage DefensePro DNS Protection profiles via Radware CyberController API.
+Unified Ansible module to create DefensePro network classes via Radware CyberController API.
 
-This module allows you to create a DNS Protection profile on Radware DefensePro devices
-using the Radware CyberController API. It requires connection parameters for the Radware CyberController,
-the target DefensePro IP, and DNS profile details.
-
-Functions:
-  run_module():
-    Main logic for the module. Handles argument parsing, logging, API request construction,
-    and response handling. Supports check mode.
-
-  main():
-    Entrypoint for the module execution.
-
-Module Arguments:
-  provider (dict): Connection parameters for Radware CyberController.
-    - cc_ip (str): CyberController IP address.
-    - username (str): Username for authentication.
-    - password (str): Password for authentication.
-    - log_level (str, optional): Logging verbosity (default: 'disabled').
-  dp_ip (str): Target DefensePro device IP address.
-  name (str): DNS profile name.
-  params (dict): DNS profile parameters in user-friendly format.
-
-Returns:
-  response (dict): API response from Radware CyberController.
-  changed (bool): Indicates if any change was made.
-  debug_info (dict): Debug information including request and response details.
+This module handles creation of multiple network classes with their network groups in a single operation.
 """
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
-from ansible.module_utils.logger import Logger
-
-DOCUMENTATION = r'''
----
-module: create_dns_profile
-short_description: Create or manage DefensePro DNS Protection profiles
-description:
-  - Creates a DNS Protection profile on Radware DefensePro via Radware CC API.
-options:
-  provider:
-    description:
-      - Dictionary with connection parameters.
-    type: dict
-    required: true
-    suboptions:
-      cc_ip:
-        description: CC IP address
-        type: str
-        required: true
-      username:
-        type: str
-        required: true
-      password:
-        type: str
-        required: true
-      log_level:
-        type: str
-        required: false
-        default: "disabled"
-  dp_ip:
-    type: str
-    required: true
-  name:
-    type: str
-    required: true
-  params:
-    description:
-      - Dictionary of DNS profile attributes (user-friendly keys allowed)
-    type: dict
-    required: true
-'''
-
-EXAMPLES = r'''
-- name: Create DNS Protection profile
-  create_dns_profile:
-    provider:
-      cc_ip: 10.105.193.3
-      username: radware
-      password: mypass
-    dp_ip: 10.105.192.33
-    name: "DNS_Profile_1"
-    params:
-      DNS Expected Qps: "4000"
-      DNS Action: "block & report"
-      DNS Max Allow Qps: "4500"
-      DNS Manual Trigger Status: "disable"
-      DNS Footprint Strictness: "medium"
-      DNS Packet Report Status: "enable"
-      DNS Learning Suppression Threshold: "50"
-'''
-
-RETURN = r'''
-response:
-  description: API response from Radware CC
-  type: dict
-debug_info:
-  description: Internal debug information including request and response
-  type: dict
-'''
-
-# Mapping user-friendly keys → API keys
-FIELD_MAP = {
-    "DNS Expected Qps": "rsDnsProtProfileExpectedQps",
-    "DNS Action": "rsDnsProtProfileAction",
-    "DNS Max Allow Qps": "rsDnsProtProfileMaxAllowQps",
-    "DNS Manual Trigger Status": "rsDnsProtProfileManualTriggerStatus",
-    "DNS Footprint Strictness": "rsDnsProtProfileFootprintStrictness",
-    "DNS Packet Report Status": "rsDnsProtProfilePacketReportStatus",
-    "DNS Learning Suppression Threshold": "rsDnsProtProfileLearningSuppressionThreshold",
-}
-
-# Numeric mapping for user-friendly values
-NUMERIC_MAPPING = {
-    "DNS Action": {"report": 0, "block & report": 1},
-    "DNS Manual Trigger Status": {"enable": 1, "disable": 2},
-    "DNS Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
-    "DNS Packet Report Status": {"enable": 1, "disable": 2},
-}
-
-def translate_params(params):
-    """Convert user-friendly keys and values to Radware API format."""
-    translated = {}
-    for key, val in params.items():
-        api_key = FIELD_MAP.get(key, key)
-        if key in NUMERIC_MAPPING:
-            val_lower = str(val).lower()
-            if val_lower not in NUMERIC_MAPPING[key]:
-                raise ValueError(f"Invalid value '{val}' for {key}")
-            translated[api_key] = NUMERIC_MAPPING[key][val_lower]
-        else:
-            translated[api_key] = int(val) if str(val).isdigit() else val
-    return translated
 
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+        netclasses=dict(type='list', required=False, default=[])
     )
-
+    
+    result = dict(changed=False, response={})
+    debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+    
+    # Extract provider and setup logging
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    profile_name = module.params['name']
-    profile_params = module.params['params']
+    netclasses = module.params['netclasses']
+    
     log_level = provider.get('log_level', 'disabled')
-
-    result = dict(changed=False, response={}, debug_info={})
+    
+    from ansible.module_utils.logger import Logger
     logger = Logger(verbosity=log_level)
-
+    
+    debug_info['input'] = {
+        'dp_ip': dp_ip,
+        'netclasses_count': len(netclasses),
+        'total_groups': sum(len(nc.get('groups', [])) for nc in netclasses)
+    }
+    
     try:
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
-
-        if module.check_mode:
-            module.exit_json(**result)
-
-        path = f"/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
-        body = {"rsDnsProtProfileName": profile_name}
-        body.update(translate_params(profile_params))
-
-        url = f"https://{provider['cc_ip']}{path}"
-        result['debug_info'] = {'method': 'POST', 'url': url, 'body': body}
-        logger.info(f"Creating DNS Protection profile '{profile_name}' on device {dp_ip}")
-        logger.debug(f"Request payload: {body}")
-
-        resp = cc._post(url, json=body)
-        try:
-            data = resp.json()
-        except ValueError:
-            raise Exception(f"Invalid JSON response: {resp.text}")
-
-        result['response'] = data
-        result['changed'] = True
-        result['debug_info'].update({'response_status': resp.status_code, 'response_json': data})
-
+        from ansible.module_utils.radware_cc import RadwareCC
+        cc = RadwareCC(provider['cc_ip'], provider['username'], 
+                      provider['password'], log_level=log_level, logger=logger)
+        
+        changes_made = False
+        created_groups = []
+        errors = []
+        
+        if not module.check_mode:
+            # Process each network class
+            if netclasses:
+                logger.info(f"Creating {len(netclasses)} network classes with {debug_info['input']['total_groups']} total groups on {dp_ip}")
+                
+                for netclass in netclasses:
+                    class_name = netclass.get('name', '')
+                    groups = netclass.get('groups', [])
+                    
+                    if not class_name:
+                        error_msg = "Network class missing required 'name' field"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+                        continue
+                    
+                    logger.info(f"Processing network class '{class_name}' with {len(groups)} groups")
+                    
+                    # Process each group within the class
+                    for index, group in enumerate(groups):
+                        address = group.get('address', '')
+                        mask = group.get('mask', '')
+                        
+                        if not address or not mask:
+                            error_msg = f"Group at index {index} in class '{class_name}' missing address or mask"
+                            errors.append(error_msg)
+                            logger.error(error_msg)
+                            continue
+                        
+                        try:
+                            # Create network group
+                            path = f"/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}"
+                            url = f"https://{provider['cc_ip']}{path}"
+                            
+                            body = {
+                                "rsBWMNetworkName": class_name,
+                                "rsBWMNetworkSubIndex": index,
+                                "rsBWMNetworkAddress": address,
+                                "rsBWMNetworkMask": mask,
+                                "rsBWMNetworkMode": "1"
+                            }
+                            
+                            logger.info(f"Creating network group '{class_name}[{index}]': {address}/{mask}")
+                            logger.debug(f"Request URL: {url}")
+                            logger.debug(f"Request body: {body}")
+                            
+                            resp = cc._post(url, json=body)
+                            data = resp.json()
+                            
+                            created_groups.append({
+                                'class_name': class_name,
+                                'index': index,
+                                'address': address,
+                                'mask': mask,
+                                'status': 'success',
+                                'response': data
+                            })
+                            changes_made = True
+                            logger.info(f"Successfully created network group '{class_name}[{index}]'")
+                            
+                        except Exception as e:
+                            error_msg = f"Failed to create network group '{class_name}[{index}]' ({address}/{mask}): {str(e)}"
+                            errors.append(error_msg)
+                            logger.error(error_msg)
+                            
+                            # Add to created_groups with error status for reporting
+                            created_groups.append({
+                                'class_name': class_name,
+                                'index': index,
+                                'address': address,
+                                'mask': mask,
+                                'status': 'failed',
+                                'error': str(e)
+                            })
+            
+            result['changed'] = changes_made
+            result['response'] = {
+                'created_groups': created_groups,
+                'errors': errors,
+                'summary': {
+                    'total_groups_attempted': len(created_groups),
+                    'successful_groups': len([g for g in created_groups if g['status'] == 'success']),
+                    'failed_groups': len([g for g in created_groups if g['status'] == 'failed'])
+                }
+            }
+            
+            debug_info['summary'] = {
+                'groups_created': len([g for g in created_groups if g['status'] == 'success']),
+                'groups_failed': len([g for g in created_groups if g['status'] == 'failed']),
+                'errors_count': len(errors),
+                'operations_completed': changes_made
+            }
+            
+        else:
+            # Check mode - show what would be created
+            planned_operations = []
+            
+            if netclasses:
+                for netclass in netclasses:
+                    class_name = netclass.get('name', '')
+                    groups = netclass.get('groups', [])
+                    
+                    if not class_name:
+                        errors.append("Network class missing required 'name' field")
+                        continue
+                    
+                    for index, group in enumerate(groups):
+                        address = group.get('address', '')
+                        mask = group.get('mask', '')
+                        
+                        if not address or not mask:
+                            errors.append(f"Group at index {index} in class '{class_name}' missing address or mask")
+                            continue
+                        
+                        planned_operations.append({
+                            'class_name': class_name,
+                            'index': index,
+                            'address': address,
+                            'mask': mask,
+                            'description': f"Create network group '{class_name}[{index}]': {address}/{mask}"
+                        })
+            
+            if planned_operations:
+                result['changed'] = True
+                result['response'] = {
+                    'preview_mode': True,
+                    'planned_operations': planned_operations,
+                    'total_operations': len(planned_operations)
+                }
+                debug_info['summary'] = {
+                    'preview_mode': True,
+                    'operations_planned': len(planned_operations)
+                }
+            else:
+                result['response'] = {
+                    'preview_mode': True,
+                    'message': 'No network classes configured for creation'
+                }
+                debug_info['summary'] = {
+                    'preview_mode': True,
+                    'operations_planned': 0
+                }
+        
+        # Handle errors
+        if errors:
+            if not result.get('changed', False):
+                module.fail_json(msg=f"All operations failed. Errors: {'; '.join(errors)}", debug_info=debug_info, **result)
+            else:
+                result['warnings'] = errors
+                
     except Exception as e:
         logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), **result)
-
+        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+    
+    result['debug_info'] = debug_info
     module.exit_json(**result)
 
 def main():

@@ -4,19 +4,44 @@
 
 ## What This Does
 
-Automate creation, editing, and deletion of DefensePro network classes across multiple devices using Ansible.
+Automate creation, editing, and deletion of DefensePro profiles and policies across multiple devices using Ansible.
+
+## Prerequisites
+
+Before starting, ensure your Ansible environment is properly configured:
+
+### Required Files Setup
+```bash
+# 1. Create Ansible configuration (required)
+cp ansible_example.cfg ansible.cfg
+
+# 2. Create inventory file (required) 
+cp inventory_example.ini inventory.ini
+
+# 3. Create CyberController connection settings (required)
+cd vars/
+cp cc_example.yml cc.yml
+nano cc.yml  # Edit with your CyberController IP, username, password
+
+```
+
+### Verify Setup
+
+# Test inventory
+ansible-inventory --list
+```
 
 ## Quick Start (5 minutes)
 
 ### 1. Setup Your Environment
 ```bash
-# Copy configuration templates
+# Copy configuration templates (after completing Prerequisites above)
 cd vars/
-cp cc_example.yml cc.yml                     # Edit CC connection variables
-cp create_dns_vars.yml.example create_dns_vars.yml
-cp edit_dns_vars.yml.example edit_dns_vars.yml
-cp delete_dns_vars.yml.example delete_dns_vars.yml
-cp get_dns_vars.yml.example get_dns_vars.yml
+cp create_vars.yml.example create_vars.yml  # Edit variables as needed
+cp edit_vars.yml.example edit_vars.yml      # Edit variables as needed
+cp delete_vars.yml.example delete_vars.yml  # Edit variables as needed
+cp get_vars.yml.example get_vars.yml        # Edit variables as needed
+cp update_vars_example.yml update_vars.yml  # Edit variables as needed
 ```
 
 ### 2. Run Operations
@@ -30,8 +55,26 @@ ansible-playbook playbooks/create_dns_profile.yml
 # Edit existing DNS profiles  
 ansible-playbook playbooks/edit_dns_profile.yml
 
-# Delete DNS profiles
-ansible-playbook playbooks/delete_dns_profile.yml
+# Delete network classes
+ansible-playbook playbooks/delete_network_class.yml
+
+# Create connection limit profiles (uses create_cl_configuration module)
+ansible-playbook playbooks/create_cl_profiles.yml
+
+# Edit existing connection limit protections (uses edit_cl_configuration module)
+ansible-playbook playbooks/edit_cl_protections.yml
+
+# Get connection limit profiles and protections (uses get_cl_configuration module)
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Delete connection limit profiles and protections (uses delete_cl_configuration module)
+ansible-playbook playbooks/delete_cl_profiles.yml
+
+# Create security policies with orchestration (includes network classes, CL profiles, and policies)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Edit existing security policies (partial updates and profile management)
+ansible-playbook playbooks/edit_security_policy.yml
 ```
 
 ## Common Workflows
@@ -66,25 +109,33 @@ ansible-playbook playbooks/edit_dns_profile.yml
 ### Workflow 3: Delete dns profile
 ```bash
 # 1. Identify what to delete
-ansible-playbook playbooks/get_dns_profile.yml
+ansible-playbook playbooks/get_network_class.yml
 
 # 2. Define deletions
-nano vars/delete_dns_vars.yml
+nano vars/delete_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/delete_dns_profile.yml
+ansible-playbook --check playbooks/delete_network_class.yml
 
 # 4. Apply deletions
-ansible-playbook playbooks/delete_dns_profile.yml
+ansible-playbook playbooks/delete_network_class.yml
 ```
 
 ## Configuration Files
 
-### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, etc.)
+### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)
 ```yaml
 dp_ip:
   - "10.105.192.32"  # Add your DefensePro IPs here
   - "10.105.192.33"
+
+# For getting network classes (get_vars.yml)
+filter_class_names: []  # Show all classes (default)
+# filter_class_names: ["web_servers", "db_servers"]  # Filter specific classes
+
+# For getting profiles (get_vars.yml)
+filter_cl_profile_names: []  # Show all profiles (default)
+# filter_cl_profile_names: ["profile1", "profile2"]  # Filter specific profiles
 ```
 
 ### CyberController Connection (`vars/cc.yml`)
@@ -97,39 +148,43 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating dns profile
+### Creating Networks
 ```yaml
-dns_profile:
-  - name: "DNS_Profile_1"
-    params:
-      DNS Expected Qps: "4000"
-      DNS Action: "block & report"
-      DNS Max Allow Qps: "4500"
-      DNS Manual Trigger Status: "disable"
-      DNS Footprint Strictness: "medium"
-      DNS Packet Report Status: "enable"
-      DNS Learning Suppression Threshold: "50"
+netclasses:
+  - name: "web_servers"
+    groups:
+      - { address: "192.168.1.0", mask: "255.255.255.0" }
+      - { address: "192.168.2.0", mask: "24" }
 ```
 
-### Editing dns profile 
+### Editing Networks  
 ```yaml
-dns_profile:
-  - name: "DNS_Profile_1"
-    params:
-      DNS Expected Qps: "5000"
-      DNS Action: "report"
-      DNS Max Allow Qps: "5500"
-      DNS Manual Trigger Status: "enable"
+edit_networks:
+  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
+  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
 ```
 
-### Deleting dns profile
+### Deleting Networks
 ```yaml
-dns_profiles:
-  - name: "DNS_Profile_1"
-  - name: "DNS_Profile_2"
+delete_networks:
+  - {class_name: "web_servers", index: 0}
+  - {class_name: "old_servers", index: 1}
 ```
 
 ## Troubleshooting
+
+### "No inventory" or "module not found" errors
+```bash
+# Check if required files exist
+ls -la ansible.cfg inventory.ini
+
+# Create if missing (see Prerequisites section)
+cp ansible_example.cfg ansible.cfg
+cp inventory_example.ini inventory.ini
+
+# Verify Ansible can find modules
+ansible-doc -l | grep network_class
+```
 
 ### "File not found" errors
 ```bash
@@ -149,6 +204,25 @@ cat vars/cc.yml
 ```bash
 # Ensure all required variables are set in your vars files
 # Check the .example files for required format
+```
+
+### "ansible-playbook command not found"
+```bash
+# Install Ansible if not already installed
+pip3 install ansible
+
+# Or using package manager
+sudo apt-get install ansible  # Ubuntu/Debian
+sudo yum install ansible      # CentOS/RHEL
+```
+
+### "Protection deletion failed" errors
+```bash
+# Check if protection is still associated with any profile
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Remove protection from profiles first, then delete protection
+# Edit delete_vars.yml - define both sections if doing complete cleanup
 ```
 
 ## Best Practices
