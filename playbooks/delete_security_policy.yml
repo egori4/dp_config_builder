@@ -1,0 +1,94 @@
+---
+- name: Delete security policies
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+          loop_control:
+            label: "Locking device: {{ item }}"
+
+        - name: Delete security policies
+          delete_security_policy:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            delete_security_policies: "{{ delete_security_policies | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Security Policy Deletions ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% else %}
+              
+              No security policies configured for deletion.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set deleted_pols = item.response.deleted_policies | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% if deleted_pols %}
+              
+              Security Policies ({{ deleted_pols | length }}/{{ item.response.summary.total_policies_attempted }} successful):
+              {% for del in deleted_pols %}
+                - {{ del.policy_name }}: {{ del.status }}
+                  Mode: {{ del.deletion_mode }}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not deleted_pols and not errors %}
+              
+              No security policies configured for deletion.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_policy_updates | default(false))
+          loop_control:
+            label: "Applying policies: {{ item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+          loop_control:
+            label: "Unlocking device: {{ item }}"

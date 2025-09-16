@@ -81,6 +81,12 @@ ansible-playbook playbooks/get_bdos_profile.yml
 
 # Delete bdos profile (uses delete_bdos_profile module)
 ansible-playbook playbooks/delete_bdos_profile.yml
+
+# Create security policies with orchestration (includes network classes, CL profiles, and policies)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Edit existing security policies (partial updates and profile management)
+ansible-playbook playbooks/edit_security_policy.yml
 ```
 
 ## Common Workflows
@@ -563,54 +569,14 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
-### Security Policy Configuration
 
-Configure security policies with profile bindings in `vars/create_vars.yml`:
 
-```yaml
-# Orchestration control flags
-security_policy_config:
-  create_network_classes: true     # Create network classes first
-  create_cl_profiles: true         # Create CL profiles next
-  create_security_policies: true   # Create security policies last
-
-# Security policies with profile bindings
-security_policies:
-  - policy_name: "web_server_protection"
-    state: "enable"                        # enable, disable
-    action: "block"                        # block, report_only
-    src_network: "any"                     # Source network class
-    dst_network: "web_servers"             # Destination network class  
-    direction: "oneway"                    # oneway, twoway
-    priority: "100"                        # Policy priority (lower = higher precedence)
-    packet_reporting_status: "enable"      # enable, disable
     
-    # Profile bindings (all optional)
-    connection_limit_profile: "web_cl_profile"
-    bdos_profile: "default_netflood_profile"
-    syn_protection_profile: "default_syn_profile"
-    dns_flood_profile: ""                  # Empty = no binding
-    https_flood_profile: ""
-    traffic_filters_profile: ""
-    signature_protection_profile: "web_appsec_profile"
-    ert_attackers_feed_profile: ""
-    geo_feed_profile: ""
-    out_of_state_profile: ""
-```
 
-**Security Policy Configuration Notes**:
-- **policy_name**: MANDATORY - Unique policy name
-- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
-- **direction**: MANDATORY - Traffic direction to match
-- **Profile bindings**: All optional - leave empty string for no binding
-- **Control flags**: Use to enable/disable each creation stage independently
-
-### Bdos Profile configuration ###
-# Define BDoS profiles to create on each device
-Configure bdos policies  `vars/create_vars.yml`:
-
+### Create BDOS Profile configuration ###
 ```yaml
-  # Orchestration control flags
+# Define BDoS profiles to create on each device
+# Configure bdos policies  `vars/create_vars.yml`:
 # OPTIONAL: BDoS profiles (only define if creating new ones)
 bdos_profiles:
   - name: "bdos_profile_5"           # MANDATORY: Profile name
@@ -656,7 +622,8 @@ bdos_profiles:
     # All other parameters use defaults
 
 
-#### Editing BDoS Profiles (Partial Updates) ###
+
+### Editing BDoS Profiles (Partial Updates) ###
 ```yaml
 # Edit existing BDoS profiles - ONLY specify what you want to change
 bdos_profiles:
@@ -675,6 +642,8 @@ bdos_profiles:
       udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
       footprint_strictness: "high"               # OPTIONAL: Update detection sensitivity
     # All other parameters remain unchanged
+```
+
 
 #### Get BDoS Profiles  ####
 ```yaml
@@ -692,8 +661,9 @@ filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only the
 delete_bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
+```
 
-** Bdos profile Notes**:
+#### Bdos profile Notes:
 
 name: MANDATORY – Unique profile name.
 state: Optional – enable or disable (default: enable).
@@ -705,6 +675,167 @@ Rate limiting: Select predefined (normal_edge, suspect_edge) or user_defined wit
 Advanced controls: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
 Control flags: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
+
+
+### Security Policy Configuration
+
+Configure security policies with profile bindings in `vars/create_vars.yml`:
+
+```yaml
+# Orchestration control flags
+security_policy_config:
+  create_network_classes: true     # Create network classes first
+  create_cl_profiles: true         # Create CL profiles next
+  create_security_policies: true   # Create security policies last
+
+# Security policies with profile bindings
+security_policies:
+  - policy_name: "web_server_protection"
+    state: "enable"                        # enable, disable
+    action: "block_and_report"                        # block_and_report, report_only
+    src_network: "any"                     # Source network class
+    dst_network: "web_servers"             # Destination network class  
+    direction: "oneway"                    # oneway, twoway
+    priority: "100"                        # Policy priority (lower = higher precedence)
+    packet_reporting_status: "enable"      # enable, disable
+    
+    # Profile bindings (all optional)
+    connection_limit_profile: "web_cl_profile"
+    bdos_profile: "default_netflood_profile"
+    syn_protection_profile: "default_syn_profile"
+    dns_flood_profile: ""                  # Empty = no binding
+    https_flood_profile: ""
+    traffic_filters_profile: ""
+    signature_protection_profile: "web_appsec_profile"
+    ert_attackers_feed_profile: ""
+    geo_feed_profile: ""
+    out_of_state_profile: ""
+```
+
+**Security Policy Configuration Notes**:
+- **policy_name**: MANDATORY - Unique policy name
+- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
+- **direction**: MANDATORY - Traffic direction to match
+- **Profile bindings**: All optional - leave empty string for no binding
+- **Control flags**: Use to enable/disable each creation stage independently
+
+
+### Editing Security Policies
+
+Modify existing security policies using partial updates in `vars/edit_vars.yml`:
+
+```yaml
+# Target DefensePro devices
+dp_ip:
+  - "10.105.192.32"
+
+# Security policies to edit
+edit_security_policies:
+  - policy_name: "web_server_protection"    # MANDATORY: Policy name to edit
+    # Basic configuration parameters (all optional)
+    src_network: "internal_networks"        # Source network class name or "any"
+    dst_network: "web_servers"              # Destination network class name or "any"
+    direction: "twoway"                     # oneway, twoway, bidirectional
+    state: "enable"                         # enable, disable, active, inactive
+    action: "block_and_report"              # block_and_report, report_only
+    priority: "750"                         # Priority value (1-1000)
+    packet_reporting_status: "enable"       # enable, disable
+    
+    # Profile bindings (all optional - use empty string to remove binding)
+    connection_limit_profile: "web_limits"  # Connection limit profile name
+    bdos_profile: ""                        # BDOS profile name (empty = detach)
+    syn_protection_profile: "syn_limits"    # SYN protection profile name
+    dns_flood_profile: ""                   # DNS flood profile name
+    https_flood_profile: ""                 # HTTPS flood profile name
+    traffic_filters_profile: ""             # Traffic filters profile name
+    signature_protection_profile: "app_sec" # Application security profile name
+    ert_attackers_feed_profile: ""          # ERT attackers feed profile name
+    geo_feed_profile: ""                    # Geo feed profile name
+    out_of_state_profile: ""                # Out of state profile name
+
+  # Edit another policy - minimal changes
+  - policy_name: "database_protection"
+    action: "report_only"                   # Change to monitoring mode
+    connection_limit_profile: ""            # Remove connection limit protection
+```
+
+**Run the playbook**:
+```bash
+# Preview changes (check mode)
+ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml --check
+
+# Execute changes
+ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml
+```
+
+**Security Policy Editing Notes**:
+- **policy_name**: MANDATORY - Must be an existing security policy name
+- **Partial Updates**: Only specify parameters you want to change - unspecified parameters remain unchanged
+- **Profile Detachment**: Use empty string ("") to remove profile bindings
+- **Profile Attachment**: Specify profile name to attach/change binding  
+- **Preview Mode**: Use `--check` flag to see planned changes before execution
+- **Control Flags**: Device locking can be skipped with `skip_device_lock: true` in vars
+
+### Deleting Security Policies
+
+Remove security policies with optional profile cleanup using `vars/delete_vars.yml`:
+
+```yaml
+# Target DefensePro devices
+dp_ip:
+  - "10.105.192.32"
+
+# Security policies to delete
+delete_security_policies:
+  - policy_name: "test_security_policy"     # MANDATORY: Policy name to delete
+    deletion_mode: "policy_only"            # OPTIONAL: policy_only | policy_and_profiles
+  
+  - policy_name: "old_security_policy"     # MANDATORY: Policy name to delete  
+    deletion_mode: "policy_and_profiles"    # OPTIONAL: Advanced cleanup mode
+    
+  # deletion_mode defaults to "policy_only" if not specified
+  - policy_name: "another_policy"           # Uses default safe deletion mode
+```
+
+**Deletion Modes**:
+
+1. **`policy_only` (default)**:
+   - Safe deletion - only removes the security policy
+   - Associated profiles remain available for other policies
+   - Use for most deletion scenarios
+
+2. **`policy_and_profiles` (advanced)**:
+   - May remove associated profiles if no longer used by other policies
+   - Use with caution - may affect other policies
+   - Only use when certain about profile cleanup requirements
+
+**Usage Examples**:
+```bash
+# Delete policies with preview mode (recommended first step)
+ansible-playbook playbooks/delete_security_policy.yml --check
+
+# Delete policies (actual execution)
+ansible-playbook playbooks/delete_security_policy.yml
+
+# Delete with verbose output
+ansible-playbook playbooks/delete_security_policy.yml -v
+```
+
+**Security Policy Deletion Notes**:
+- **policy_name**: MANDATORY - Must be an existing security policy name
+- **deletion_mode**: OPTIONAL - Defaults to "policy_only" for safety
+- **Safe Default**: Always use "policy_only" unless certain about profile cleanup needs
+- **Preview Mode**: Use `--check` flag to see planned deletions before execution
+- **Batch Processing**: Multiple policies can be deleted in a single operation
+- **Profile Safety**: "policy_only" mode preserves profiles for other policies to use
+- **Advanced Cleanup**: "policy_and_profiles" mode should only be used when profiles are policy-specific
+
+**Recommended Workflow**:
+1. Use preview mode first: `ansible-playbook playbooks/delete_security_policy.yml --check`
+2. Review planned deletions carefully
+3. For shared environments, prefer "policy_only" mode
+4. For standalone policies with unique profiles, consider "policy_and_profiles" mode
+5. Execute deletion: `ansible-playbook playbooks/delete_security_policy.yml`
 
 ## Troubleshooting
 

@@ -212,15 +212,6 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete Connection Limit Profiles (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Security Policy Creation (using vars/create_vars.yml configuration)
-ansible-playbook playbooks/create_security_policy.yml
-
-# Security Policy Editing (using vars/edit_vars.yml configuration)  
-ansible-playbook playbooks/edit_security_policy.yml
-
-# Security Policy Deletion (using vars/delete_vars.yml configuration)
-ansible-playbook playbooks/delete_security_policy.yml
-
 # Create BDoS profiles (uses create_bdos_profile module)
 ansible-playbook playbooks/create_bdos_profile.yml
 
@@ -232,6 +223,17 @@ ansible-playbook playbooks/get_bdos_profile.yml
 
 # Delete BDoS profiles (uses delete_bdos_profile module)
 ansible-playbook playbooks/delete_bdos_profile.yml
+
+
+# Security Policy Creation (using vars/create_vars.yml configuration)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Security Policy Editing (using vars/edit_vars.yml configuration)  
+ansible-playbook playbooks/edit_security_policy.yml
+
+# Security Policy Deletion (using vars/delete_vars.yml configuration)
+ansible-playbook playbooks/delete_security_policy.yml
+
 
 ```
 

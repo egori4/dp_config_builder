@@ -1,0 +1,107 @@
+---
+- name: Edit security policies
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Locking device: {{ item }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Edit security policies
+          edit_security_policy:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            edit_security_policies: "{{ edit_security_policies | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: edit_results
+          when: edit_security_policies is defined and edit_security_policies|length > 0
+
+        - name: Display edit results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              Security Policy Edits ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - Policy: {{ op.policy_name }}
+                  Changes: {{ op.changes | join(', ') }}
+              {% endfor %}
+              {% else %}
+              
+              No security policies configured for editing.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% set edited_policies = item.response.edited_policies | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              {% set summary = item.response.summary | default({}) %}
+              {% if edited_policies %}
+              
+              Security Policies ({{ summary.successful_edits | default(0) }}/{{ summary.total_policies_attempted | default(0) }} successful):
+              {% for policy in edited_policies %}
+                - {{ policy.policy_name }}: {{ policy.status }}
+                  {% if policy.changes_applied %}Changes: {{ policy.changes_applied | join(', ') }}{% endif %}
+              {% endfor %}
+              {% endif %}
+              {% if errors %}
+              
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% if not edited_policies and not errors %}
+              
+              No security policies configured for editing.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+          when: 
+            - edit_results is defined
+            - edit_results.results is defined
+            - edit_security_policies is defined 
+            - edit_security_policies|length > 0
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - edit_security_policies is defined 
+            - edit_security_policies|length > 0
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Unlocking device: {{ item }}"
+          # Continue unlocking even if previous unlock failed
+          ignore_errors: yes
+          when: not (skip_device_lock | default(false))

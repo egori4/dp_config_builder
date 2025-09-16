@@ -224,7 +224,7 @@ def map_security_policy_parameters(policy):
     
     ACTION_MAP = {
         'report_only': '0', 'report': '0',
-        'block': '1', 'deny': '1', 'drop': '1', 'protect': '1'
+        'block_and_report': '1', 'block': '1'
     }
     
     PACKET_REPORTING_MAP = {

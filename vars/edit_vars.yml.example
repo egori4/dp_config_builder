@@ -120,35 +120,56 @@ bdos_profiles:
       user_defined_rate_limit_unit: "mbps"   # kbps/mbps/gbps
       adv_udp_detection: "enable"            # enable/disable
 
-################################### Edit Security Policies #############################
-# Define security policies to edit (must exist on the DefensePro)
+################################## Security Policies Variables ###############################
+# Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
 edit_security_policies:
-  - policy_name: "egor_security_policy_demo"  # Policy name to edit (MANDATORY)
-    # Basic configuration parameters (all optional)
-    # src_network: "any"                     # Source network class name or "any"
-    # dst_network: "egor_test_net"           # Destination network class name or "any"
-    direction: "oneway"                    # oneway, twoway, bidirectional
-    state: "disable"                        # enable, disable, active, inactive
-    action: "report_only"                        # block_and_report, report_only
-    # priority: "860"                        # Priority value (1-1000)
-    # packet_reporting_status: "enable"      # enable, disable
+  # Example: Edit a security policy, changing priority and action
+  - policy_name: "web_server_protection"    # Policy name to edit (MANDATORY)
+    priority: "750"                         # Change priority to 750
+    action: "block_and_report"                         # Change action to block and report mode
+    state: "enable"                         # Ensure policy is enabled
     
-    # Profile bindings (all optional - use empty string to remove binding)
-    connection_limit_profile: "cl_prof_egor_test10"   # Connection limit profile name
-    # bdos_profile: ""                                  # BDOS profile name
-    # syn_protection_profile: ""                        # SYN protection profile name
-    # dns_flood_profile: ""                             # DNS flood profile name
-    # https_flood_profile: ""                           # HTTPS flood profile name
-    # traffic_filters_profile: ""                       # Traffic filters profile name
-    # signature_protection_profile: ""                  # Application security profile name
-    # ert_attackers_feed_profile: ""                    # ERT attackers feed profile name
-    # geo_feed_profile: ""                              # Geo feed profile name
-    # out_of_state_profile: ""                          # Out of state profile name
+  # Example: Edit another policy with network and profile changes
+  # - policy_name: "database_protection"     # Another policy to edit
+  #   src_network: "internal_networks"       # Change source network class
+  #   dst_network: "database_servers"        # Change destination network class
+  #   direction: "twoway"                    # Change to bidirectional
+  #   connection_limit_profile: "db_limits"  # Bind connection limit profile
+  #   bdos_profile: "database_bdos"          # Bind BDOS profile
 
-  # Example: Edit another policy with different parameters
-  # - policy_name: "another_security_policy"
-  #   state: "disable"                       # Disable the policy
-  #   action: "report_only"                  # Change to report only mode
+  # Example: Edit policy to remove profile bindings
+  # - policy_name: "temp_policy"             # Policy to modify
   #   connection_limit_profile: ""           # Remove connection limit profile binding
+  #   signature_protection_profile: ""       # Remove signature protection binding
+  #   state: "disable"                       # Disable the policy
+
+  # Add more policy entries as needed
+
+# Notes for Security Policies:
+# - policy_name: MANDATORY - Must be an existing security policy name
+# - Only specify parameters you want to change - unspecified parameters keep their current values
+# - Use empty string ("") for profile bindings to remove existing bindings
+# 
+# ALL SUPPORTED Security Policy PARAMETERS with user-friendly values:
+# Basic Configuration:
+# - src_network: "network_class_name" or "any" (Source network class)
+# - dst_network: "network_class_name" or "any" (Destination network class)  
+# - direction: "oneway", "twoway", "bidirectional", "one_way", "two_way" (Traffic direction)
+# - state: "enable", "disable", "enabled", "disabled", "active", "inactive" (Policy state)
+# - action: "block_and_report", "report_only" (Action when triggered)
+# - priority: "number" (Priority value 1-1000, higher numbers = higher priority)
+# - packet_reporting_status: "enable", "disable", "enabled", "disabled" (Packet reporting)
+#
+# Profile Bindings (use empty string "" to remove binding):
+# - connection_limit_profile: "profile_name" (Connection limit profile)
+# - bdos_profile: "profile_name" (BDOS/Network flood profile)
+# - syn_protection_profile: "profile_name" (SYN protection profile)
+# - dns_flood_profile: "profile_name" (DNS flood profile)
+# - https_flood_profile: "profile_name" (HTTPS flood profile)
+# - traffic_filters_profile: "profile_name" (Traffic filters profile)
+# - signature_protection_profile: "profile_name" (Application security/AppSec profile)
+# - ert_attackers_feed_profile: "profile_name" (ERT attackers feed profile)
+# - geo_feed_profile: "profile_name" (Geo feed profile)
+# - out_of_state_profile: "profile_name" (Out of state profile)
