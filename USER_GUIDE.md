@@ -250,7 +250,45 @@ ansible-playbook playbooks/delete_cl_profiles.yml
 - **Delete protections only**: Skip `cl_profile_deletions`, define `cl_protection_deletions` with standalone protections
 - **Complete cleanup**: Define both sections - remove from profiles first, then delete protections
 
-### Workflow 9: Create Security Policies with Profile Bindings
+
+### Workflow 9 :Create New BDoS Profiles
+```bash
+# 1. Define your BDoS profiles
+nano vars/create_vars.yml
+
+# 2. Test first (dry run)
+ansible-playbook --check playbooks/create_bdos_profile.yml
+
+# 3. Apply configuration
+ansible-playbook playbooks/create_bdos_profile.yml
+```
+
+### Workflow 9a :Edit Existing BDoS Profile
+```bash
+nano vars/edit_vars.yml
+ansible-playbook --check playbooks/edit_bdos_profile.yml
+ansible-playbook playbooks/edit_bdos_profile.yml
+```
+
+#### workflow 9b :Get BDoS Profile
+```bash
+ansible-playbook playbooks/get_bdos_profile.yml
+```
+
+#### workflow 9c : Delete BDoS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_bdos_profile.yml
+ansible-playbook playbooks/delete_bdos_profile.yml
+```
+
+
+
+
+
+
+### Workflow 10: Create Security Policies with Profile Bindings
+
 ```bash
 # 1. Configure your orchestration settings  
 nano vars/create_vars.yml
@@ -282,7 +320,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 10: Apply DefensePro Policy Updates
+### Workflow 11: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -302,36 +340,6 @@ ansible-playbook playbooks/update_policies.yml
 # Option C: Override target devices (alternative to editing vars file)
 ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.32','10.105.192.33']"
 ```
-#### Workflow 11 :Create New BDoS Profiles
-```bash
-# 1. Define your BDoS profiles
-nano vars/create_vars.yml
-
-# 2. Test first (dry run)
-ansible-playbook --check playbooks/create_bdos_profile.yml
-
-# 3. Apply configuration
-ansible-playbook playbooks/create_bdos_profile.yml
-'''
-
-### Workflow 11a :Edit Existing BDoS Profile
-```bash
-nano vars/edit_vars.yml
-ansible-playbook --check playbooks/edit_bdos_profile.yml
-ansible-playbook playbooks/edit_bdos_profile.yml
-'''
-
-#### workflow 11b :Get BDoS Profile
-```bash
-ansible-playbook playbooks/get_bdos_profile.yml
-'''
-
-#### workflow 11c : Delete BDoS Profile
-```bash
-nano vars/delete_vars.yml
-ansible-playbook --check playbooks/delete_bdos_profile.yml
-ansible-playbook playbooks/delete_bdos_profile.yml
-'''
 
 **Policy Update Features**:
 - **Automatic integration**: Policies applied automatically during orchestration
@@ -339,6 +347,7 @@ ansible-playbook playbooks/delete_bdos_profile.yml
 - **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
 - **Safety confirmation**: Optional interactive prompts to prevent accidental updates
 - **Per-device processing**: Updates applied individually with proper locking
+
 
 
 ## Configuration Files
@@ -357,6 +366,7 @@ filter_class_names: []  # Show all classes (default)
 filter_cl_profile_names: []  # Show all profiles (default)
 # filter_cl_profile_names: ["profile1", "profile2"]  # Filter specific profiles
 ```
+
 
 ### CyberController Connection (`vars/cc.yml`)
 ```yaml

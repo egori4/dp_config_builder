@@ -11,4 +11,4 @@ ansible.cfg
 playbooks/log
 tmp/
 plugins/modules/__pycache__/
-.vscode/settings.json
+.vscode/

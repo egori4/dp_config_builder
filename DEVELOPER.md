@@ -122,7 +122,7 @@ dp_config_builder/
 │   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
 │   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
 │   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
-│   │   ├── 🔧 BDoS Flood Profile Modules (v0.1.5+)
+│   │   ├── 🔧 BDoS Flood Profile Modules (v0.1.3+)
 │   │   │   ├── create_bdos_profile.py      # Batch creation with validation
 │   │   │   ├── edit_bdos_profile.py        # Modify existing BDoS profiles
 │   │   │   ├── delete_bdos_profile.py      # Batch deletion with error handling
@@ -671,9 +671,9 @@ resp = cc._post(url, json=body)
     "status": "error", 
     "message": "M_00386: An entry with same key already exists."
 }
-
-################ Create BDoS Profile #################
-```python
+```
+###  Create BDoS Profile 
+```json
 POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
 
 {
@@ -710,8 +710,10 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
     "rsIDSNewRulesUserDefinedRateLimitUnit": 2,
     "rsIDSNewRulesAdvancedUdpDetection": "1"
 }
+```
+### Edit BDoS Profile
+```json
 
-##################### Edit BDoS Profile #########################
 PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
 
 {
@@ -723,12 +725,15 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
     "rsIDSNewRulesInboundTraffic": 2000000,
     "rsIDSNewRulesOutboundTraffic": 1000000
 }
+```
 
 Usage:
 Call edit_bdos_configuration once per device, passing list of profiles to edit.
 Each profile dict must include profile_name (mandatory) and any parameters to change
 
-####################### Get BDoS Profile ##########################
+
+### Get BDoS Profile 
+```json
 GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable
 
 Response:
@@ -789,14 +794,17 @@ Response:
 #Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
+```
+### Delete BDoS Profile 
 
-############## Delete BDoS Profile #########################
 DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}
+
+```yml
 # Profiles to delete
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
-
+```
 Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion
