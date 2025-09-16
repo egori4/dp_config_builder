@@ -1,197 +1,226 @@
 # plugins/modules/edit_dns_profile.py
 """
-Ansible module to edit/update a DNS Protection profile on DefensePro via Radware CyberController API.
+Unified Ansible module to edit/update DNS Protection profiles on DefensePro devices.
 
-This module allows you to update an existing DNS Protection profile on Radware DefensePro devices
-using the Radware CyberController API. It requires connection parameters for the Radware CyberController,
-the target DefensePro IP, and the DNS profile details to update.
-
-Functions:
-  run_module():
-    Main logic for the module. Handles argument parsing, logging, API request construction,
-    and response handling. Supports check mode.
-
-  main():
-    Entrypoint for the module execution.
-
-Module Arguments:
-  provider (dict): Connection parameters for Radware CyberController.
-    - cc_ip (str): CyberController IP address.
-    - username (str): Username for authentication.
-    - password (str): Password for authentication.
-    - log_level (str, optional): Logging verbosity (default: 'disabled').
-  dp_ip (str): Target DefensePro device IP address.
-  name (str): DNS profile name to edit.
-  params (dict): DNS profile parameters to update in user-friendly format.
-
-Returns:
-  response (dict): API response from Radware CyberController.
-  changed (bool): Indicates if any change was made.
-  debug_info (dict): Debug information including request and response details.
+This module follows the same unified architecture pattern as create_bdos_profile.py.
+- Accepts a list of DNS profiles to update on a single/multiple device.
+- Supports check mode, logging, error handling, and parameter mapping with inline validation.
 """
+
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
-from ansible.module_utils.logger import Logger
 
-DOCUMENTATION = r'''
----
-module: edit_dns_profile
-short_description: Edit an existing DNS Protection profile on DefensePro
-options:
-  provider:
-    description:
-      - Dictionary with connection parameters.
-    type: dict
-    required: true
-    suboptions:
-      cc_ip:
-        description: CyberController IP address
-        type: str
-        required: true
-      username:
-        description: Username for authentication
-        type: str
-        required: true
-      password:
-        description: Password for authentication
-        type: str
-        required: true
-      log_level:
-        description: Logging verbosity
-        type: str
-        required: false
-        default: "disabled"
-  dp_ip:
-    description: Target DefensePro device IP
-    type: str
-    required: true
-  name:
-    description: DNS profile name to edit
-    type: str
-    required: true
-  params:
-    description: DNS profile parameters to update
-    type: dict
-    required: true
-'''
-
-EXAMPLES = r'''
-- name: Edit DNS Protection profile
-  edit_dns_profile:
-    provider:
-      cc_ip: 10.105.193.3
-      username: radware
-      password: mypass
-    dp_ip: 10.105.192.33
-    name: "DNS_Profile_1"
-    params:
-      DNS Expected Qps: "5000"
-      DNS Max Allow Qps: "5500"
-      DNS Footprint Strictness: "high"
-'''
-
-RETURN = r'''
-response:
-  description: API response from Radware CC
-  type: dict
-debug_info:
-  description: Internal debug information including request and response
-  type: dict
-'''
-
-# Mapping user-friendly keys → API keys
-FIELD_MAP = {
-    "DNS Expected Qps": "rsDnsProtProfileExpectedQps",
-    "DNS Action": "rsDnsProtProfileAction",
-    "DNS Max Allow Qps": "rsDnsProtProfileMaxAllowQps",
-    "DNS Manual Trigger Status": "rsDnsProtProfileManualTriggerStatus",
-    "DNS Footprint Strictness": "rsDnsProtProfileFootprintStrictness",
-    "DNS Packet Report Status": "rsDnsProtProfilePacketReportStatus",
-    "DNS Learning Suppression Threshold": "rsDnsProtProfileLearningSuppressionThreshold",
-}
-
-# Numeric mapping for user-friendly values
-NUMERIC_MAPPING = {
-    "DNS Action": {"report": 0, "block & report": 1},
-    "DNS Manual Trigger Status": {"enable": 1, "disable": 2},
-    "DNS Footprint Strictness": {"low": 0, "medium": 1, "high": 2},
-    "DNS Packet Report Status": {"enable": 1, "disable": 2},
-}
-
-def translate_params(params):
-    """Convert user-friendly keys and values to Radware API format."""
-    translated = {}
-    for key, val in params.items():
-        api_key = FIELD_MAP.get(key, key)
-        if key in NUMERIC_MAPPING:
-            val_lower = str(val).lower()
-            if val_lower not in NUMERIC_MAPPING[key]:
-                raise ValueError(f"Invalid value '{val}' for {key}")
-            translated[api_key] = NUMERIC_MAPPING[key][val_lower]
-        else:
-            translated[api_key] = int(val) if str(val).isdigit() else val
-    return translated
 
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True),
-        params=dict(type='dict', required=True)
+        dns_profiles=dict(type='list', required=False, default=[])
     )
 
+    result = dict(changed=False, response={})
+    debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    profile_name = module.params['name']
-    profile_params = module.params['params']
-    log_level = provider.get('log_level', 'disabled')
+    dns_profiles = module.params['dns_profiles']
 
-    result = dict(changed=False, response={}, debug_info={})
+    log_level = provider.get('log_level', 'disabled')
+    from ansible.module_utils.logger import Logger
     logger = Logger(verbosity=log_level)
 
+    debug_info['input'] = {
+        'dp_ip': dp_ip,
+        'profiles_count': len(dns_profiles)
+    }
+
     try:
-        cc = RadwareCC(
-            provider['cc_ip'],
-            provider['username'],
-            provider['password'],
-            log_level=log_level,
-            logger=logger
-        )
+        from ansible.module_utils.radware_cc import RadwareCC
+        cc = RadwareCC(provider['cc_ip'], provider['username'],
+                       provider['password'], log_level=log_level, logger=logger)
+
+        changes_made = False
+        updated_profiles = []
+        errors = []
 
         if module.check_mode:
-            module.exit_json(**result)
+            if dns_profiles:
+                planned_operations = [
+                    {
+                        'profile_name': profile.get('name', 'unnamed_profile'),
+                        'params': profile.get('params', {})
+                    }
+                    for profile in dns_profiles
+                ]
+                result.update({
+                    'changed': True,
+                    'response': {
+                        'preview_mode': True,
+                        'planned_operations': planned_operations
+                    }
+                })
+            else:
+                result.update({
+                    'changed': False,
+                    'response': {
+                        'preview_mode': True,
+                        'message': 'No DNS profiles configured for update'
+                    }
+                })
 
-        path = f"/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
-        body = translate_params(profile_params)
+        else:
+            if dns_profiles:
+                logger.info(f"Updating {len(dns_profiles)} DNS profiles on {dp_ip}")
 
-        url = f"https://{provider['cc_ip']}{path}"
-        result['debug_info'] = {'method': 'PUT', 'url': url, 'body': body}
+                for profile in dns_profiles:
+                    profile_name = profile.get('name')
+                    if not profile_name:
+                        error_msg = "Profile name is required (use 'name' field)"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+                        continue
 
-        logger.info(f"Editing DNS Protection profile '{profile_name}' on device {dp_ip}")
-        logger.debug(f"Request payload: {body}")
+                    try:
+                        api_params = map_dns_profile_parameters(profile.get('params', {}))
+                    except ValueError as e:
+                        error_msg = f"Validation failed for profile {profile_name}: {str(e)}"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+                        continue
 
-        resp = cc._put(url, json=body)
-        logger.debug(f"Response status: {resp.status_code}")
+                    request_body = {"rsDnsProtProfileName": profile_name}
+                    request_body.update(api_params)
 
-        try:
-            data = resp.json()
-        except ValueError:
-            logger.error(f"Invalid JSON response: {resp.text}")
-            raise Exception(f"Invalid JSON response: {resp.text}")
+                    url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
 
-        result['response'] = data
-        result['changed'] = True
-        result['debug_info'].update({'response_status': resp.status_code, 'response_json': data})
+                    logger.info(f"Updating DNS profile: {profile_name}")
+                    logger.debug(f"Request URL: {url}")
+                    logger.debug(f"Request body: {request_body}")
+
+                    try:
+                        resp = cc._put(url, json=request_body)
+                        if resp.status_code in (200, 201, 204):
+                            logger.info(f"Successfully updated DNS profile: {profile_name}")
+                            changes_made = True
+                            updated_profiles.append({
+                                'profile_name': profile_name,
+                                'status': 'success',
+                                'params_applied': api_params
+                            })
+                        else:
+                            error_msg = f"Failed to update DNS profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                            errors.append(error_msg)
+                            logger.error(error_msg)
+
+                    except Exception as e:
+                        error_msg = f"Error updating DNS profile {profile_name}: {str(e)}"
+                        errors.append(error_msg)
+                        logger.error(error_msg)
+
+            else:
+                logger.info(f"No DNS profiles configured for update on {dp_ip}")
+
+            result.update({
+                'changed': changes_made,
+                'response': {
+                    'updated_profiles': updated_profiles,
+                    'errors': errors,
+                    'summary': {
+                        'successful_profiles': len(updated_profiles),
+                        'total_profiles_attempted': len(dns_profiles),
+                        'errors_count': len(errors)
+                    }
+                }
+            })
+
+            debug_info['summary'] = {
+                'profiles_updated': len(updated_profiles),
+                'profiles_failed': len(errors),
+                'operations_completed': changes_made
+            }
+
+            if errors:
+                module.fail_json(msg=f"DNS profile update completed with {len(errors)} error(s).", **result)
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), **result)
+        error_msg = f"DNS profile update failed: {str(e)}"
+        logger.error(error_msg)
+        debug_info['error'] = error_msg
+        module.fail_json(msg=error_msg, debug_info=debug_info, **result)
 
+    result['debug_info'] = debug_info
     module.exit_json(**result)
+
+
+def map_dns_profile_parameters(params):
+    """
+    Map user-friendly DNS Protection parameters to DefensePro API values.
+    """
+
+    ENUM_MAPS = {
+        "action": {"report_only": "0", "block_and_report": "1"},
+        "manual_trigger": {"enable": "1", "disable": "2"},
+        "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
+        "packet_report": {"enable": "1", "disable": "2"}
+    }
+
+    FIELD_MAP = {
+        "expected_qps": "rsDnsProtProfileExpectedQps",
+        "action": "rsDnsProtProfileAction",
+        "max_allow_qps": "rsDnsProtProfileMaxAllowQps",
+        "manual_trigger": "rsDnsProtProfileManualTriggerStatus",
+        "footprint_strictness": "rsDnsProtProfileFootprintStrictness",
+        "packet_report": "rsDnsProtProfilePacketReportStatus",
+        "learning_suppression_threshold": "rsDnsProtProfileLearningSuppressionThreshold",
+        "a_quota": "rsDnsProtProfileDnsAQuota",
+        "mx_quota": "rsDnsProtProfileDnsMxQuota",
+        "ptr_quota": "rsDnsProtProfileDnsPtrQuota",
+        "aaaa_quota": "rsDnsProtProfileDnsAaaaQuota",
+        "text_quota": "rsDnsProtProfileDnsTextQuota",
+        "soa_quota": "rsDnsProtProfileDnsSoaQuota",
+        "other_quota": "rsDnsProtProfileDnsOtherQuota"
+    }
+
+    mapped = {}
+
+    for key, value in params.items():
+        if key not in FIELD_MAP:
+            continue
+
+        mapped_key = FIELD_MAP[key]
+
+        # Enum mapping
+        if key in ENUM_MAPS:
+            mapped_value = ENUM_MAPS[key].get(str(value).lower())
+            if mapped_value is None:
+                raise ValueError(f"Invalid value '{value}' for {key}. Allowed: {list(ENUM_MAPS[key].keys())}")
+            mapped[mapped_key] = mapped_value
+            continue
+
+        # Range validations
+        if key in ["expected_qps", "max_allow_qps"]:
+            ivalue = int(value)
+            if not (0 <= ivalue <= 400000000):
+                raise ValueError(f"{key} must be between 0 and 400000000")
+            mapped[mapped_key] = str(ivalue)
+            continue
+
+        if key == "learning_suppression_threshold":
+            ivalue = int(value)
+            if not (0 <= ivalue <= 50):
+                raise ValueError(f"{key} must be between 0 and 50")
+            mapped[mapped_key] = str(ivalue)
+            continue
+
+        # Direct mapping
+        mapped[mapped_key] = str(value)
+
+    return mapped
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()

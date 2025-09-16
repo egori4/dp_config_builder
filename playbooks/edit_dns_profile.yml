@@ -1,10 +1,10 @@
 ---
-- name: Edit DNS Protection profile
+- name: Edit DNS profiles
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/edit_dns_vars.yml
+    - ../vars/edit_vars.yml  # Can use same vars file as create
 
   tasks:
     - block:
@@ -13,18 +13,74 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
-        - name: Edit DNS Protection profiles
-          vars:
-            profile_matrix: "{{ dp_ip | product(dns_profile) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
+        - name: Update DNS profiles
           edit_dns_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
-            params: "{{ item.1.params }}"
+            dp_ip: "{{ item }}"
+            dns_profiles: "{{ dns_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: DNS_edit_results
+
+        - name: Display DNS edit results
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              DNS Profile Edits ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.profile_name }}
+              {% endfor %}
+              {% else %}
+              
+              No DNS profiles configured for editing.
+              {% endif %}
+              {% elif ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed:
+              
+              DNS Configurations ({{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) would be edited
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              
+              Error occurred during editing:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.debug_info.input.profiles_count | default(0) > 0 %}
+              
+              DNS Profiles edited successfully:
+                - {{ item.debug_info.input.profiles_count }} profile(s) edited
+              {% else %}
+              
+              No DNS profiles were edited.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ DNS_edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - DNS_edit_results is defined
+            - DNS_edit_results.changed | default(false)
 
       always:
         - name: Unlock device(s)
@@ -32,3 +88,4 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

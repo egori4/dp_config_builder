@@ -78,77 +78,97 @@ The DefensePro Configuration Builder follows a layered architecture with clear s
 ```
 dp_config_builder/
 ├── 📁 Configuration Files
-│   ├── ansible.cfg              # Ansible runtime configuration
-│   ├── ansible_example.cfg      # Template for ansible.cfg  
-│   ├── inventory.ini            # Ansible hosts (usually just 'cc')
-│   └── inventory_example.ini    # Template for inventory.ini
+│   ├── ansible.cfg
+│   ├── ansible_example.cfg
+│   ├── inventory.ini
+│   └── inventory_example.ini
 ├── 
-├── 📁 Documentation  
-│   ├── README.md                # Project overview and quick start
-│   ├── USER_GUIDE.md           # Step-by-step operational guide
-│   └── DEVELOPER.md            # Technical architecture (this file)
+├── 📁 Documentation
+│   ├── README.md
+│   ├── USER_GUIDE.md
+│   └── DEVELOPER.md
 ├── 
-├── 📁 playbooks/               # ORCHESTRATION LAYER
+├── 📁 playbooks/
 │   ├── 🎯 Network Class Operations
-│   │   ├── create_network_class.yml    # Create network classes
-│   │   ├── edit_network_class.yml      # Modify network classes  
-│   │   ├── delete_network_class.yml    # Remove network classes
-│   │   └── get_network_class.yml       # Query network classes
-│   ├── 🎯 Connection Limit Operations  
-│   │   ├── create_cl_profiles.yml      # Create CL profiles/protections
-│   │   ├── edit_cl_protections.yml     # Edit CL protections
-│   │   ├── get_cl_profiles.yml         # Query CL profiles
-│   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
+│   │   ├── create_network_class.yml
+│   │   ├── edit_network_class.yml
+│   │   ├── delete_network_class.yml
+│   │   └── get_network_class.yml
+│   ├── 🎯 Connection Limit Operations
+│   │   ├── create_cl_profiles.yml
+│   │   ├── edit_cl_protections.yml
+│   │   ├── get_cl_profiles.yml
+│   │   └── delete_cl_profiles.yml
+│   ├── 🎯 BDoS Operations
+│   │   ├── create_bdos_profile.yml       # Create BDoS profiles
+│   │   ├── edit_bdos_profile.yml         # Edit BDoS profiles (partial updates)
+│   │   ├── get_bdos_profile.yml          # Query BDoS profiles
+│   │   └── delete_bdos_profile.yml       # Delete BDoS profiles
+│   ├── 🎯 DNS Flood Operations
+│   │   ├── create_dns_profile.yml        # Create DNS flood profiles
+│   │   ├── edit_dns_profile.yml          # Edit DNS flood profiles
+│   │   ├── get_dns_profile.yml           # Query DNS flood profiles
+│   │   └── delete_dns_profile.yml        # Delete DNS flood profiles
 │   ├── 🎯 Security Policy Operations
-│   │   ├── create_security_policy.yml  # Create security policies with orchestration
-│   │   ├── edit_security_policy.yml    # Edit existing security policies
-│   │   └── delete_security_policy.yml  # Delete security policies with cleanup options
+│   │   ├── create_security_policy.yml
+│   │   ├── edit_security_policy.yml
+│   │   └── delete_security_policy.yml
 │   ├── 📊 Runtime Data (auto-created)
-│   │   ├── log/                        # Execution logs by date
-│   │   │   └── log_YYYYMMDD.log       # Daily log files
-│   │   └── tmp/                        # Temporary files  
-│   │       └── radware_cc_sessions/    # Session cache files
+│   │   ├── log/
+│   │   │   └── log_YYYYMMDD.log
+│   │   └── tmp/
+│   │       └── radware_cc_sessions/
 ├── 
-├── 📁 plugins/                 # BUSINESS LOGIC & UTILITIES
-│   ├── 📁 modules/             # BUSINESS LOGIC LAYER
-│   │   ├── 🔧 Network Class Modules (Unified Architecture v0.1.2.2+)
-│   │   │   ├── create_network_class.py  # Batch creation with error collection
-│   │   │   ├── edit_network_class.py    # Batch editing with preview mode
-│   │   │   ├── delete_network_class.py  # Batch deletion with validation  
-│   │   │   └── get_network_class.py     # Enhanced querying with filtering
-│   │   ├── 🔧 Connection Limit Modules (v0.1.4+)
-│   │   │   ├── create_cl_configuration.py  # Create protections & profiles
-│   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
-│   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
-│   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
-│   │   ├── 🔧 Security Policy Modules (v0.2.0+)
-│   │   │   ├── create_security_policy.py   # Create policies with profile bindings
-│   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
-│   │   │   └── delete_security_policy.py   # Delete policies (dual deletion modes)
+├── 📁 plugins/
+│   ├── 📁 modules/
+│   │   ├── 🔧 Network Class Modules
+│   │   │   ├── create_network_class.py
+│   │   │   ├── edit_network_class.py
+│   │   │   ├── delete_network_class.py
+│   │   │   └── get_network_class.py
+│   │   ├── 🔧 Connection Limit Modules
+│   │   │   ├── create_cl_configuration.py
+│   │   │   ├── edit_cl_configuration.py
+│   │   │   ├── get_cl_configuration.py
+│   │   │   └── delete_cl_configuration.py
+│   │   ├── 🔧 BDoS Modules
+│   │   │   ├── create_bdos_profile.py
+│   │   │   ├── edit_bdos_profile.py
+│   │   │   ├── get_bdos_profile.py
+│   │   │   └── delete_bdos_profile.py
+│   │   ├── 🔧 DNS Flood Modules
+│   │   │   ├── create_dns_profile.py
+│   │   │   ├── edit_dns_profile.py
+│   │   │   ├── get_dns_profile.py
+│   │   │   └── delete_dns_profile.py
+│   │   ├── 🔧 Security Policy Modules
+│   │   │   ├── create_security_policy.py
+│   │   │   ├── edit_security_policy.py
+│   │   │   └── delete_security_policy.py
 │   │   └── 🔧 Device Management
-│   │       ├── dp_lock.py              # Device configuration lock
-│   │       └── dp_unlock.py            # Device configuration unlock
-│   └── 📁 module_utils/        # INFRASTRUCTURE LAYER
-│       ├── radware_cc.py              # HTTP client with session management
-│       └── logger.py                  # Structured logging with rotation
+│   │       ├── dp_lock.py
+│   │       └── dp_unlock.py
+│   └── 📁 module_utils/
+│       ├── radware_cc.py
+│       └── logger.py
 ├── 
-├── 📁 vars/                    # CONFIGURATION & DATA LAYER
+├── 📁 vars/
 │   ├── 🔗 Connection Configuration
-│   │   ├── cc.yml                     # CyberController connection (git-ignored)
-│   │   └── cc_example.yml             # Template for cc.yml
-│   ├── 🎯 Operation Variables (git-ignored)
-│   │   ├── create_vars.yml            # Variables for creation operations
-│   │   ├── edit_vars.yml              # Variables for editing operations  
-│   │   ├── delete_vars.yml            # Variables for deletion operations
-│   │   ├── get_vars.yml               # Variables for query operations
-│   │   └── update_vars.yml            # Variables for policy update operations
-│   └── 📋 Variable Templates (in git)
-│       ├── create_vars.yml.example    # Template for create_vars.yml
-│       ├── edit_vars.yml.example      # Template for edit_vars.yml
-│       ├── delete_vars.yml.example    # Template for delete_vars.yml
-│       ├── get_vars.yml.example       # Template for get_vars.yml
-│       └── update_vars_example.yml    # Template for update_vars.yml 
-└── 
+│   │   ├── cc.yml
+│   │   └── cc_example.yml
+│   ├── 🎯 Operation Variables
+│   │   ├── create_vars.yml
+│   │   ├── edit_vars.yml
+│   │   ├── delete_vars.yml
+│   │   ├── get_vars.yml
+│   │   └── update_vars.yml
+│   └── 📋 Variable Templates
+│       ├── create_vars.yml.example
+│       ├── edit_vars.yml.example
+│       ├── delete_vars.yml.example
+│       ├── get_vars.yml.example
+│       └── update_vars_example.yml
+└──
 
 ```
 
@@ -243,16 +263,26 @@ dp_config_builder/
      - Comprehensive error handling with detailed failure reporting
      - Preview mode support for orchestration planning
 
+6. **BDoS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_bdos_profile.py`, `edit_bdos_profile.py`, `delete_bdos_profile.py`, `get_bdos_profile.py`
 
 ## API Endpoints
 
 ### Network Class Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
-| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
+| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
 
 ### Device Locking
 | Operation | Method | Endpoint |
@@ -292,6 +322,14 @@ dp_config_builder/
 - **Profile Management**: Attach profiles by name, detach with empty string ("")
 - **User-Friendly Value Mapping**: Automatic conversion of human-readable values to API codes
 - **Flexible Configuration**: Full parameter support when needed
+
+### DNS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
 
 ### Policy Update Management
 

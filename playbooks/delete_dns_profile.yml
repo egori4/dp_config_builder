@@ -4,7 +4,7 @@
   gather_facts: no
   vars_files:
     - ../vars/cc.yml             # CC connection details
-    - ../vars/delete_dns_vars.yml  # DP IPs and profiles to delete
+    - ../vars/delete_vars.yml  # DP IPs and profiles to delete
 
   tasks:
     - block:
@@ -16,7 +16,7 @@
 
         - name: Delete each DNS Protection profile
           vars:
-            device_profile_matrix: "{{ dp_ip | product(dns_profile) | list }}"
+            device_profile_matrix: "{{ dp_ip | product(dns_profiles) | list }}"
           loop: "{{ device_profile_matrix }}"
           loop_control:
             label: "{{ item.0 }}/{{ item.1.name }}"
