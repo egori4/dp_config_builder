@@ -237,10 +237,10 @@ ansible-playbook playbooks/delete_bdos_profile.yml
 
 ```
 
-
-
 todo 
-
+add edit policy
+add delete policy
+add conditional lock unlock and policy update on edit, delete profiles (netclass, connlim)
 add get policy
 documentation
 
