@@ -673,6 +673,7 @@ resp = cc._post(url, json=body)
 }
 
 ################ Create BDoS Profile #################
+```python
 POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
 
 {
@@ -732,22 +733,59 @@ GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable
 
 Response:
 {
-    "profiles": [
+    "rsNetFloodProfileTable": [
         {
-            "profile_name": "BDOS_Profile_5",
-            "action": "report_only",
-            "syn_flood": "enable",
-            "udp_flood": "enable",
-            "icmp_flood": "enable",
-            "inbound_traffic": 1000000,
-            "outbound_traffic": 500000,
-            "footprint_strictness": "medium"
+            "rsNetFloodProfileName": "BDoS_Test1",
+            "rsNetFloodProfileTcpStatus": "2",
+            "rsNetFloodProfileTcpSynStatus": "2",
+            "rsNetFloodProfileUdpStatus": "2",
+            "rsNetFloodProfileIgmpStatus": "2",
+            "rsNetFloodProfileIcmpStatus": "2",
+            "rsNetFloodProfileTcpFinAckStatus": "2",
+            "rsNetFloodProfileTcpRstStatus": "2",
+            "rsNetFloodProfileTcpPshAckStatus": "2",
+            "rsNetFloodProfileTcpSynAckStatus": "2",
+            "rsNetFloodProfileTcpFragStatus": "2",
+            "rsNetFloodProfileBandwidthIn": "40000",
+            "rsNetFloodProfileBandwidthOut": "40000",
+            "rsNetFloodProfileTcpInQuota": "75",
+            "rsNetFloodProfileUdpInQuota": "50",
+            "rsNetFloodProfileIcmpInQuota": "3",
+            "rsNetFloodProfileIgmpInQuota": "3",
+            "rsNetFloodProfileTcpOutQuota": "75",
+            "rsNetFloodProfileUdpOutQuota": "50",
+            "rsNetFloodProfileIcmpOutQuota": "3",
+            "rsNetFloodProfileIgmpOutQuota": "3",
+            "rsNetFloodProfileTransparentOptimization": "2",
+            "rsNetFloodProfileAction": "1",
+            "rsNetFloodProfileLevelOfReuglarzation": "2",
+            "rsNetFloodProfileBurstEnabled": "1",
+            "rsNetFloodProfileNoBurstTimeout": "30",
+            "rsNetFloodProfileBurstAttackThreshold": "5",
+            "rsNetFloodProfileBurstAttackPeriod": "12",
+            "rsNetFloodProfileOverMitigationStatus": "2",
+            "rsNetFloodProfileOverMitigationThreshold": "25",
+            "rsNetFloodProfileLearningSuppressionThreshold": "0",
+            "rsNetFloodProfileFootprintStrictness": "0",
+            "rsNetFloodProfileRateLimit": "0",
+            "rsNetFloodProfileUserDefinedRateLimit": "0",
+            "rsNetFloodProfileUserDefinedRateLimitUnit": "0",
+            "rsNetFloodProfileAdvUdpDetection": "2",
+            "rsNetFloodProfileUdpExcludedPorts": "None",
+            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
+            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
+            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
+            "rsNetFloodProfilePacketReportStatus": "1",
+            "rsNetFloodProfilePacketTraceStatus": "2",
+            "rsNetFloodProfileUdpFragStatus": "2",
+            "rsNetFloodProfileUdpFragInQuota": "25",
+            "rsNetFloodProfileUdpFragOutQuota": "25"
         }
     ]
 }
 
 #Usage:-
-#Call get_bdos_configuration once per device
+#Call get_bdos_profile once per device
 #Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
@@ -755,7 +793,7 @@ Response:
 ############## Delete BDoS Profile #########################
 DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}
 # Profiles to delete
-bdos_profile_deletions:
+bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
 
