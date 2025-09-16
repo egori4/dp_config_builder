@@ -282,11 +282,6 @@ ansible-playbook --check playbooks/delete_bdos_profile.yml
 ansible-playbook playbooks/delete_bdos_profile.yml
 ```
 
-
-
-
-
-
 ### Workflow 10: Create Security Policies with Profile Bindings
 
 ```bash

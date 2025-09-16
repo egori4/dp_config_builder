@@ -83,3 +83,72 @@ edit_cl_protections:
 # - action: "drop", "report_only" (Action when threshold exceeded)
 # - packet_report: "enable", "disable" (Detailed packet reporting)
 # - protection_type: "cps", "concurrent_connections" (Detection type: Connections Per Second vs Total Active Connections)
+
+########################## Edit BDoS Profile ##########################
+# Define BDOS profiles to create on each device
+bdos_profiles:
+  - name: "BDOS_Profile_5"
+    params:
+      action: "report_only"                  # report_only/block_and_report
+      syn_flood: "enable"                    # enable/disable
+      udp_flood: "enable"                    # enable/disable
+      igmp_flood: "enable"                 # enable/disable
+      icmp_flood: "enable"                   # enable/disable
+      tcp_ack_fin_flood: "enable"          # enable/disable
+      tcp_rst_flood: "enable"              # enable/disable
+      tcp_syn_ack_flood: "enable"          # enable/disable
+      tcp_frag_flood: "enable"             # enable/disable
+      udp_frag_flood: "enable"             # enable/disable
+      inbound_traffic: 1000000               # 1 to 1342177280
+      outbound_traffic: 500000               # 1 to 1342177280
+      tcp_in_quota: 80                        # 0-100
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+      transparent_optimization: "enable"        # enable/disable
+      packet_report: "enable"                # enable/disable
+      burst_attack: "disable"                # enable/disable
+      maximum_interval_between_bursts: 60    # minutes
+      learning_suppression_threshold: 10     # 0-50
+      footprint_strictness: "medium"         # low/medium/high
+      bdos_rate_limit: "user_defined"        # disable/normal_edge/suspect_edge/user_defined
+      user_defined_rate_limit: 500           # 0-4000
+      user_defined_rate_limit_unit: "mbps"   # kbps/mbps/gbps
+      adv_udp_detection: "enable"            # enable/disable
+
+################################### Edit Security Policies #############################
+# Define security policies to edit (must exist on the DefensePro)
+# Each policy requires policy_name (mandatory) to identify which policy to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+edit_security_policies:
+  - policy_name: "egor_security_policy_demo"  # Policy name to edit (MANDATORY)
+    # Basic configuration parameters (all optional)
+    # src_network: "any"                     # Source network class name or "any"
+    # dst_network: "egor_test_net"           # Destination network class name or "any"
+    direction: "oneway"                    # oneway, twoway, bidirectional
+    state: "disable"                        # enable, disable, active, inactive
+    action: "report_only"                        # block_and_report, report_only
+    # priority: "860"                        # Priority value (1-1000)
+    # packet_reporting_status: "enable"      # enable, disable
+    
+    # Profile bindings (all optional - use empty string to remove binding)
+    connection_limit_profile: "cl_prof_egor_test10"   # Connection limit profile name
+    # bdos_profile: ""                                  # BDOS profile name
+    # syn_protection_profile: ""                        # SYN protection profile name
+    # dns_flood_profile: ""                             # DNS flood profile name
+    # https_flood_profile: ""                           # HTTPS flood profile name
+    # traffic_filters_profile: ""                       # Traffic filters profile name
+    # signature_protection_profile: ""                  # Application security profile name
+    # ert_attackers_feed_profile: ""                    # ERT attackers feed profile name
+    # geo_feed_profile: ""                              # Geo feed profile name
+    # out_of_state_profile: ""                          # Out of state profile name
+
+  # Example: Edit another policy with different parameters
+  # - policy_name: "another_security_policy"
+  #   state: "disable"                       # Disable the policy
+  #   action: "report_only"                  # Change to report only mode
+  #   connection_limit_profile: ""           # Remove connection limit profile binding

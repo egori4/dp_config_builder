@@ -102,7 +102,7 @@ def run_module():
                     try:
                         resp = cc._post(url, json=request_body)
                         if resp.status_code in (200, 201):
-                            logger.info(f"Successfully created NetFlood profile: {profile_name}")
+                            logger.info(f"Successfully created BDOS profile: {profile_name}")
                             changes_made = True
                             created_profiles.append({
                                 'profile_name': profile_name,
@@ -110,17 +110,17 @@ def run_module():
                                 'params_applied': api_params
                             })
                         else:
-                            error_msg = f"Failed to create NetFlood profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                            error_msg = f"Failed to create BDOS profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
                             errors.append(error_msg)
                             logger.error(error_msg)
 
                     except Exception as e:
-                        error_msg = f"Error creating NetFlood profile {profile_name}: {str(e)}"
+                        error_msg = f"Error creating BDOS profile {profile_name}: {str(e)}"
                         errors.append(error_msg)
                         logger.error(error_msg)
 
             else:
-                logger.info(f"No NetFlood profiles configured for creation on {dp_ip}")
+                logger.info(f"No BDOS profiles configured for creation on {dp_ip}")
 
             result.update({
                 'changed': changes_made,
