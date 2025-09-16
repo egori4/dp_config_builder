@@ -83,12 +83,12 @@ dp_config_builder/
 │   ├── inventory.ini
 │   └── inventory_example.ini
 ├── 
-├── 📁 Documentation
-│   ├── README.md
-│   ├── USER_GUIDE.md
-│   └── DEVELOPER.md
+├── 📁 Documentation  
+│   ├── README.md                # Project overview and quick start
+│   ├── USER_GUIDE.md           # Step-by-step operational guide
+│   └── DEVELOPER.md            # Technical architecture (this file)
 ├── 
-├── 📁 playbooks/
+├── 📁 playbooks/               # ORCHESTRATION LAYER
 │   ├── 🎯 Network Class Operations
 │   │   ├── create_network_class.yml
 │   │   ├── edit_network_class.yml
@@ -114,10 +114,10 @@ dp_config_builder/
 │   │   ├── edit_security_policy.yml
 │   │   └── delete_security_policy.yml
 │   ├── 📊 Runtime Data (auto-created)
-│   │   ├── log/
-│   │   │   └── log_YYYYMMDD.log
-│   │   └── tmp/
-│   │       └── radware_cc_sessions/
+│   │   ├── log/                        # Execution logs by date
+│   │   │   └── log_YYYYMMDD.log       # Daily log files
+│   │   └── tmp/                        # Temporary files  
+│   │       └── radware_cc_sessions/    # Session cache files
 ├── 
 ├── 📁 plugins/
 │   ├── 📁 modules/
@@ -303,6 +303,15 @@ dp_config_builder/
 - Optional in variables (defaults to 0)
 - Valid values: 0 or next available starting from 450001+
 - Used in URL path for both creation and editing operations
+
+### BDoS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+
 
 ### Security Policy Management
 
@@ -561,85 +570,6 @@ resp = cc._post(url, json=body)
     "message": "M_00386: An entry with same key already exists."
 }
 ```
-
-### Edit Security Policy
-```python
-# Request - Partial update (only specified parameters are changed)
-url = f"/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}"
-body = {
-    "rsIDSNewRulesAction": "0",              # Change action to "report_only"
-    "rsIDSNewRulesPriority": "200",          # Change priority
-    "rsIDSNewRulesProfileConlmt": "",        # Detach connection limit profile (empty string)
-    "rsIDSNewRulesProfileNetflood": "bdos_profile"  # Attach BDOS profile
-}
-resp = cc._put(url, json=body)
-
-# Response (Success)
-{
-    "status": "ok"
-}
-
-# Response (Error)
-{
-    "status": "error",
-    "message": "M_00001: Policy not found"
-}
-```
-
-## Security Policy Operations 
-
-### Edit Security Policy
-
-**Module**: `edit_security_policy.py`  
-**Playbook**: `edit_security_policy.yml`  
-**Variables**: `edit_vars.yml` (edit_security_policies section)
-
-**Purpose**: Modify existing security policies with partial updates and profile management
-
-**Key Features**:
-- **Partial Updates**: Only specify parameters to change - unspecified parameters remain unchanged  
-- **Profile Management**: Attach profiles by name, detach with empty string ("")
-- **Batch Processing**: Edit multiple policies in a single operation
-- **Preview Mode**: Check mode shows planned changes before execution
-- **Conditional Execution**: Device locking/unlocking can be skipped with control flags
-
-**Variables Structure** (`edit_vars.yml`):
-```yaml
-edit_security_policies:
-  - policy_name: "web_server_protection"    # MANDATORY: Policy name to edit
-    # Basic configuration parameters (all optional)
-    src_network: "internal_networks"        # Source network class name or "any"
-    dst_network: "web_servers"              # Destination network class name or "any"
-    direction: "twoway"                     # oneway, twoway, bidirectional
-    state: "enable"                         # enable, disable, active, inactive
-    action: "block_and_report"              # block_and_report, report_only
-    priority: "750"                         # Priority value (1-1000)
-    packet_reporting_status: "enable"       # enable, disable
-    
-    # Profile bindings (all optional - use empty string to remove binding)
-    connection_limit_profile: "web_limits"  # Connection limit profile name
-    bdos_profile: ""                        # BDOS profile name (empty = detach)
-    syn_protection_profile: "syn_limits"    # SYN protection profile name
-    # ... additional profile types supported
-```
-
-**Usage Pattern**:
-```yaml
-# Playbook execution 
-- name: Edit security policies
-  edit_security_policy:
-    provider: "{{ radware_cc_provider }}"
-    dp_ip: "{{ item }}"
-    edit_security_policies: "{{ edit_security_policies }}"
-  loop: "{{ dp_ip }}"
-```
-
-**API Mapping**:
-- `policy_name` → URL path parameter 
-- `action: "block_and_report"` → `"rsIDSNewRulesAction": "1"`
-- `action: "report_only"` → `"rsIDSNewRulesAction": "0"`
-- `connection_limit_profile: ""` → `"rsIDSNewRulesProfileConlmt": ""` (detachment)
-- `direction: "twoway"` → `"rsIDSNewRulesDirection": "2"`
 
 ### HTTP Error Patterns
 ```python

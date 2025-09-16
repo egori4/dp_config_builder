@@ -1,0 +1,58 @@
+---
+- name: Fetch BDOS profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml  # Contains dp_ip list and profile_names list
+
+  tasks:
+    - block:
+        - name: Lock device(s) for orchestrated fetch
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Fetch BDOS profiles from devices
+          get_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ dp_ip }}"
+            profile_names: "{{ bdos_profiles }}"
+          register: BDoS_fetch_results
+
+        - name: Display fetched BDOS profiles
+          vars:
+            formatted_output: |
+              {% for dp, profiles in BDoS_fetch_results.response.items() %}
+              Device: {{ dp }}
+              {% for prof_name, prof_data in profiles.items() %}
+                - Profile: {{ prof_name }}
+                {% if prof_data.success is defined %}
+                  Status: SUCCESS
+                  Data: {{ prof_data.data }}
+                {% elif prof_data.failed is defined %}
+                  Status: FAILED
+                  {% if prof_data.error is defined %}
+                  Error: {{ prof_data.error }}
+                  {% endif %}
+                  {% if prof_data.status_code is defined %}
+                  HTTP Code: {{ prof_data.status_code }}
+                  {% endif %}
+                  {% if prof_data.data is defined %}
+                  Response: {{ prof_data.data }}
+                  {% endif %}
+                {% endif %}
+              {% endfor %}
+              {% endfor %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

@@ -121,6 +121,220 @@ ansible-playbook --check playbooks/delete_network_class.yml
 ansible-playbook playbooks/delete_network_class.yml
 ```
 
+### Workflow 4: Create Connection Limit Profiles
+```bash
+# 1. Configure protections and profiles
+nano vars/create_vars.yml
+
+# 2. Test first (dry run)
+ansible-playbook --check playbooks/create_cl_profiles.yml
+
+# 3. Apply configuration
+ansible-playbook playbooks/create_cl_profiles.yml
+
+# Alternative: Use with check mode for testing
+ansible-playbook playbooks/create_cl_profiles.yml --check
+```
+
+#### Workflow 4a: Create Protections Only (Skip Profiles)
+```bash
+# 1. Edit create_vars.yml - define cl_protections section, comment out cl_profiles
+nano vars/create_vars.yml
+
+# 2. Test and apply
+ansible-playbook --check playbooks/create_cl_profiles.yml
+ansible-playbook playbooks/create_cl_profiles.yml
+```
+
+#### Workflow 4b: Create Profiles Only (Use Existing Protections)
+```bash
+# 1. Edit create_vars.yml - comment out cl_protections, define cl_profiles with existing names
+nano vars/create_vars.yml
+
+# 2. Test and apply  
+ansible-playbook --check playbooks/create_cl_profiles.yml
+ansible-playbook playbooks/create_cl_profiles.yml
+```
+
+### Workflow 5: Edit Connection Limit Protections
+```bash
+# 1. Identify existing protections (check DefensePro UI for protection indexes)
+# Protection indexes start from 450001 and increment
+
+# 2. Configure your changes (only specify what you want to change)
+nano vars/edit_vars.yml
+
+# 3. Test first (dry run) - shows exactly what will change
+ansible-playbook --check playbooks/edit_cl_protections.yml
+
+# 4. Apply changes
+ansible-playbook playbooks/edit_cl_protections.yml
+```
+
+**Note**: For editing, you only need to specify the parameters you want to change. All other parameters remain unchanged on the device.
+
+**Usage patterns**:
+- **Create new protections + profiles**: Define both `cl_protections` and `cl_profiles` sections
+- **Create protections only**: Define `cl_protections` section, skip `cl_profiles` section
+- **Use only existing protections**: Skip `cl_protections`, define only `cl_profiles` with existing protection names
+- **Mixed approach**: Create some new protections, reference some existing ones in the same profile
+
+### Workflow 6: Get Network Classes with Filtering
+```bash
+# 1. See all network classes on devices
+ansible-playbook playbooks/get_network_class.yml
+
+# 2. Filter by specific class names (edit get_vars.yml first)
+nano vars/get_vars.yml  # Set filter_class_names: ["web_servers", "db_servers"]
+ansible-playbook playbooks/get_network_class.yml
+
+# 3. Reset to show all classes
+nano vars/get_vars.yml  # Set filter_class_names: []
+ansible-playbook playbooks/get_network_class.yml
+```
+
+**Note**: The get operation shows network classes with detailed breakdown including IP ranges and group information. You can filter by class names or show all classes.
+
+### Workflow 7: Get Connection Limit Profiles
+```bash
+# 1. See all profiles and protections on devices
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 2. Filter by specific profile names (edit get_vars.yml first)
+nano vars/get_vars.yml  # Set filter_cl_profile_names: ["profile1", "profile2"]
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 3. Reset to show all profiles
+nano vars/get_vars.yml  # Set filter_cl_profile_names: []
+ansible-playbook playbooks/get_cl_profiles.yml
+```
+
+**Note**: The get operation shows profiles with their associated protections and all protection settings. You can filter by profile names or show all profiles.
+
+### Workflow 8: Delete Connection Limit Profiles and Protections
+```bash
+# 1. Identify what to delete (get current state first)
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# 2. Configure your deletions
+nano vars/delete_vars.yml
+
+# 3. Test first (dry run) - shows exactly what will be deleted
+ansible-playbook --check playbooks/delete_cl_profiles.yml
+
+# The check mode will show:
+# - Profile Operations: Which protections will be removed from which profiles
+# - Protection Deletions: Which protections will be deleted entirely (with their indexes)
+# - Validation: Both names and indexes are validated against current device state
+# - Status indicators: NOT FOUND for protections/indexes that don't exist on the device
+
+# 4. Apply deletions
+ansible-playbook playbooks/delete_cl_profiles.yml
+```
+
+**Important Rules for Deletion**:
+- **Profile deletions**: Remove protections from profiles (profile auto-deleted when last protection removed)
+- **Protection deletions**: Delete protections entirely (protection must not be in any profile)
+- **Order matters**: Profile deletions are processed before protection deletions
+- **Dependencies**: Cannot delete protection if it's still associated with any profile
+- **Preview mode**: Use `--check` flag to see exactly what would be deleted before applying changes
+
+**Usage patterns**:
+- **Remove from profiles only**: Define `cl_profile_deletions` section, skip `cl_protection_deletions`
+- **Delete protections only**: Skip `cl_profile_deletions`, define `cl_protection_deletions` with standalone protections
+- **Complete cleanup**: Define both sections - remove from profiles first, then delete protections
+
+### Workflow 9: Create Security Policies with Profile Bindings
+```bash
+# 1. Configure your orchestration settings  
+nano vars/create_vars.yml
+
+# Edit the security_policy_config section:
+security_policy_config:
+  create_network_classes: true    # Create network classes first
+  create_cl_profiles: true        # Create CL profiles next  
+  create_security_policies: true  # Create security policies last
+
+# 2. Configure your security policies
+# Add policies to the security_policies section with profile bindings
+
+# 3. Test orchestration plan (preview mode)
+ansible-playbook --check playbooks/create_security_policy.yml
+
+# 4. Execute full orchestration
+ansible-playbook playbooks/create_security_policy.yml
+```
+
+**Security Policy Features**:
+- **Unified orchestration**: Creates profiles and security policies in sequence
+- **Profile binding**: Binds protection profiles to policies
+- **Flexible control**: Enable/disable each creation stage independently
+- **Existing resource support**: Use existing profiles without recreating them
+
+**Common scenarios**:
+- **Full setup**: Enable all flags to create everything from scratch
+- **Policies only**: Disable network and profile creation, use existing resources
+- **Partial creation**: Mix and match what gets created vs. using existing resources
+
+### Workflow 10: Apply DefensePro Policy Updates
+```bash
+# Option A: Automatic policy updates (during orchestration)
+# 1. Enable automatic policy application in create_vars.yml
+security_policy_config:
+  apply_policies_after_creation: true  # Automatically apply policies after creation
+
+# 2. Run orchestration - policies will be applied automatically
+ansible-playbook playbooks/create_security_policy.yml
+
+# Option B: Manual policy updates (standalone)
+# 1. Configure target devices in update_vars.yml
+nano vars/update_vars.yml  # Set target_devices list
+
+# 2. Run the standalone policy update playbook
+ansible-playbook playbooks/update_policies.yml
+
+# Option C: Override target devices (alternative to editing vars file)
+ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.32','10.105.192.33']"
+```
+#### Workflow 11 :Create New BDoS Profiles
+```bash
+# 1. Define your BDoS profiles
+nano vars/create_vars.yml
+
+# 2. Test first (dry run)
+ansible-playbook --check playbooks/create_bdos_profile.yml
+
+# 3. Apply configuration
+ansible-playbook playbooks/create_bdos_profile.yml
+'''
+
+### Workflow 11a :Edit Existing BDoS Profile
+```bash
+nano vars/edit_vars.yml
+ansible-playbook --check playbooks/edit_bdos_profile.yml
+ansible-playbook playbooks/edit_bdos_profile.yml
+'''
+
+#### workflow 11b :Get BDoS Profile
+```bash
+ansible-playbook playbooks/get_bdos_profile.yml
+'''
+
+#### workflow 11c : Delete BDoS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_bdos_profile.yml
+ansible-playbook playbooks/delete_bdos_profile.yml
+'''
+
+**Policy Update Features**:
+- **Automatic integration**: Policies applied automatically during orchestration
+- **Manual control**: Standalone playbook for manual policy updates using `vars/update_vars.yml`
+- **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
+- **Safety confirmation**: Optional interactive prompts to prevent accidental updates
+- **Per-device processing**: Updates applied individually with proper locking
+
+
 ## Configuration Files
 
 ### Your Network Devices (`vars/create_vars.yml`, `vars/edit_vars.yml`, `vars/get_vars.yml`, etc.)
@@ -170,6 +384,214 @@ delete_networks:
   - {class_name: "web_servers", index: 0}
   - {class_name: "old_servers", index: 1}
 ```
+### Connection Limit Profiles - Complete Configuration Reference
+
+**Important**: Both `cl_protections` and `cl_profiles` sections are completely optional. You can define one, another or both, based on your needs.
+
+#### Creating Connection Limit Protections (ALL Supported Parameters)
+```yaml
+# OPTIONAL: Protection subprofiles (only define if creating new ones)
+cl_protections:
+  - name: "cl_prot_comprehensive_example"        # MANDATORY: Protection name
+    protocol: "tcp"                              # OPTIONAL: tcp, udp (default: tcp)
+    threshold: "100"                             # OPTIONAL: Connection threshold (default: "50")
+    app_port_group: "https"                      # OPTIONAL: http, https, dns, ftp, smtp, imap, custom port, or "" for all (default: "")
+    tracking_type: "src_ip"                      # OPTIONAL: src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port (default: dst_ip)
+    action: "drop"                               # OPTIONAL: drop, report_only (default: drop)
+    packet_report: "enable"                      # OPTIONAL: enable, disable (default: disable)
+    protection_type: "cps"                       # OPTIONAL: cps, concurrent_connections (default: cps)
+    index: 450001                                # OPTIONAL: 0 or 450001+ (default: 0)
+
+  # Minimal example (only mandatory parameter)
+  - name: "cl_prot_minimal"                      # MANDATORY: Only this is required
+    # All other parameters will use defaults
+
+  # Custom index example
+  - name: "cl_prot_custom_index"
+    protocol: "udp"
+    threshold: "200"
+    index: 450002                                # Custom index
+```
+
+#### Editing Connection Limit Protections (Partial Updates)
+```yaml
+# Edit existing protections - ONLY specify what you want to change
+edit_cl_protections:
+  - protection_index: 450001                    # MANDATORY: Must specify which protection to edit
+    protection_name: "Updated Protection"        # OPTIONAL: Change name only
+    
+  - protection_index: 450002                    # MANDATORY: Another protection to edit
+    threshold: "500"                            # OPTIONAL: Change threshold only
+    action: "report_only"                       # OPTIONAL: Change action only
+    # All other parameters remain unchanged
+    
+  - protection_index: 450003                    # MANDATORY: Edit multiple parameters
+    protocol: "udp"                             # OPTIONAL: Change protocol
+    threshold: "300"                            # OPTIONAL: Change threshold
+    tracking_type: "dst_ip_and_port"           # OPTIONAL: Change tracking
+    packet_report: "disable"                   # OPTIONAL: Change reporting
+    # Other parameters remain unchanged
+```
+
+#### Getting Connection Limit Profiles and Protections
+```yaml
+# Get all profiles and protections from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Filter by specific profile names (configure in get_vars.yml)
+filter_cl_profile_names: ["profile1", "profile2"]  # Show only these profiles
+# filter_cl_profile_names: []                      # Show all profiles (default)
+```
+
+#### Deleting Connection Limit Profiles and Protections
+```yaml
+# OPTIONAL: Remove protections from profiles (without deleting protection itself)
+cl_profile_deletions:
+  - profile_name: "profile_to_modify"
+    protections:
+      - "protection1"
+      - "protection2"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+cl_protection_deletions:
+  - protections_to_delete:
+      - "standalone_protection"      # Delete by name (module looks up index)
+      - "another_protection"         # Delete by name (module looks up index)
+      - "old_protection"             # Delete by name (module looks up index)
+      - 450001                       # Delete by index directly
+      - 450002                       # Delete by index directly
+
+# Important: Both sections are optional - define based on your needs
+# Order: Profile deletions processed first, then protection deletions
+```
+
+**Parameter Reference for Connection Limit Protections**:
+
+| Parameter | Status | Options | Default | Description |
+|-----------|--------|---------|---------|-------------|
+| `name` | **MANDATORY** | Any string | - | Protection name (create only) |
+| `protection_index` | **MANDATORY** | Integer | - | Index to edit (edit only) |
+| `protocol` | OPTIONAL | tcp, udp | tcp | Network protocol |
+| `threshold` | OPTIONAL | "number" | "50" | Connection limit threshold |
+| `app_port_group` | OPTIONAL | http, https, dns, ftp, smtp, imap, custom port, "" | "" | Application port filter |
+| `tracking_type` | OPTIONAL | src_ip, dst_ip, src_and_dest_ip, dst_ip_and_port | dst_ip | Traffic tracking method |
+| `action` | OPTIONAL | drop, report_only | drop | Action when threshold exceeded |
+| `packet_report` | OPTIONAL | enable, disable | disable | Detailed packet reporting |
+| `protection_type` | OPTIONAL | cps, concurrent_connections | cps | Detection type |
+| `index` | OPTIONAL | 0 or 450001+ | 0 | Creation index |
+
+**Key Points for Editing**:
+-  **Partial Updates**: Only specify parameters you want to change
+-  **Unchanged Values**: Unspecified parameters keep their current values
+-  **Flexible**: Change one parameter or many in a single operation
+
+#### Connection Limit Profiles (Optional Section)
+```yaml
+# OPTIONAL: Profiles (can reference existing or newly created protections)
+cl_profiles:
+  - name: "web_server_limits"                   # MANDATORY: Profile name
+    protections:                                # MANDATORY: List of protections
+      - "cl_prot_tcp_limit"                     # Will be created above
+      - "existing_protection"                   # Already exists on DefensePro
+      
+  - name: "database_limits"                     # Another profile example
+    protections:
+      - "cl_prot_comprehensive_example"         # Reference created protection
+      - "legacy_protection_on_device"           # Reference existing protection
+```
+
+**Profile Configuration Notes**:
+-  **name**: MANDATORY - Unique profile name
+-  **protections**: MANDATORY - List of protection names to include
+-  **Mixed References**: Can combine newly created and existing protections
+-  **Flexible**: Create profiles with any combination of protections
+#### Usage Pattern Examples
+```yaml
+# Example 1: Create new protections + profiles (comprehensive)
+cl_protections:
+  - name: "web_protection"
+    protocol: "tcp"
+    threshold: "100"
+    app_port_group: "https"
+    tracking_type: "src_ip"
+    action: "drop"
+    index: 450001
+  - name: "api_protection"
+    protocol: "tcp"
+    threshold: "500"
+    tracking_type: "dst_ip_and_port"
+    action: "report_only"
+    index: 450002
+
+cl_profiles:
+  - name: "web_security_profile"
+    protections:
+      - "web_protection"      # Newly created
+      - "api_protection"      # Newly created
+
+# Example 2: Use only existing protections (skip cl_protections entirely)
+cl_profiles:
+  - name: "profile_with_existing"
+    protections:
+      - "protection_already_on_device"
+      - "another_existing_protection"
+
+# Example 3: Mixed approach (some new, some existing)
+cl_protections:
+  - name: "new_custom_protection"
+    protocol: "udp"
+    threshold: "200"
+    index: 450003
+
+cl_profiles:
+  - name: "mixed_profile"
+    protections:
+      - "new_custom_protection"      # Newly created above
+      - "legacy_protection"          # Already exists on device
+```
+
+### Security Policy Configuration
+
+Configure security policies with profile bindings in `vars/create_vars.yml`:
+
+```yaml
+# Orchestration control flags
+security_policy_config:
+  create_network_classes: true     # Create network classes first
+  create_cl_profiles: true         # Create CL profiles next
+  create_security_policies: true   # Create security policies last
+
+# Security policies with profile bindings
+security_policies:
+  - policy_name: "web_server_protection"
+    state: "enable"                        # enable, disable
+    action: "block"                        # block, report_only
+    src_network: "any"                     # Source network class
+    dst_network: "web_servers"             # Destination network class  
+    direction: "oneway"                    # oneway, twoway
+    priority: "100"                        # Policy priority (lower = higher precedence)
+    packet_reporting_status: "enable"      # enable, disable
+    
+    # Profile bindings (all optional)
+    connection_limit_profile: "web_cl_profile"
+    bdos_profile: "default_netflood_profile"
+    syn_protection_profile: "default_syn_profile"
+    dns_flood_profile: ""                  # Empty = no binding
+    https_flood_profile: ""
+    traffic_filters_profile: ""
+    signature_protection_profile: "web_appsec_profile"
+    ert_attackers_feed_profile: ""
+    geo_feed_profile: ""
+    out_of_state_profile: ""
+```
+
+**Security Policy Configuration Notes**:
+- **policy_name**: MANDATORY - Unique policy name
+- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
+- **direction**: MANDATORY - Traffic direction to match
+- **Profile bindings**: All optional - leave empty string for no binding
+- **Control flags**: Use to enable/disable each creation stage independently
 
 ## Troubleshooting
 
