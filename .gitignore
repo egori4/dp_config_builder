@@ -1,11 +1,13 @@
+# Keep templates in Git (don't ignore these)
+!vars/*_vars.yml.example
+
+# User-specific variable files (exclude from Git)
+vars/*_vars.yml
 vars/cc.yml
+
+# Ignore sensitive files
 inventory.ini
 ansible.cfg
 playbooks/log
 tmp/
-
-# User-specific variable files (exclude from Git)
-vars/*_vars.yml
-
-# Keep templates in Git (don't ignore these)
-!vars/*_vars.yml.example
+plugins/modules/__pycache__/

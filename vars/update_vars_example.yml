@@ -1,0 +1,44 @@
+---
+# update_vars_example.yml - Example configuration for DefensePro policy updates
+# Copy this file to update_vars.yml and customize for your environment
+
+# Target DefensePro devices for policy updates
+# Add the IP addresses of all DefensePro devices where you want to apply policy updates
+target_devices:
+  - "192.168.0.184"  # DefensePro device 1
+  - "192.168.0.236"  # DefensePro device 2
+  # - "10.105.192.32"  # Add more devices as needed
+  # - "10.105.192.33"
+
+# Update operation settings
+update_settings:
+  # Whether to show confirmation prompt before applying updates
+  # Set to true for interactive confirmation, false for automated runs
+  require_confirmation: false
+  
+  # Whether to continue updating other devices if one fails
+  # true = continue with remaining devices, false = stop on first failure
+  continue_on_error: false
+
+# Usage Examples:
+# ===============
+#
+# 1. Update policies on all configured devices:
+#    ansible-playbook -i inventory.ini playbooks/update_policies.yml
+#
+# 2. Update policies on specific devices (override the vars file):
+#    ansible-playbook -i inventory.ini playbooks/update_policies.yml -e "target_devices=['192.168.1.100','192.168.1.101']"
+#
+# 3. Run in check mode to see what would be updated:
+#    ansible-playbook -i inventory.ini playbooks/update_policies.yml --check
+#
+# 4. Force confirmation prompt even if disabled in vars:
+#    ansible-playbook -i inventory.ini playbooks/update_policies.yml -e "update_settings={'require_confirmation': true}"
+
+# Notes:
+# ======
+# - Policy updates apply all pending configuration changes to the device
+# - This operation cannot be easily reverted, so use check mode first if unsure
+# - The playbook automatically handles device locking/unlocking
+# - All devices are unlocked even if updates fail on some devices
+# - Check the management interface to verify policies are active after update

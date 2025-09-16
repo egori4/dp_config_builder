@@ -1,0 +1,34 @@
+---
+- name: Edit connection limit protections
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+
+        # Edit connection limit protections (per-device, multi-edit)
+        - name: Edit connection limit protections on device (multi-edit)
+          edit_cl_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            edit_cl_protections: "{{ edit_cl_protections }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "{{ item }}"
+          when: edit_cl_protections is defined and edit_cl_protections|length > 0
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
