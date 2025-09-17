@@ -87,6 +87,18 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
+
+# Get all DNS profiles from devices
+ansible-playbook playbooks/get_dns_profile.yml
+
+# Create new DNS profiles
+ansible-playbook playbooks/create_dns_profile.yml
+
+# Edit existing DNS profiles
+ansible-playbook playbooks/edit_dns_profile.yml
+
+# Delete DNS profiles
+ansible-playbook playbooks/delete_dns_profile.yml
 ```
 
 ## Common Workflows
