@@ -1,32 +1,74 @@
 ---
-- name: Edit OOS (Stateful) profiles on all devices
+- name: Edit OOS (Stateful) profiles
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/edit_oos_vars.yml
+    - ../vars/edit_vars.yml
 
   tasks:
     - block:
-        - name: Lock device(s) before editing profiles
+        - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
-        - name: Edit each OOS profile on all devices
-          loop: "{{ dp_ip | product(oos_profiles) | list }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.name }}"
+        - name: Edit OOS profiles
           edit_oos_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
-            params: "{{ item.1.params }}"
+            dp_ip: "{{ item }}"
+            oos_profiles: "{{ oos_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: OOS_edit_results
+
+        - name: Display OOS edit results
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed:
+              OOS Configurations ({{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) would be updated
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              Error occurred during edit:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.debug_info.input.profiles_count | default(0) > 0 %}
+              OOS Profiles edited successfully:
+                - {{ item.debug_info.input.profiles_count }} profile(s) updated
+              {% else %}
+              No OOS profiles were updated.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ OOS_edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - OOS_edit_results is defined
+            - OOS_edit_results.changed | default(false)
 
       always:
-        - name: Unlock device(s) after editing profiles
+        - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

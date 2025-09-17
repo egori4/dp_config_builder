@@ -277,10 +277,10 @@ dp_config_builder/
 ### Network Class Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
-| **Get** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsBWMNetworkTable/{class_name}/{index}` |
+| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsBWMNetworkTable[/{class_name}` |
 
 ### Device Locking
 | Operation | Method | Endpoint |
@@ -1026,23 +1026,23 @@ session_{md5_hash}.time   # Creation timestamp
 ### Unit Testing
 ```bash
 # Syntax validation
-python3 -m py_compile plugins/modules/create_oos_profile.py
+python3 -m py_compile plugins/modules/create_network_class.py
 
 # YAML validation  
 python3 -c "import yaml; yaml.safe_load(open('vars/create_vars.yml'))"
 
 # Ansible module testing
-ansible-doc -t module plugins/modules/create_oos_profile.py
+ansible-doc -t module plugins/modules/create_network_class
 ```
 
 ### Integration Testing
 ```bash
 # Check mode (dry run)
-ansible-playbook --check playbooks/create_oos_profile.yml
+ansible-playbook --check playbooks/create_network_class.yml
 
 # Single device testing
 # Edit vars file to target one device, then run normally
-ansible-playbook playbooks/create_oos_profile.yml
+ansible-playbook playbooks/create_network_class.yml
 ```
 
 ## Extending the Modules

@@ -1,6 +1,6 @@
 # DefensePro Configuration Builder - User Guide
 
-**Quick automation for Radware DefensePro OOS Profile management**
+**Quick automation for Radware DefensePro network class management**
 
 ## What This Does
 
@@ -46,14 +46,14 @@ cp update_vars_example.yml update_vars.yml  # Edit variables as needed
 
 ### 2. Run Operations
 ```bash
-# Fetch OOS profiles
-ansible-playbook playbooks/get_oos_profile.yml
+# See what network classes exist
+ansible-playbook playbooks/get_network_class.yml
 
-# Create new OOS profiles
-ansible-playbook playbooks/create_oos_profile.yml
+# Create new network classes
+ansible-playbook playbooks/create_network_class.yml
 
-# Edit existing OOS profiles
-ansible-playbook playbooks/edit_oos_profile.yml
+# Edit existing network classes  
+ansible-playbook playbooks/edit_network_class.yml
 
 # Delete network classes
 ansible-playbook playbooks/delete_network_class.yml
@@ -103,35 +103,34 @@ ansible-playbook playbooks/delete_dns_profile.yml
 
 ## Common Workflows
 
-### Workflow 1: Create New OOS Profile
+### Workflow 1: Create New Network Classes
 ```bash
 # 1. Edit your requirements
-nano vars/create_oos_vars.yml
+nano vars/create_vars.yml
 
 # 2. Test first (dry run)
-ansible-playbook --check playbooks/create_oos_profile.yml
+ansible-playbook --check playbooks/create_network_class.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_oos_profile.yml
-
+ansible-playbook playbooks/create_network_class.yml
 ```
 
-### Workflow 2: Modify Existing OOS Profile
+### Workflow 2: Modify Existing Networks
 ```bash
-# 1. See current profiles
-ansible-playbook playbooks/get_oos_profile.yml
+# 1. See current state
+ansible-playbook playbooks/get_network_class.yml
 
 # 2. Define your changes
-nano vars/edit_oos_vars.yml
+nano vars/edit_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_oos_profile.yml
+ansible-playbook --check playbooks/edit_network_class.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_oos_profile.yml
+ansible-playbook playbooks/edit_network_class.yml
 ```
 
-### Workflow 3: Delete OOS Profile
+### Workflow 3: Clean Up Networks
 ```bash
 # 1. Identify what to delete
 ansible-playbook playbooks/get_network_class.yml
@@ -423,30 +422,20 @@ log_level: "info"  # info, debug, or disabled
 
 ## Variable Format Guide
 
-### Creating OOS Profile
+### Creating Networks
 ```yaml
-oos_profiles:
-  - name: "OOS_Profile_1"
-    params:
-      Act Threshold: "5000"
-      Term Threshold: "4000"
-      Syn-Ack Allow: "enable"
-      Packet Trace Status: "enable"
-      Packet Report Status: "enable"
-      Action: "block & report"
+netclasses:
+  - name: "web_servers"
+    groups:
+      - { address: "192.168.1.0", mask: "255.255.255.0" }
+      - { address: "192.168.2.0", mask: "24" }
 ```
 
 ### Editing Networks  
 ```yaml
-oos_profiles:
-  - name: "OOS_Profile_1"
-    params:
-      Act Threshold: "6000"
-      Term Threshold: "5000"
-      Syn-Ack Allow: "disable"
-      Packet Trace Status: "enable"
-      Packet Report Status: "disable"
-      Action: "block & report"
+edit_networks:
+  - {class_name: "web_servers", index: 0, address: "10.1.1.0", mask: "24"}
+  - {class_name: "web_servers", index: 1, address: "10.1.2.0", mask: "24"}
 ```
 
 ### Deleting Networks
@@ -934,12 +923,12 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_oos_profile.yml
+ansible-playbook playbooks/get_network_class.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_oos_profile.yml
+ansible-playbook --check playbooks/edit_network_class.yml
 ```
 
 ###  **Start with One Device**
@@ -952,15 +941,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_oos_profile.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
-oos_profile:
-  - name: "oos_profilename"      # Good: Clear purpose
+netclasses:
+  - name: "web_servers_dmz"      # Good: Clear purpose
     # vs
-  - name: "OOS1"                 # Bad: Unclear
+  - name: "net1"                 # Bad: Unclear
 ```
 
 ## Getting Help

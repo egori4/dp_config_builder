@@ -1,39 +1,57 @@
 ---
-- name: Get specific OOS (Stateful) profiles from all devices
-  hosts: localhost
+- name: Get OOS (Stateful) profiles
+  hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/get_oos_vars.yml   # Contains dp_ip and oos_profiles_to_fetch
+    - ../vars/get_vars.yml
 
   tasks:
     - block:
-        - name: Lock device(s) before fetching profiles
+        - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
-        - name: Fetch each OOS profile from all devices
-          loop: "{{ dp_ip | product(profile_names) | list }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1 }}"
+        - name: Get OOS profiles
           get_oos_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1 }}"
-          register: oos_profiles_output
-          until: oos_profiles_output is success
-          retries: 2
-          delay: 2
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: OOS_get_results
+
+        - name: Display OOS profiles
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.oos_profiles | length > 0 %}
+              
+              OOS Profiles fetched ({{ item.oos_profiles | length }}):
+              {% for profile in item.oos_profiles %}
+                - Name: {{ profile.name }}
+                  Parameters:
+                  {% for k, v in profile.params.items() %}
+                    {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              
+              No OOS profiles found.
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ OOS_get_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
 
       always:
-        - name: Unlock device(s) after fetching profiles
+        - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-
-    - name: Show OOS profiles
-      debug:
-        var: oos_profiles_output
+          when: not (skip_device_lock | default(false))
