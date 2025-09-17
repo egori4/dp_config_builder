@@ -102,10 +102,6 @@ dp_config_builder/
 │   │   ├── edit_oos_profile.yml
 │   │   ├── delete_oos_profile.yml
 │   │   └── get_oos_profile.yml
-│   │   ├── create_bdos_profile.yml     # Create BDoS Flood profiles
-│   │   ├── edit_bdos_profile.yml       # Modify BDoS Flood profiles
-│   │   ├── delete_bdos_profile.yml     # Remove BDoS Flood profiles
-│   │   └── get_bdos_profile.yml        # Query BDoS Flood profiles
 │   ├── 🎯 Security Policy Operations
 │   │   ├── create_security_policy.yml
 │   │   ├── edit_security_policy.yml
@@ -276,7 +272,6 @@ dp_config_builder/
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
 8. **Security Policy Modules** (`plugins/modules/`)
-6. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
