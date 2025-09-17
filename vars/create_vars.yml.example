@@ -97,3 +97,129 @@ cl_profiles:
 # 1. Create protections only: Define cl_protections, skip cl_profiles
 # 2. Create profiles only: Skip cl_protections, define cl_profiles with existing protection names
 # 3. Create both: Define both cl_protections and cl_profiles
+
+
+########################## BDoS Profiles ##########################
+# Define BDOS profiles to create on each device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this section if you only want to use existing BDoS profiles
+```yml
+bdos_profiles:
+  - name: "BDOS_Profile_50"
+    params:
+      action: "report_only"                   # Options: report_only, block_and_report
+      syn_flood: "enable"                     # Options: enable, disable
+      udp_flood: "enable"                     # Options: enable, disable
+      igmp_flood: "enable"                    # Options: enable, disable
+      icmp_flood: "enable"                    # Options: enable, disable
+      tcp_ack_fin_flood: "enable"             # Options: enable, disable
+      tcp_rst_flood: "enable"                 # Options: enable, disable
+      tcp_syn_ack_flood: "enable"             # Options: enable, disable
+      tcp_frag_flood: "enable"                # Options: enable, disable
+      udp_frag_flood: "enable"                # Options: enable, disable
+      inbound_traffic: 1000000                # 1 to 1342177280 (kbps)
+      outbound_traffic: 500000                # 1 to 1342177280 (kbps)
+      tcp_in_quota: 80                         # 0-100 (%)
+      udp_in_quota: 50                         # 0-100 (%)
+      icmp_in_quota: 10                        # 0-100 (%)
+      igmp_in_quota: 50                        # 0-100 (%)
+      tcp_out_quota: 80                        # 0-100 (%)
+      udp_out_quota: 50                        # 0-100 (%)
+      icmp_out_quota: 10                        # 0-100 (%)
+      igmp_out_quota: 50                        # 0-100 (%)
+      transparent_optimization: "enable"       # Options: enable, disable
+      packet_report: "enable"                  # Options: enable, disable
+      burst_attack: "enable"                   # Options: enable, disable
+      maximum_interval_between_bursts: 32      # Minutes (1-336)
+      learning_suppression_threshold: 10       # 0-50
+      footprint_strictness: "medium"           # Options: low, medium, high
+      udp_packet_rate_detection_sensitivity: "low"  # Options: Ignore_or_Disable, low, medium, high
+      bdos_rate_limit: "user_defined"          # Options: disable, normal_edge, suspect_edge, user_defined
+      user_defined_rate_limit: 500             # 0-4000 (rate value)
+      user_defined_rate_limit_unit: "mbps"     # Options: kbps, mbps, gbps
+      adv_udp_detection: "enable"              # Options: enable, disable
+```
+# Parameter Descriptions:
+# - action: What to do when a flood is detected
+# - *_flood: Enable/disable detection of specific attack type
+# - inbound_traffic / outbound_traffic: Max traffic allowed (bps)
+# - *_in_quota / *_out_quota: Traffic quota per protocol (%)
+# - transparent_optimization: Optimize traffic without blocking
+# - packet_report: Enable detailed packet reporting
+# - burst_attack: Detect burst attacks
+# - maximum_interval_between_bursts: Interval in minutes to define burst
+# - learning_suppression_threshold: Suppress alerts during learning (0-50)
+# - footprint_strictness: Sensitivity of footprint analysis
+# - udp_packet_rate_detection_sensitivity: Sensitivity of UDP flood detection
+# - bdos_rate_limit: Rate limit mode
+# - user_defined_rate_limit / unit: Custom rate limit
+# - adv_udp_detection: Advanced UDP detection toggle
+
+# Usage Scenarios:
+# 1. Create new BDoS profiles: Define bdos_profiles
+# 2. Use existing BDoS profiles only: Skip this section and reference them elsewhere
+
+
+################################## DNS Profile create Variables ###############################
+# Define DNS profiles to create on each device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this section if you only want to use existing DNS profiles
+```yml
+dns_profiles:
+  # Example: Edit DNS profile "DNS_Profile_50", changing multiple parameters
+  - name: "DNS_Profile_50"                 # Mandatory: exact name of the profile to edit
+    action: "block_and_report"             # Options: report_only, block_and_report
+    expected_qps: 5000                      # 1 to 4000000
+    max_allow_qps: 10000                    # 1 to 4000000
+    manual_trigger: "disable"               # Options: enable, disable
+    manual_trigger_act_thresh: 1000
+    manual_trigger_term_thresh: 0
+    manual_trigger_max_qps_target: 0
+    packet_report: "enable"                # Options: enable, disable
+    packet_trace: "disable"                # Options: enable, disable
+    footprint_strictness: "high"           # Options: low, medium, high
+    learning_suppression_threshold: 20     # 0–50
+    query_name_sensitivity: "medium"       # Options: low, medium, high
+    subdomains_wl_learning: "enable"       # Options: enable, disable
+
+    # Quotas and status toggles
+    a_quota: 50                             # 0–100 (%)
+    mx_quota: 30
+    ptr_quota: 20
+    aaaa_quota: 25
+    text_quota: 15
+    soa_quota: 10
+    naptr_quota: 5
+    srv_quota: 5
+    other_quota: 5
+
+    a_status: "enable"                      # Options: enable, disable
+    mx_status: "disable"
+    ptr_status: "enable"
+    aaaa_status: "enable"
+    text_status: "disable"
+    soa_status: "enable"
+    naptr_status: "disable"
+    srv_status: "enable"
+    other_status: "disable"
+
+  # Example: Minimal update for another DNS profile
+  # - name: "DNS_Profile_75"
+  #   action: "report_only"
+  #   expected_qps: 2000
+```
+### Parameter Descriptions:
+# - action: What to do when DNS traffic anomaly is detected
+# - expected_qps / max_allow_qps: Thresholds for query rates
+# - manual_trigger and related fields: Enable manual override and thresholds
+# - packet_report / packet_trace: Enable detailed reporting and tracing
+# - footprint_strictness: Sensitivity of footprint analysis
+# - learning_suppression_threshold: Suppress alerts during learning (0-50)
+# - query_name_sensitivity: Sensitivity of query name monitoring
+# - subdomains_wl_learning: Enable/disable learning for subdomains
+# - *_quota: Percentage allocation per DNS record type
+# - *_status: Enable/disable monitoring per DNS record type
+
+# Usage Scenarios:
+# 1. Create new DNS profiles: Define dns_profiles
+# 2. Use existing DNS profiles only: Skip this section and reference them elsewhere

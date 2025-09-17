@@ -10,4 +10,5 @@ inventory.ini
 ansible.cfg
 playbooks/log
 tmp/
-plugins/modules/__pycache__/
+*__pycache__/
+.vscode/

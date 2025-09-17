@@ -113,6 +113,14 @@ dp_config_builder/
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
 | `get_network_class.yml` | Query current state with filtering | [USER_GUIDE.md](USER_GUIDE.md#workflow-6-get-network-classes-with-filtering) |
 
+### BDoS Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
+| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
+| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
+| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
+
 ### Connection Limit Profiles
 
 | Playbook | Purpose | Documentation |
@@ -122,6 +130,13 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
+### DNS Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
+| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
+| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
+| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 ### Security Policy Management
 
 | Playbook | Purpose | Documentation |
@@ -212,6 +227,30 @@ ansible-playbook playbooks/edit_security_policy.yml
 
 # Security Policy Deletion (using vars/delete_vars.yml configuration)
 ansible-playbook playbooks/delete_security_policy.yml
+
+# Create BDoS Profile
+ansible-playbook playbooks/create_bdos_profile.yml
+
+# Edit BDoS Profile (uses edit_bdos_profile module)
+ansible-playbook playbooks/edit_bdos_profile.yml
+
+# Get BDoS Profile (uses get_bdos_profile module)
+ansible-playbook playbooks/get_bdos_profile.yml
+
+# Delete BDoS Profile (uses delete_bdos_profile module)
+ansible-playbook playbooks/delete_bdos_profile.yml
+
+# Get all DNS profiles from devices
+ansible-playbook playbooks/get_dns_profile.yml
+
+# Create new DNS profiles
+ansible-playbook playbooks/create_dns_profile.yml
+
+# Edit existing DNS profiles
+ansible-playbook playbooks/edit_dns_profile.yml
+
+# Delete DNS profiles
+ansible-playbook playbooks/delete_dns_profile.yml
 ```
 
 
