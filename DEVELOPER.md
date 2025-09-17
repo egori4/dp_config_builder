@@ -229,7 +229,18 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
-5. **Security Policy Modules** (`plugins/modules/`)
+5. **BDoS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_bdos_profile.py`, `edit_bdos_profile.py`, `delete_bdos_profile.py`, `get_bdos_profile.py`
+
+6. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -672,7 +683,7 @@ DELETE /mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
-  ```
+```
 ***Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion
