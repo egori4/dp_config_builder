@@ -70,23 +70,23 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete connection limit profiles and protections (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Create BDoS profiles (uses create_bdos_profile module)
-ansible-playbook playbooks/create_bdos_profile.yml
-
-# Edit existing bdos profiles (uses edit_bdos_profile module)
-ansible-playbook playbooks/edit_bdos_profile.yml
-
-# Get bdos profiles (uses get_bdos_profile module)
-ansible-playbook playbooks/get_bdos_profile.yml
-
-# Delete bdos profile (uses delete_bdos_profile module)
-ansible-playbook playbooks/delete_bdos_profile.yml
-
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
 ansible-playbook playbooks/create_security_policy.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
+
+# Get all BDoS profiles from devices
+ansible-playbook playbooks/get_bdos_profile.yml
+
+# Create new BDoS profiles
+ansible-playbook playbooks/create_bdos_profile.yml
+
+# Edit existing BDoS profiles
+ansible-playbook playbooks/edit_bdos_profile.yml
+
+# Delete BDoS profiles
+ansible-playbook playbooks/delete_bdos_profile.yml
 ```
 
 ## Common Workflows
@@ -570,9 +570,6 @@ cl_profiles:
 ```
 
 
-
-    
-
 ### Create BDOS Profile configuration ###
 ```yaml
 # Define BDoS profiles to create on each device
@@ -610,11 +607,9 @@ bdos_profiles:
       maximum_interval_between_bursts: 60        # OPTIONAL: 1–60 minutes (default: 10)
       learning_suppression_threshold: 10         # OPTIONAL: 0–50 (default: 0)
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
-
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
       user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
       user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
-
       adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
 
   # Minimal example (only mandatory parameter)
@@ -652,28 +647,29 @@ bdos_profiles:
 ansible-playbook playbooks/get_bdos_profile.yml
 
 # Filter by specific profile names (configure in get_vars.yml)
-filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
-# filter_bdos_profile_names: []                                # Show all profiles (default)
+bdos_profiles:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"                         
 
 #### Delete BDoS Profiles  ####
 ```yaml
 # Delete BDoS profiles by name
-delete_bdos_profiles:
+bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
 ```
 
 #### Bdos profile Notes:
 
-name: MANDATORY – Unique profile name.
-state: Optional – enable or disable (default: enable).
-action: Required – choose between report_only or block_and_report.
-Flood toggles (syn_flood, udp_flood, etc.): Enable/disable specific protocol flood detection.
-Traffic limits (inbound/outbound): Mandatory; define baseline traffic thresholds (1–1342177280).
-Quota values: Define % share of traffic per protocol (0–100).
-Rate limiting: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
-Advanced controls: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
-Control flags: create_bdos_profiles can be toggled independently to enable/disable orchestration.
+*** name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: Required – choose between report_only or block_and_report.
+*** Flood toggles (syn_flood, udp_flood, etc.) ***: Enable/disable specific protocol flood detection.
+*** Traffic limits (inbound/outbound) ***: Mandatory; define baseline traffic thresholds (1–1342177280).
+*** Quota values ***: Define % share of traffic per protocol (0–100).
+*** Rate limiting ***: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
+*** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
+*** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
 
 
@@ -718,125 +714,6 @@ security_policies:
 - **direction**: MANDATORY - Traffic direction to match
 - **Profile bindings**: All optional - leave empty string for no binding
 - **Control flags**: Use to enable/disable each creation stage independently
-
-
-### Editing Security Policies
-
-Modify existing security policies using partial updates in `vars/edit_vars.yml`:
-
-```yaml
-# Target DefensePro devices
-dp_ip:
-  - "10.105.192.32"
-
-# Security policies to edit
-edit_security_policies:
-  - policy_name: "web_server_protection"    # MANDATORY: Policy name to edit
-    # Basic configuration parameters (all optional)
-    src_network: "internal_networks"        # Source network class name or "any"
-    dst_network: "web_servers"              # Destination network class name or "any"
-    direction: "twoway"                     # oneway, twoway, bidirectional
-    state: "enable"                         # enable, disable, active, inactive
-    action: "block_and_report"              # block_and_report, report_only
-    priority: "750"                         # Priority value (1-1000)
-    packet_reporting_status: "enable"       # enable, disable
-    
-    # Profile bindings (all optional - use empty string to remove binding)
-    connection_limit_profile: "web_limits"  # Connection limit profile name
-    bdos_profile: ""                        # BDOS profile name (empty = detach)
-    syn_protection_profile: "syn_limits"    # SYN protection profile name
-    dns_flood_profile: ""                   # DNS flood profile name
-    https_flood_profile: ""                 # HTTPS flood profile name
-    traffic_filters_profile: ""             # Traffic filters profile name
-    signature_protection_profile: "app_sec" # Application security profile name
-    ert_attackers_feed_profile: ""          # ERT attackers feed profile name
-    geo_feed_profile: ""                    # Geo feed profile name
-    out_of_state_profile: ""                # Out of state profile name
-
-  # Edit another policy - minimal changes
-  - policy_name: "database_protection"
-    action: "report_only"                   # Change to monitoring mode
-    connection_limit_profile: ""            # Remove connection limit protection
-```
-
-**Run the playbook**:
-```bash
-# Preview changes (check mode)
-ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml --check
-
-# Execute changes
-ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml
-```
-
-**Security Policy Editing Notes**:
-- **policy_name**: MANDATORY - Must be an existing security policy name
-- **Partial Updates**: Only specify parameters you want to change - unspecified parameters remain unchanged
-- **Profile Detachment**: Use empty string ("") to remove profile bindings
-- **Profile Attachment**: Specify profile name to attach/change binding  
-- **Preview Mode**: Use `--check` flag to see planned changes before execution
-- **Control Flags**: Device locking can be skipped with `skip_device_lock: true` in vars
-
-### Deleting Security Policies
-
-Remove security policies with optional profile cleanup using `vars/delete_vars.yml`:
-
-```yaml
-# Target DefensePro devices
-dp_ip:
-  - "10.105.192.32"
-
-# Security policies to delete
-delete_security_policies:
-  - policy_name: "test_security_policy"     # MANDATORY: Policy name to delete
-    deletion_mode: "policy_only"            # OPTIONAL: policy_only | policy_and_profiles
-  
-  - policy_name: "old_security_policy"     # MANDATORY: Policy name to delete  
-    deletion_mode: "policy_and_profiles"    # OPTIONAL: Advanced cleanup mode
-    
-  # deletion_mode defaults to "policy_only" if not specified
-  - policy_name: "another_policy"           # Uses default safe deletion mode
-```
-
-**Deletion Modes**:
-
-1. **`policy_only` (default)**:
-   - Safe deletion - only removes the security policy
-   - Associated profiles remain available for other policies
-   - Use for most deletion scenarios
-
-2. **`policy_and_profiles` (advanced)**:
-   - May remove associated profiles if no longer used by other policies
-   - Use with caution - may affect other policies
-   - Only use when certain about profile cleanup requirements
-
-**Usage Examples**:
-```bash
-# Delete policies with preview mode (recommended first step)
-ansible-playbook playbooks/delete_security_policy.yml --check
-
-# Delete policies (actual execution)
-ansible-playbook playbooks/delete_security_policy.yml
-
-# Delete with verbose output
-ansible-playbook playbooks/delete_security_policy.yml -v
-```
-
-**Security Policy Deletion Notes**:
-- **policy_name**: MANDATORY - Must be an existing security policy name
-- **deletion_mode**: OPTIONAL - Defaults to "policy_only" for safety
-- **Safe Default**: Always use "policy_only" unless certain about profile cleanup needs
-- **Preview Mode**: Use `--check` flag to see planned deletions before execution
-- **Batch Processing**: Multiple policies can be deleted in a single operation
-- **Profile Safety**: "policy_only" mode preserves profiles for other policies to use
-- **Advanced Cleanup**: "policy_and_profiles" mode should only be used when profiles are policy-specific
-
-**Recommended Workflow**:
-1. Use preview mode first: `ansible-playbook playbooks/delete_security_policy.yml --check`
-2. Review planned deletions carefully
-3. For shared environments, prefer "policy_only" mode
-4. For standalone policies with unique profiles, consider "policy_and_profiles" mode
-5. Execute deletion: `ansible-playbook playbooks/delete_security_policy.yml`
-
 ## Troubleshooting
 
 ### "No inventory" or "module not found" errors

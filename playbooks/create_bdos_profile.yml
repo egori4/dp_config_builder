@@ -25,7 +25,7 @@
             label: "Device: {{ item }}"
           register: BDoS_create_results
 
-        - name: Display BDoS creation results
+        - name: Display BDoS creation results (Phase 1 & Phase 2)
           vars:
             formatted_output: |
               Device: {{ item.item }}
@@ -37,6 +37,8 @@
               BDoS Profile Creations ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
                 - {{ op.profile_name }}
+                  Phase 1 (bandwidth/core): {{ op.params | default({}) | dict2items | selectattr('key','search','Bandwidth|Transparent|Flood|Action|Optimization') | list }}
+                  Phase 2 (quotas): {{ op.params | default({}) | dict2items | selectattr('key','search','Quota') | list }}
               {% endfor %}
               {% else %}
               
@@ -58,7 +60,11 @@
               {% elif item.debug_info.input.profiles_count | default(0) > 0 %}
               
               BDoS Profiles created successfully:
-                - {{ item.debug_info.input.profiles_count }} profile(s) created
+              {% for prof in item.response.created_profiles %}
+                - {{ prof.profile_name }}
+                  Phase 1 applied: {{ prof.params_applied_phase1 | default({}) }}
+                  Phase 2 applied: {{ prof.params_applied_phase2 | default({}) }}
+              {% endfor %}
               {% else %}
               
               No BDoS profiles were created.
