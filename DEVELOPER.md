@@ -102,6 +102,10 @@ dp_config_builder/
 │   │   ├── edit_oos_profile.yml
 │   │   ├── delete_oos_profile.yml
 │   │   └── get_oos_profile.yml
+│   │   ├── create_bdos_profile.yml     # Create BDoS Flood profiles
+│   │   ├── edit_bdos_profile.yml       # Modify BDoS Flood profiles
+│   │   ├── delete_bdos_profile.yml     # Remove BDoS Flood profiles
+│   │   └── get_bdos_profile.yml        # Query BDoS Flood profiles
 │   ├── 🎯 Security Policy Operations
 │   │   ├── create_security_policy.yml
 │   │   ├── edit_security_policy.yml
@@ -238,7 +242,6 @@ dp_config_builder/
      - Both `cl_protections` and `cl_profiles` sections are optional for creation
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
-
 5. **BDoS Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
@@ -273,6 +276,7 @@ dp_config_builder/
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
 8. **Security Policy Modules** (`plugins/modules/`)
+6. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -541,9 +545,10 @@ cl_protection_deletions:
 - **Enhanced validation**: Check mode validates both names and indexes against device state
 
 
+
+## Profile operations
 ###  Create BDoS Profile 
-```json
-POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+```jsonPOST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 {
             "rsNetFloodProfileName": "BDOS_Profile_50",
             "rsNetFloodProfileTcpStatus": "2",
@@ -596,6 +601,10 @@ POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name
 ```json
 PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 
+
+##################### Edit BDoS Profile #########################
+PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+```json
 {
             "rsNetFloodProfileName": "BDOS_Profile_50",
             "rsNetFloodProfileTcpStatus": "2",
@@ -649,10 +658,7 @@ Call edit_bdos_profile once per device, passing list of profiles to edit.
 Each profile dict must include profile_name (mandatory) and any parameters to change
 
 ####################### Get BDoS Profile ##########################
-#### Get BDoS Profile 
 ```json
-GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
-
 GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 
 Response:
@@ -717,12 +723,10 @@ Response:
 ### Delete BDoS Profile ###
 ```yml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}
-
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
 ```
-
 ***Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion

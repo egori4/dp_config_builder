@@ -87,6 +87,7 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
+<<<<<<< HEAD
 
 # Get all DNS profiles from devices
 ansible-playbook playbooks/get_dns_profile.yml
@@ -111,6 +112,8 @@ ansible-playbook playbooks/edit_oos_profile.yml
 
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
+=======
+>>>>>>> bdos_Egor_v0.1.3_from_Rahul
 ```
 
 ## Common Workflows
@@ -649,14 +652,16 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> bdos_Egor_v0.1.3_from_Rahul
 ### Create BDOS Profile configuration ###
 ```yaml
 # Define BDoS profiles to create on each device
-# Configure bdos policies  `vars/create_vars.yml`:
 # OPTIONAL: BDoS profiles (only define if creating new ones)
 bdos_profiles:
-  - name: "bdos_profile_5"           # MANDATORY: Profile name
+  - name: "bdos_profile_5"                       # MANDATORY: Profile name
     state: "enable"                              # OPTIONAL: enable, disable (default: enable)
     params:
       action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
@@ -689,6 +694,7 @@ bdos_profiles:
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
       user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
+      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
       user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
       adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
 
@@ -715,7 +721,8 @@ bdos_profiles:
     params:
       syn_flood: "disable"                       # OPTIONAL: Disable SYN flood detection
       udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
-      footprint_strictness: "high"               # OPTIONAL: Update detection sensitivity
+      footprint_strictness: "high"        # OPTIONAL: Update detection sensitivity
+      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
     # All other parameters remain unchanged
 ```
 
@@ -726,8 +733,9 @@ bdos_profiles:
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_bdos_profile.yml
 # Filter by specific profile names (configure in get_vars.yml)
-filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
-# filter_bdos_profile_names: []                                # Show all profiles (default)
+bdos_profiles:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"                         
 
 #### Delete BDoS Profiles  ####
 ```yaml
@@ -746,7 +754,11 @@ bdos_profiles:
 *** Traffic limits (inbound/outbound) ***: Mandatory; define baseline traffic thresholds (1–1342177280).
 *** Quota values ***: Define % share of traffic per protocol (0–100).
 *** Rate limiting ***: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
+<<<<<<< HEAD
 *** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
+=======
+*** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, udp packet rate detection sensitivit, and advanced UDP detection.
+>>>>>>> bdos_Egor_v0.1.3_from_Rahul
 *** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
 #### Create DNS Profiles  ####

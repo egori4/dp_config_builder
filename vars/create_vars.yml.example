@@ -103,7 +103,11 @@ cl_profiles:
 # Define BDOS profiles to create on each device
 # All parameters use user-friendly values that are automatically mapped to API values
 # You can skip this section if you only want to use existing BDoS profiles
+<<<<<<< HEAD
 ```yml
+=======
+
+>>>>>>> bdos_Egor_v0.1.3_from_Rahul
 bdos_profiles:
   - name: "BDOS_Profile_50"
     params:
@@ -138,7 +142,11 @@ bdos_profiles:
       user_defined_rate_limit: 500             # 0-4000 (rate value)
       user_defined_rate_limit_unit: "mbps"     # Options: kbps, mbps, gbps
       adv_udp_detection: "enable"              # Options: enable, disable
+<<<<<<< HEAD
 ```
+=======
+
+>>>>>>> bdos_Egor_v0.1.3_from_Rahul
 # Parameter Descriptions:
 # - action: What to do when a flood is detected
 # - *_flood: Enable/disable detection of specific attack type
@@ -158,6 +166,7 @@ bdos_profiles:
 # Usage Scenarios:
 # 1. Create new BDoS profiles: Define bdos_profiles
 # 2. Use existing BDoS profiles only: Skip this section and reference them elsewhere
+<<<<<<< HEAD
 
 
 ################################## DNS Profile create Variables ###############################
@@ -259,3 +268,5 @@ oos_profiles:
 ## Usage Scenarios:
    # Create new OOS profiles: Define oos_profiles as above
    # Use existing OOS profiles only: Skip this section and reference them in edit/delete playbooks
+=======
+>>>>>>> bdos_Egor_v0.1.3_from_Rahul
