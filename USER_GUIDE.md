@@ -70,11 +70,7 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete connection limit profiles and protections (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Create security policies with orchestration (includes network classes, CL profiles, and policies)
-ansible-playbook playbooks/create_security_policy.yml
 
-# Edit existing security policies (partial updates and profile management)
-ansible-playbook playbooks/edit_security_policy.yml
 
 # Get all BDoS profiles from devices
 ansible-playbook playbooks/get_bdos_profile.yml
@@ -87,8 +83,19 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
-```
 
+# Create security policies with orchestration (includes network classes, CL profiles, and policies)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Edit existing security policies (partial updates and profile management)
+ansible-playbook playbooks/edit_security_policy.yml
+
+# Get Security policies and all profiles from devices
+ansible-playbook playbooks/get_security_policy.yml
+
+# Delete Security Policies(and optional corresponding profiles)
+ansible-playbook playbooks/delete_security_policy.yml
+```
 ## Common Workflows
 
 ### Workflow 1: Create New Network Classes
@@ -569,7 +576,6 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
-
 ### Create BDOS Profile configuration ###
 ```yaml
 # Define BDoS profiles to create on each device
@@ -647,9 +653,8 @@ bdos_profiles:
 ansible-playbook playbooks/get_bdos_profile.yml
 
 # Filter by specific profile names (configure in get_vars.yml)
-bdos_profiles:
-  - "BDOS_Profile_5"
-  - "BDOS_Profile_6"                         
+filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
+# filter_bdos_profile_names: []                                # Show all profiles (default)
 
 #### Delete BDoS Profiles  ####
 ```yaml
