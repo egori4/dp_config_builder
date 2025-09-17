@@ -476,68 +476,116 @@ cl_protection_deletions:
 
 
 
-
-
-
 ## Profile operations
 ###  Create BDoS Profile 
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
+POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 {
-    "rsIDSNewRulesName": "BDOS_Profile_5",
-    "rsIDSNewRulesAction": "2",
-    "rsIDSNewRulesSynFlood": "1",
-    "rsIDSNewRulesUdpFlood": "1",
-    "rsIDSNewRulesIgmpFlood": "0",
-    "rsIDSNewRulesIcmpFlood": "1",
-    "rsIDSNewRulesTcpAckFinFlood": "0",
-    "rsIDSNewRulesTcpRstFlood": "0",
-    "rsIDSNewRulesTcpPshAckFlood": "0",
-    "rsIDSNewRulesTcpSynAckFlood": "0",
-    "rsIDSNewRulesTcpFragFlood": "0",
-    "rsIDSNewRulesUdpFragFlood": "0",
-    "rsIDSNewRulesInboundTraffic": 1000000,
-    "rsIDSNewRulesOutboundTraffic": 500000,
-    "rsIDSNewRulesTcpInQuota": 50,
-    "rsIDSNewRulesUdpInQuota": 50,
-    "rsIDSNewRulesIcmpInQuota": 50,
-    "rsIDSNewRulesIgmpInQuota": 50,
-    "rsIDSNewRulesTcpOutQuota": 50,
-    "rsIDSNewRulesUdpOutQuota": 50,
-    "rsIDSNewRulesIcmpOutQuota": 50,
-    "rsIDSNewRulesIgmpOutQuota": 50,
-    "rsIDSNewRulesTransparentOptimization": "1",
-    "rsIDSNewRulesPacketReport": "1",
-    "rsIDSNewRulesBurstAttack": "0",
-    "rsIDSNewRulesMaxIntervalBetweenBursts": 60,
-    "rsIDSNewRulesLearningSuppressionThreshold": 10,
-    "rsIDSNewRulesFootprintStrictness": 2,
-    "rsIDSNewRulesRateLimit": 3,
-    "rsIDSNewRulesUserDefinedRateLimit": 500,
-    "rsIDSNewRulesUserDefinedRateLimitUnit": 2,
-    "rsIDSNewRulesAdvancedUdpDetection": "1"
-}
+            "rsNetFloodProfileName": "BDOS_Profile_50",
+            "rsNetFloodProfileTcpStatus": "2",
+            "rsNetFloodProfileTcpSynStatus": "1",
+            "rsNetFloodProfileUdpStatus": "1",
+            "rsNetFloodProfileIgmpStatus": "1",
+            "rsNetFloodProfileIcmpStatus": "1",
+            "rsNetFloodProfileTcpFinAckStatus": "1",
+            "rsNetFloodProfileTcpRstStatus": "1",
+            "rsNetFloodProfileTcpPshAckStatus": "2",
+            "rsNetFloodProfileTcpSynAckStatus": "1",
+            "rsNetFloodProfileTcpFragStatus": "1",
+            "rsNetFloodProfileBandwidthIn": "1000000",
+            "rsNetFloodProfileBandwidthOut": "500000",
+            "rsNetFloodProfileTcpInQuota": "80",
+            "rsNetFloodProfileUdpInQuota": "50",
+            "rsNetFloodProfileIcmpInQuota": "10",
+            "rsNetFloodProfileIgmpInQuota": "50",
+            "rsNetFloodProfileTcpOutQuota": "80",
+            "rsNetFloodProfileUdpOutQuota": "50",
+            "rsNetFloodProfileIcmpOutQuota": "10",
+            "rsNetFloodProfileIgmpOutQuota": "50",
+            "rsNetFloodProfileTransparentOptimization": "1",
+            "rsNetFloodProfileAction": "0",
+            "rsNetFloodProfileLevelOfReuglarzation": "2",
+            "rsNetFloodProfileBurstEnabled": "1",
+            "rsNetFloodProfileNoBurstTimeout": "60",
+            "rsNetFloodProfileBurstAttackThreshold": "5",
+            "rsNetFloodProfileBurstAttackPeriod": "32",
+            "rsNetFloodProfileOverMitigationStatus": "2",
+            "rsNetFloodProfileOverMitigationThreshold": "25",
+            "rsNetFloodProfileLearningSuppressionThreshold": "10",
+            "rsNetFloodProfileFootprintStrictness": "1",
+            "rsNetFloodProfileRateLimit": "3",
+            "rsNetFloodProfileUserDefinedRateLimit": "500",
+            "rsNetFloodProfileUserDefinedRateLimitUnit": "1",
+            "rsNetFloodProfileAdvUdpDetection": "1",
+            "rsNetFloodProfileUdpExcludedPorts": "None",
+            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
+            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
+            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
+            "rsNetFloodProfilePacketReportStatus": "1",
+            "rsNetFloodProfilePacketTraceStatus": "2",
+            "rsNetFloodProfileUdpFragStatus": "1",
+            "rsNetFloodProfileUdpFragInQuota": "25",
+            "rsNetFloodProfileUdpFragOutQuota": "25"
+        }
 
 ##################### Edit BDoS Profile #########################
-PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable/{profile_name}
-
+PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+```json
 {
-    "rsIDSNewRulesName": "BDOS_Profile_5",
-    "rsIDSNewRulesAction": "1",
-    "rsIDSNewRulesSynFlood": "0",
-    "rsIDSNewRulesUdpFlood": "0",
-    "rsIDSNewRulesIcmpFlood": "0",
-    "rsIDSNewRulesInboundTraffic": 2000000,
-    "rsIDSNewRulesOutboundTraffic": 1000000
-}
-
+            "rsNetFloodProfileName": "BDOS_Profile_50",
+            "rsNetFloodProfileTcpStatus": "2",
+            "rsNetFloodProfileTcpSynStatus": "1",
+            "rsNetFloodProfileUdpStatus": "1",
+            "rsNetFloodProfileIgmpStatus": "1",
+            "rsNetFloodProfileIcmpStatus": "1",
+            "rsNetFloodProfileTcpFinAckStatus": "1",
+            "rsNetFloodProfileTcpRstStatus": "1",
+            "rsNetFloodProfileTcpPshAckStatus": "2",
+            "rsNetFloodProfileTcpSynAckStatus": "1",
+            "rsNetFloodProfileTcpFragStatus": "1",
+            "rsNetFloodProfileBandwidthIn": "1000000",
+            "rsNetFloodProfileBandwidthOut": "500000",
+            "rsNetFloodProfileTcpInQuota": "80",
+            "rsNetFloodProfileUdpInQuota": "50",
+            "rsNetFloodProfileIcmpInQuota": "10",
+            "rsNetFloodProfileIgmpInQuota": "50",
+            "rsNetFloodProfileTcpOutQuota": "80",
+            "rsNetFloodProfileUdpOutQuota": "50",
+            "rsNetFloodProfileIcmpOutQuota": "10",
+            "rsNetFloodProfileIgmpOutQuota": "50",
+            "rsNetFloodProfileTransparentOptimization": "1",
+            "rsNetFloodProfileAction": "0",
+            "rsNetFloodProfileLevelOfReuglarzation": "2",
+            "rsNetFloodProfileBurstEnabled": "1",
+            "rsNetFloodProfileNoBurstTimeout": "60",
+            "rsNetFloodProfileBurstAttackThreshold": "5",
+            "rsNetFloodProfileBurstAttackPeriod": "32",
+            "rsNetFloodProfileOverMitigationStatus": "2",
+            "rsNetFloodProfileOverMitigationThreshold": "25",
+            "rsNetFloodProfileLearningSuppressionThreshold": "10",
+            "rsNetFloodProfileFootprintStrictness": "1",
+            "rsNetFloodProfileRateLimit": "3",
+            "rsNetFloodProfileUserDefinedRateLimit": "500",
+            "rsNetFloodProfileUserDefinedRateLimitUnit": "1",
+            "rsNetFloodProfileAdvUdpDetection": "1",
+            "rsNetFloodProfileUdpExcludedPorts": "None",
+            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
+            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
+            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
+            "rsNetFloodProfilePacketReportStatus": "1",
+            "rsNetFloodProfilePacketTraceStatus": "2",
+            "rsNetFloodProfileUdpFragStatus": "1",
+            "rsNetFloodProfileUdpFragInQuota": "25",
+            "rsNetFloodProfileUdpFragOutQuota": "25"
+        }
+```
 Usage:
 Call edit_bdos_configuration once per device, passing list of profiles to edit.
 Each profile dict must include profile_name (mandatory) and any parameters to change
 
 ####################### Get BDoS Profile ##########################
 GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable
-
+```json
 Response:
 {
     "rsNetFloodProfileTable": [
@@ -597,23 +645,18 @@ Response:
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
 ```
-### Delete BDoS Profile 
-
+### Delete BDoS Profile ###
 DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}
-
-```yml
-# Profiles to delete
 ```yml
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
-```
-Key Features:
+  ```
+***Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion
 - Order of deletion handled automatically
-- Both names and indexes supported internally (no need to provide    index)
-```
+- Both names and indexes supported internally (no need to provide index)
 
 ### Edit Security Policy
 ```python
