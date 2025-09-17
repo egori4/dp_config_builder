@@ -87,6 +87,44 @@ cl_profiles:
     protections:
       - "dns_protection"
 
+########################## BDoS Profile ##########################
+# Define BDOS profiles to create on each device
+
+bdos_profiles:
+  - name: "BDOS_Profile_egor"
+    params:
+      action: "report_only"                  # report_only/block_and_report
+      syn_flood: "enable"                    # enable/disable
+      udp_flood: "enable"                    # enable/disable
+      igmp_flood: "enable"                 # enable/disable
+      icmp_flood: "enable"                   # enable/disable
+      tcp_ack_fin_flood: "enable"          # enable/disable
+      tcp_rst_flood: "enable"              # enable/disable
+      tcp_syn_ack_flood: "enable"          # enable/disable
+      tcp_frag_flood: "enable"             # enable/disable
+      udp_frag_flood: "enable"             # enable/disable
+      inbound_traffic: 1000000               # 1 to 1342177280
+      outbound_traffic: 500000               # 1 to 1342177280
+      tcp_in_quota: 80                        # 0-100
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+      transparent_optimization: "enable"        # enable/disable
+      packet_report: "enable"                # enable/disable
+      burst_attack: "disable"                # enable/disable
+      maximum_interval_between_bursts: 60    # minutes
+      learning_suppression_threshold: 10     # 0-50
+      footprint_strictness: "medium"         # low/medium/high
+      bdos_rate_limit: "user_defined"        # disable/normal_edge/suspect_edge/user_defined
+      user_defined_rate_limit: 500           # 0-4000
+      user_defined_rate_limit_unit: "mbps"   # kbps/mbps/gbps
+      adv_udp_detection: "enable"            # enable/disable
+
+
 ########################## Security Policy Configuration ##########################
 
 # Control flags for orchestration workflow

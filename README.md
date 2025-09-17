@@ -121,8 +121,6 @@ dp_config_builder/
 | `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-bdos-profiles)             |
 | `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-bdos-profiles-with-filtering) |
 
-
-
 ### Connection Limit Profiles
 
 | Playbook | Purpose | Documentation |

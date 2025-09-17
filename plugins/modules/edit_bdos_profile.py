@@ -97,7 +97,7 @@ def run_module():
                     try:
                         resp = cc._put(url, json=request_body)
                         if resp.status_code in (200, 201):
-                            logger.info(f"Successfully edited NetFlood profile: {profile_name}")
+                            logger.info(f"Successfully edited BDOS profile: {profile_name}")
                             changes_made = True
                             edited_profiles.append({
                                 'profile_name': profile_name,
@@ -105,17 +105,18 @@ def run_module():
                                 'params_applied': api_params
                             })
                         else:
-                            error_msg = f"Failed to edit NetFlood profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                            error_msg = f"Failed to edit BDOS profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
                             errors.append(error_msg)
                             logger.error(error_msg)
 
                     except Exception as e:
-                        error_msg = f"Error editing NetFlood profile {profile_name}: {str(e)}"
+                        error_msg = f"Error editing BDOS profile {profile_name}: {str(e)}"
                         errors.append(error_msg)
                         logger.error(error_msg)
 
+                    logger.debug(f"API response for {profile_name}: {resp.status_code} - {resp.text}")
             else:
-                logger.info(f"No NetFlood profiles configured for editing on {dp_ip}")
+                logger.info(f"No BDOS profiles configured for editing on {dp_ip}")
 
             result.update({
                 'changed': changes_made,
