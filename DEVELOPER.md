@@ -87,17 +87,15 @@ dp_config_builder/
 │   │   ├── edit_cl_protections.yml     # Edit CL protections
 │   │   ├── get_cl_profiles.yml         # Query CL profiles
 │   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
-<<<<<<<<< Temporary merge branch 1
-│   ├── 🎯 Security Policy Operations
-│   │   ├── create_security_policy.yml  # Create security policies with orchestration
-│   │   ├── edit_security_policy.yml    # Edit existing security policies
-│   │   └── delete_security_policy.yml  # Delete security policies with cleanup options
-=========
 │   ├── 🎯 BDoS Flood Profile Operations
 │   │   ├── create_bdos_profile.yml     # Create BDoS Flood profiles
 │   │   ├── edit_bdos_profile.yml       # Modify BDoS Flood profiles
 │   │   ├── delete_bdos_profile.yml     # Remove BDoS Flood profiles
-│   │   └── get_bdos_profile.yml       # Query BDoS Flood profiles
+│   │   └── get_bdos_profile.yml        # Query BDoS Flood profiles
+│   ├── 🎯 Security Policy Operations
+│   │   ├── create_security_policy.yml  # Create security policies with orchestration
+│   │   ├── edit_security_policy.yml    # Edit existing security policies
+│   │   └── delete_security_policy.yml  # Delete security policies with cleanup options
 │   ├── 📊 Runtime Data (auto-created)
 │   │   ├── log/                        # Execution logs by date
 │   │   │   └── log_YYYYMMDD.log        # Daily log files
