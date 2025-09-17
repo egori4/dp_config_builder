@@ -90,14 +90,3 @@ cl_protection_deletions:
 # - Delete other standalone protections
 # - Define both sections with different protection names
 
-###################### BDOS Profile Deletions ##########################
-# Define BDoS profiles to delete by name
-delete_bdos_profiles:
-  - name: "bdos_profile_1"  # MANDATORY: Profile name to delete
-  - name: "bdos_profile_2"  # Add more profiles as needed
-
-# Notes:
-# - Each entry must include the 'name' key
-# - Only profiles listed here will be deleted
-# - If list is empty, no BDoS profiles will be deleted
-# - Deletion is irreversible on the device, use with caution

@@ -222,25 +222,12 @@ ansible-playbook playbooks/edit_security_policy.yml
 
 # Security Policy Deletion (using vars/delete_vars.yml configuration)
 ansible-playbook playbooks/delete_security_policy.yml
-
-# Create BDoS profiles (uses create_bdos_profile module)
-ansible-playbook playbooks/create_bdos_profile.yml
-
-# Edit existing BDoS profiles (uses edit_bdos_profile module)
-ansible-playbook playbooks/edit_bdos_profile.yml
-
-# Get BDoS profiles (uses get_bdos_profile module)
-ansible-playbook playbooks/get_bdos_profile.yml
-
-# Delete BDoS profiles (uses delete_bdos_profile module)
-ansible-playbook playbooks/delete_bdos_profile.yml
-
 ```
 
+
+
 todo 
-add edit policy
-add delete policy
-add conditional lock unlock and policy update on edit, delete profiles (netclass, connlim)
+
 add get policy
 documentation
 

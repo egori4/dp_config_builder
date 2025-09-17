@@ -122,11 +122,6 @@ dp_config_builder/
 │   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
 │   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
 │   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
-│   │   ├── 🔧 BDoS Flood Profile Modules (v0.1.5+)
-│   │   │   ├── create_bdos_profile.py      # Batch creation with validation
-│   │   │   ├── edit_bdos_profile.py        # Modify existing BDoS profiles
-│   │   │   ├── delete_bdos_profile.py      # Batch deletion with error handling
-│   │   │   └── get_bdos_profile.py        # Query BDoS Flood profiles
 │   │   └── 🔧 Device Management
 │   │       ├── dp_lock.py                  # Device configuration lock
 │   │       └── dp_unlock.py                # Device configuration unlock
@@ -225,15 +220,23 @@ dp_config_builder/
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
 5. **Security Policy Modules** (`plugins/modules/`)
-   - **Purpose**: Unified orchestration for security policy creation with profile bindings
-   - **Features**: Policy creation, profile binding, orchestration control
+   - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
+   - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
-     - Creation: `create_security_policy.py` ( API call with profile bindings)
+     - Creation: `create_security_policy.py` (API call with profile bindings)
+     - Editing: `edit_security_policy.py` (partial updates with profile attachment/detachment)
+     - Deletion: `delete_security_policy.py` (dual deletion modes with optional profile cleanup)
      - Orchestration: `create_security_policy.yml` (coordinates profiles creation, and policies)
+     - Editing: `edit_security_policy.yml` (modifies existing policies with conditional locking)
+     - Deletion: `delete_security_policy.yml` (removes policies with flexible cleanup options)
    - **Key Features**:
      - Unified orchestration with control flags for each creation stage
+     - Partial updates for editing (only specify parameters to change)
+     - Profile attachment and detachment (empty string to detach)
+     - Dual deletion modes (policy-only vs policy+profiles cleanup)
+     - Preview mode for all operations to validate changes before execution
      - Different protection profile types bindable to policies
-     - User-friendly parameter mapping (e.g., "block" → "1", "inbound" → "1")
+     - User-friendly parameter mapping (e.g., "block_and_report" → "1", "inbound" → "1")
      - Comprehensive error handling with detailed failure reporting
      - Preview mode support for orchestration planning
 
@@ -282,14 +285,17 @@ dp_config_builder/
 | Operation | HTTP Method | API Endpoint |
 |-----------|-------------|--------------|
 | Create Security Policy | POST | `/mgmt/device/byip/{ip}/config/rsIDSNewRulesTable/{policy_name}` |
+| Edit Security Policy | PUT | `/mgmt/device/byip/{ip}/config/rsIDSNewRulesTable/{policy_name}` |
 
 **Parameters**: Minimal required parameters with optional advanced configuration
 **Profile Bindings**: Different protection profile types supported
-**Response**: Policy creation status with error details
+**Response**: Policy creation/modification status with error details
 
 **Key Features**:
-- **Minimal Parameters**: Only `policy_name` is mandatory - DefensePro provides defaults
+- **Minimal Parameters**: Only `policy_name` is mandatory for creation/editing - DefensePro provides defaults
 - **Conditional Parameter Sending**: Only user-specified parameters sent to API
+- **Partial Updates**: For editing, only specify parameters to change - unspecified parameters remain unchanged
+- **Profile Management**: Attach profiles by name, detach with empty string ("")
 - **User-Friendly Value Mapping**: Automatic conversion of human-readable values to API codes
 - **Flexible Configuration**: Full parameter support when needed
 
@@ -653,7 +659,7 @@ except Exception as e:
 url = f"/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}"
 body = {
     "rsIDSNewRulesDirection": "1",           # Mapped from "inbound"
-    "rsIDSNewRulesAction": "1",              # Mapped from "block"
+    "rsIDSNewRulesAction": "1",              # Mapped from "block_and_report"
     "rsIDSNewRulesPriority": "100", 
     "rsIDSNewRulesProfileConlmt": "web_cl_profile",  # Profile binding
     # ... additional profile bindings
@@ -857,6 +863,86 @@ Key Features:
 - Module validates existence before deletion
 - Order of deletion handled automatically
 - Both names and indexes supported internally (no need to provide    index)
+```
+
+### Edit Security Policy
+```python
+# Request - Partial update (only specified parameters are changed)
+url = f"/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}"
+body = {
+    "rsIDSNewRulesAction": "0",              # Change action to "report_only"
+    "rsIDSNewRulesPriority": "200",          # Change priority
+    "rsIDSNewRulesProfileConlmt": "",        # Detach connection limit profile (empty string)
+    "rsIDSNewRulesProfileNetflood": "bdos_profile"  # Attach BDOS profile
+}
+resp = cc._put(url, json=body)
+
+# Response (Success)
+{
+    "status": "ok"
+}
+
+# Response (Error)
+{
+    "status": "error",
+    "message": "M_00001: Policy not found"
+}
+```
+
+## Security Policy Operations 
+
+### Edit Security Policy
+
+**Module**: `edit_security_policy.py`  
+**Playbook**: `edit_security_policy.yml`  
+**Variables**: `edit_vars.yml` (edit_security_policies section)
+
+**Purpose**: Modify existing security policies with partial updates and profile management
+
+**Key Features**:
+- **Partial Updates**: Only specify parameters to change - unspecified parameters remain unchanged  
+- **Profile Management**: Attach profiles by name, detach with empty string ("")
+- **Batch Processing**: Edit multiple policies in a single operation
+- **Preview Mode**: Check mode shows planned changes before execution
+- **Conditional Execution**: Device locking/unlocking can be skipped with control flags
+
+**Variables Structure** (`edit_vars.yml`):
+```yaml
+edit_security_policies:
+  - policy_name: "web_server_protection"    # MANDATORY: Policy name to edit
+    # Basic configuration parameters (all optional)
+    src_network: "internal_networks"        # Source network class name or "any"
+    dst_network: "web_servers"              # Destination network class name or "any"
+    direction: "twoway"                     # oneway, twoway, bidirectional
+    state: "enable"                         # enable, disable, active, inactive
+    action: "block_and_report"              # block_and_report, report_only
+    priority: "750"                         # Priority value (1-1000)
+    packet_reporting_status: "enable"       # enable, disable
+    
+    # Profile bindings (all optional - use empty string to remove binding)
+    connection_limit_profile: "web_limits"  # Connection limit profile name
+    bdos_profile: ""                        # BDOS profile name (empty = detach)
+    syn_protection_profile: "syn_limits"    # SYN protection profile name
+    # ... additional profile types supported
+```
+
+**Usage Pattern**:
+```yaml
+# Playbook execution 
+- name: Edit security policies
+  edit_security_policy:
+    provider: "{{ radware_cc_provider }}"
+    dp_ip: "{{ item }}"
+    edit_security_policies: "{{ edit_security_policies }}"
+  loop: "{{ dp_ip }}"
+```
+
+**API Mapping**:
+- `policy_name` → URL path parameter 
+- `action: "block_and_report"` → `"rsIDSNewRulesAction": "1"`
+- `action: "report_only"` → `"rsIDSNewRulesAction": "0"`
+- `connection_limit_profile: ""` → `"rsIDSNewRulesProfileConlmt": ""` (detachment)
+- `direction: "twoway"` → `"rsIDSNewRulesDirection": "2"`
 
 ### HTTP Error Patterns
 ```python
@@ -888,6 +974,65 @@ except Exception as e:
         **result
     )
 ```
+
+### Delete Security Policy
+
+**Module**: `delete_security_policy.py`  
+**Playbook**: `delete_security_policy.yml`  
+**Variables**: `delete_vars.yml` (delete_security_policies section)
+
+**Purpose**: Remove security policies with optional profile cleanup
+
+**Key Features**:
+- **Dual Deletion Modes**: Simple policy deletion or complex policy+profiles deletion
+- **Safe Default**: Policy-only deletion preserves profiles for other policies
+- **Batch Processing**: Delete multiple policies in a single operation
+- **Preview Mode**: Check mode shows planned deletions before execution
+- **Conditional Execution**: Device locking/unlocking can be skipped with control flags
+
+**Deletion Modes**:
+1. **`policy_only` (default/recommended)**:
+   - Endpoint: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}`
+   - Safe deletion - only removes the policy
+   - Associated profiles remain available for other policies
+   - Use for most deletion scenarios
+
+2. **`policy_and_profiles` (advanced)**:
+   - Endpoint: `DELETE /mgmt/device/byip/{dp_ip}/config/deletenetworktemplatelist`
+   - May remove associated profiles if no longer used by other policies
+   - Use with caution - may affect other policies
+   - Only use when certain about profile cleanup requirements
+
+**Variables Structure** (`delete_vars.yml`):
+```yaml
+delete_security_policies:
+  - policy_name: "test_security_policy"     # MANDATORY: Policy name to delete
+    deletion_mode: "policy_only"            # OPTIONAL: policy_only | policy_and_profiles
+  
+  - policy_name: "old_security_policy"     # MANDATORY: Policy name to delete  
+    deletion_mode: "policy_and_profiles"    # OPTIONAL: Advanced cleanup mode
+    
+  # deletion_mode defaults to "policy_only" if not specified
+  - policy_name: "another_policy"           # Uses default safe deletion mode
+```
+
+**API Endpoints**:
+```python
+# Policy-only deletion (safe, default)
+url = f"{config.BASE_URL}/config/rsIDSNewRulesTable/{policy_name}"
+resp = cc._delete(url)
+
+# Policy and profiles deletion (advanced)
+url = f"{config.BASE_URL}/config/deletenetworktemplatelist"
+body = {"rsIDSNewRulesTable": [{"Name": policy_name}]}
+resp = cc._delete(url, json=body)
+```
+
+**Usage Recommendations**:
+- Use `policy_only` mode for shared environments where profiles may be used by multiple policies
+- Use `policy_and_profiles` mode only when certain that associated profiles should be cleaned up
+- Always test in preview mode first with `policy_and_profiles` to understand impact
+- Consider manual profile cleanup after policy deletion for better control
 
 ## Session Management
 
