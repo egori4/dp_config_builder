@@ -70,16 +70,18 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete connection limit profiles and protections (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Create BDoS profiles (uses create_bdos_profile module)
-ansible-playbook playbooks/create_bdos_profile.yml
 
-# Edit existing bdos profiles (uses edit_bdos_profile module)
-ansible-playbook playbooks/edit_bdos_profile.yml
 
-# Get bdos profiles (uses get_bdos_profile module)
+# Get all BDoS profiles from devices
 ansible-playbook playbooks/get_bdos_profile.yml
 
-# Delete bdos profile (uses delete_bdos_profile module)
+# Create new BDoS profiles
+ansible-playbook playbooks/create_bdos_profile.yml
+
+# Edit existing BDoS profiles
+ansible-playbook playbooks/edit_bdos_profile.yml
+
+# Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
 
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
@@ -87,8 +89,13 @@ ansible-playbook playbooks/create_security_policy.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
-```
 
+# Get Security policies and all profiles from devices
+ansible-playbook playbooks/get_security_policy.yml
+
+# Delete Security Policies(and optional corresponding profiles)
+ansible-playbook playbooks/delete_security_policy.yml
+```
 ## Common Workflows
 
 ### Workflow 1: Create New Network Classes
@@ -569,17 +576,12 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
-
-
-    
-
 ### Create BDOS Profile configuration ###
 ```yaml
 # Define BDoS profiles to create on each device
-# Configure bdos policies  `vars/create_vars.yml`:
 # OPTIONAL: BDoS profiles (only define if creating new ones)
 bdos_profiles:
-  - name: "bdos_profile_5"           # MANDATORY: Profile name
+  - name: "bdos_profile_5"                       # MANDATORY: Profile name
     state: "enable"                              # OPTIONAL: enable, disable (default: enable)
     params:
       action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
@@ -610,11 +612,10 @@ bdos_profiles:
       maximum_interval_between_bursts: 60        # OPTIONAL: 1–60 minutes (default: 10)
       learning_suppression_threshold: 10         # OPTIONAL: 0–50 (default: 0)
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
-
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
       user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
+      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
       user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
-
       adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
 
   # Minimal example (only mandatory parameter)
@@ -640,7 +641,8 @@ bdos_profiles:
     params:
       syn_flood: "disable"                       # OPTIONAL: Disable SYN flood detection
       udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
-      footprint_strictness: "high"               # OPTIONAL: Update detection sensitivity
+      footprint_strictness: "high"        # OPTIONAL: Update detection sensitivity
+      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
     # All other parameters remain unchanged
 ```
 
@@ -658,22 +660,22 @@ filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only the
 #### Delete BDoS Profiles  ####
 ```yaml
 # Delete BDoS profiles by name
-delete_bdos_profiles:
+bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
 ```
 
 #### Bdos profile Notes:
 
-name: MANDATORY – Unique profile name.
-state: Optional – enable or disable (default: enable).
-action: Required – choose between report_only or block_and_report.
-Flood toggles (syn_flood, udp_flood, etc.): Enable/disable specific protocol flood detection.
-Traffic limits (inbound/outbound): Mandatory; define baseline traffic thresholds (1–1342177280).
-Quota values: Define % share of traffic per protocol (0–100).
-Rate limiting: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
-Advanced controls: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
-Control flags: create_bdos_profiles can be toggled independently to enable/disable orchestration.
+*** name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: Required – choose between report_only or block_and_report.
+*** Flood toggles (syn_flood, udp_flood, etc.) ***: Enable/disable specific protocol flood detection.
+*** Traffic limits (inbound/outbound) ***: Mandatory; define baseline traffic thresholds (1–1342177280).
+*** Quota values ***: Define % share of traffic per protocol (0–100).
+*** Rate limiting ***: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
+*** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, udp packet rate detection sensitivit, and advanced UDP detection.
+*** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
 
 

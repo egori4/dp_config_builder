@@ -116,10 +116,10 @@ dp_config_builder/
 ### BDoS Profile Management
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
-| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-bdos-profiles)             |
-| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-bdos-profiles)               |
-| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-bdos-profiles)             |
-| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-bdos-profiles-with-filtering) |
+| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
+| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
+| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
+| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
 
 ### Connection Limit Profiles
 
@@ -197,6 +197,7 @@ dp_config_builder/
 # Network Classes Example
 cd vars/
 cp create_vars.yml.example create_vars.yml
+```
 # Edit create_vars.yml with your networks and devices
 ansible-playbook playbooks/create_network_class.yml
 
@@ -224,7 +225,6 @@ ansible-playbook playbooks/get_bdos_profile.yml
 # Delete BDoS profiles (uses delete_bdos_profile module)
 ansible-playbook playbooks/delete_bdos_profile.yml
 
-
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_security_policy.yml
 
@@ -235,14 +235,6 @@ ansible-playbook playbooks/edit_security_policy.yml
 ansible-playbook playbooks/delete_security_policy.yml
 
 
-```
-
-todo 
-add edit policy
-add delete policy
-add conditional lock unlock and policy update on edit, delete profiles (netclass, connlim)
-add get policy
-documentation
 
 ## Version History
 

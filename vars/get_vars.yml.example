@@ -33,7 +33,6 @@ filter_cl_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names
 # filter_cl_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
 # filter_cl_profile_names: []  # Show all profiles (default)
 
-
 ###################### Get BDOS Profile ##########################
 # Filter by specific BDoS profile names, or leave empty list for all profiles
 filter_bdos_profile_names: ["bdos_profile_1","bdos_profile_2"]  # Set to list of profile names to filter, or leave empty for all

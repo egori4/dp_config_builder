@@ -81,7 +81,7 @@ debug_info:
 # -------------------------------
 def build_api_path(dp_ip, profile_name):
     """Construct API endpoint path for BDOS profile deletion."""
-    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}/"
+    return f"/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name['name']}/"
 
 # -------------------------------
 # Main Module Logic
@@ -116,6 +116,7 @@ def run_module():
             url = f"https://{provider['cc_ip']}{path}"
             result['debug_info'].setdefault('requests', []).append({"method": "DELETE", "url": url})
             logger.info(f"Deleting BDOS profile '{profile_name}' on {dp_ip}")
+            logger.debug(f"DELETE URL: {url}")
 
             if module.check_mode:
                 result['response'].append({"profile": profile_name, "msg": "Check mode - not deleted"})
@@ -125,13 +126,11 @@ def run_module():
                 resp = cc._delete(url)
                 status_code = resp.status_code
                 result['debug_info'].setdefault('responses', []).append({"profile": profile_name, "status_code": status_code})
-                
+                logger.debug(f"Response status: {status_code}")
                 # If profile does not exist, skip gracefully
-                if status_code == 404:
-                    result['response'].append({"profile": profile_name, "status": "skipped", "reason": "Profile not found"})
-                    continue
 
                 data = resp.json() if resp.content else {"status": "deleted"}
+                logger.debug(f"Response JSON: {data}")
 
                 if status_code not in (200, 204):
                     data.setdefault('error', f"HTTP {status_code}")

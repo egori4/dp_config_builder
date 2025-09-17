@@ -1,14 +1,14 @@
 # plugins/modules/create_bdos_profile.py
 """
-Unified Ansible module to create BDOS profiles on DefensePro devices.
+Unified Ansible module to create BDOS profiles on DefensePro devices with two-phase execution.
 
-This module follows the same unified architecture pattern as create_security_policy.py.
-- Accepts a list of BDoS profiles to create in a single/multiple device.
-- Supports check mode, logging, error handling, and parameter mapping with inline validation.
+Phase 1: Create profile + apply bandwidth and core parameters (POST)
+Phase 2: Update quotas (PUT), only if Phase 1 succeeded or bandwidth already exists
+
+Supports check mode, logging, error handling, and detailed debug info.
 """
 
 from ansible.module_utils.basic import AnsibleModule
-
 
 def run_module():
     module_args = dict(
@@ -21,7 +21,6 @@ def run_module():
     debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
-    # Extract provider and params
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
     bdos_profiles = module.params['bdos_profiles']
@@ -30,10 +29,7 @@ def run_module():
     from ansible.module_utils.logger import Logger
     logger = Logger(verbosity=log_level)
 
-    debug_info['input'] = {
-        'dp_ip': dp_ip,
-        'profiles_count': len(bdos_profiles)
-    }
+    debug_info['input'] = {'dp_ip': dp_ip, 'profiles_count': len(bdos_profiles)}
 
     try:
         from ansible.module_utils.radware_cc import RadwareCC
@@ -45,29 +41,18 @@ def run_module():
         errors = []
 
         if module.check_mode:
-            if bdos_profiles:
-                planned_operations = [
-                    {
-                        'profile_name': profile.get('name', 'unnamed_profile'),
-                        'params': profile.get('params', {})
-                    }
-                    for profile in bdos_profiles
-                ]
-                result.update({
-                    'changed': True,
-                    'response': {
-                        'preview_mode': True,
-                        'planned_operations': planned_operations
-                    }
-                })
-            else:
-                result.update({
-                    'changed': False,
-                    'response': {
-                        'preview_mode': True,
-                        'message': 'No BDoS profiles configured for creation'
-                    }
-                })
+            planned_ops = [
+                {'profile_name': p.get('name', 'unnamed_profile'), 'params': p.get('params', {})}
+                for p in bdos_profiles
+            ] if bdos_profiles else []
+            result.update({
+                'changed': bool(planned_ops),
+                'response': {
+                    'preview_mode': True,
+                    'planned_operations': planned_ops,
+                    'message': 'No BDoS profiles configured for creation' if not planned_ops else ''
+                }
+            })
 
         else:
             if bdos_profiles:
@@ -76,51 +61,83 @@ def run_module():
                 for profile in bdos_profiles:
                     profile_name = profile.get('name')
                     if not profile_name:
-                        error_msg = "Profile name is required (use 'name' field)"
-                        errors.append(error_msg)
-                        logger.error(error_msg)
+                        err = "Profile name is required (use 'name' field)"
+                        errors.append(err)
+                        logger.error(err)
                         continue
 
-                    # Map params to API format
                     try:
                         api_params = map_netflood_profile_parameters(profile.get('params', {}))
                     except ValueError as e:
-                        error_msg = f"Validation failed for profile {profile_name}: {str(e)}"
-                        errors.append(error_msg)
-                        logger.error(error_msg)
+                        err = f"Validation failed for profile {profile_name}: {str(e)}"
+                        errors.append(err)
+                        logger.error(err)
                         continue
 
-                    request_body = {"rsNetFloodProfileName": profile_name}
-                    request_body.update(api_params)
+                    # Split Phase 1 vs Phase 2
+                    phase1_keys = [
+                        "rsNetFloodProfileAction", "rsNetFloodProfileAdvUdpDetection",
+                        "rsNetFloodProfileBandwidthIn", "rsNetFloodProfileBandwidthOut",
+                        "rsNetFloodProfileBurstEnabled", "rsNetFloodProfileBurstAttackPeriod",
+                        "rsNetFloodProfileFootprintStrictness", "rsNetFloodProfileLearningSuppressionThreshold",
+                        "rsNetFloodProfilePacketReportStatus", "rsNetFloodProfileTcpSynStatus",
+                        "rsNetFloodProfileTcpRstStatus", "rsNetFloodProfileTcpSynAckStatus",
+                        "rsNetFloodProfileTcpFinAckStatus", "rsNetFloodProfileTcpFragStatus",
+                        "rsNetFloodProfileUdpStatus", "rsNetFloodProfileUdpFragStatus",
+                        "rsNetFloodProfileIgmpStatus", "rsNetFloodProfileIcmpStatus",
+                        "rsNetFloodProfileTransparentOptimization",
+                        "rsNetFloodProfileRateLimit", "rsNetFloodProfileUserDefinedRateLimit",
+                        "rsNetFloodProfileUserDefinedRateLimitUnit"
+                    ]
+
+                    phase1_params = {k: v for k, v in api_params.items() if k in phase1_keys}
+                    phase2_params = {k: v for k, v in api_params.items() if k not in phase1_keys}
 
                     url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}"
 
-                    logger.info(f"Creating BDoS profile: {profile_name}")
-                    logger.debug(f"Request URL: {url}")
-                    logger.debug(f"Request body: {request_body}")
-
+                    # Phase 1: POST
                     try:
-                        resp = cc._post(url, json=request_body)
-                        if resp.status_code in (200, 201):
-                            logger.info(f"Successfully created BDOS profile: {profile_name}")
-                            changes_made = True
-                            created_profiles.append({
-                                'profile_name': profile_name,
-                                'status': 'success',
-                                'params_applied': api_params
-                            })
-                        else:
-                            error_msg = f"Failed to create BDOS profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
-                            errors.append(error_msg)
-                            logger.error(error_msg)
-
+                        logger.info(f"[Phase 1] Creating profile {profile_name}")
+                        logger.debug(f"POST URL: {url}")
+                        logger.debug(f"POST body: {phase1_params}")
+                        resp = cc._post(url, json={"rsNetFloodProfileName": profile_name, **phase1_params})
+                        if resp.status_code not in (200, 201):
+                            err = f"Phase 1 error for profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                            errors.append(err)
+                            logger.error(err)
+                            continue
+                        logger.info(f"[Phase 1] Success for profile {profile_name}")
                     except Exception as e:
-                        error_msg = f"Error creating BDOS profile {profile_name}: {str(e)}"
-                        errors.append(error_msg)
-                        logger.error(error_msg)
+                        err = f"Phase 1 exception for profile {profile_name}: {str(e)}"
+                        errors.append(err)
+                        logger.error(err)
+                        continue
 
-            else:
-                logger.info(f"No BDOS profiles configured for creation on {dp_ip}")
+                    # Phase 2: PUT (quotas)
+                    try:
+                        if phase2_params:
+                            logger.info(f"[Phase 2] Applying quotas for profile {profile_name}")
+                            logger.debug(f"PUT URL: {url}")
+                            logger.debug(f"PUT body: {phase2_params}")
+                            resp = cc._put(url, json=phase2_params)
+                            if resp.status_code not in (200, 201):
+                                err = f"Phase 2 error for profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                                errors.append(err)
+                                logger.error(err)
+                            else:
+                                logger.info(f"[Phase 2] Quotas applied successfully for {profile_name}")
+                    except Exception as e:
+                        err = f"Phase 2 exception for profile {profile_name}: {str(e)}"
+                        errors.append(err)
+                        logger.error(err)
+
+                    changes_made = True
+                    created_profiles.append({
+                        'profile_name': profile_name,
+                        'status': 'success',
+                        'params_applied_phase1': phase1_params,
+                        'params_applied_phase2': phase2_params
+                    })
 
             result.update({
                 'changed': changes_made,
@@ -142,24 +159,21 @@ def run_module():
             }
 
             if errors:
-                module.fail_json(msg=f"BdoS profile creation completed with {len(errors)} error(s).", **result)
+                module.fail_json(msg=f"BDoS profile creation completed with {len(errors)} error(s).", **result)
 
     except Exception as e:
-        error_msg = f"BDoS profile creation failed: {str(e)}"
-        logger.error(error_msg)
-        debug_info['error'] = error_msg
-        module.fail_json(msg=error_msg, debug_info=debug_info, **result)
+        err = f"BDoS profile creation failed: {str(e)}"
+        logger.error(err)
+        debug_info['error'] = err
+        module.fail_json(msg=err, debug_info=debug_info, **result)
 
     result['debug_info'] = debug_info
     module.exit_json(**result)
 
 
 def map_netflood_profile_parameters(params):
-    """
-    Map user-friendly NetFlood parameters to DefensePro API values.
-    """
-
-    ENUM_MAPS = {       
+    """Map user-friendly parameters to DefensePro API values."""
+    ENUM_MAPS = {
         "syn_flood": {"enable": "1", "disable": "2"},
         "udp_flood": {"enable": "1", "disable": "2"},
         "igmp_flood": {"enable": "1", "disable": "2"},
@@ -176,12 +190,11 @@ def map_netflood_profile_parameters(params):
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
         "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
         "packet_report": {"enable": "1", "disable": "2"},
+        "udp_ packet_rate_detection_sensitivit": {"	Ignore_or_Disable":"1","low": "2", "medium": "3", "high": "4"},
         "adv_udp_detection": {"enable": "1", "disable": "2"}
     }
 
     FIELD_MAP = {
-        "status": "rsNetFloodProfileStatus",
-        "tcp_status": "rsNetFloodProfileTcpStatus",
         "syn_flood": "rsNetFloodProfileTcpSynStatus",
         "udp_flood": "rsNetFloodProfileUdpStatus",
         "igmp_flood": "rsNetFloodProfileIgmpStatus",
@@ -192,8 +205,14 @@ def map_netflood_profile_parameters(params):
         "tcp_syn_ack_flood": "rsNetFloodProfileTcpSynAckStatus",
         "tcp_frag_flood": "rsNetFloodProfileTcpFragStatus",
         "udp_frag_flood": "rsNetFloodProfileUdpFragStatus",
-
-        # Bandwidth / quota
+        "transparent_optimization": "rsNetFloodProfileTransparentOptimization",
+        "action": "rsNetFloodProfileAction",
+        "burst_attack": "rsNetFloodProfileBurstEnabled",
+        "footprint_strictness": "rsNetFloodProfileFootprintStrictness",
+        "bdos_rate_limit": "rsNetFloodProfileRateLimit",
+        "packet_report": "rsNetFloodProfilePacketReportStatus",
+        "udp_ packet_rate_detection_sensitivit": "rsNetFloodProfileLevelOfReuglarzation",
+        "adv_udp_detection": "rsNetFloodProfileAdvUdpDetection",
         "inbound_traffic": "rsNetFloodProfileBandwidthIn",
         "outbound_traffic": "rsNetFloodProfileBandwidthOut",
         "tcp_in_quota": "rsNetFloodProfileTcpInQuota",
@@ -204,31 +223,18 @@ def map_netflood_profile_parameters(params):
         "udp_out_quota": "rsNetFloodProfileUdpOutQuota",
         "icmp_out_quota": "rsNetFloodProfileIcmpOutQuota",
         "igmp_out_quota": "rsNetFloodProfileIgmpOutQuota",
-
-        # Other parameters
-        "transparent_optimization": "rsNetFloodProfileTransparentOptimization",
-        "packet_report": "rsNetFloodProfilePacketReportStatus",
-        "action": "rsNetFloodProfileAction",
-        "burst_attack": "rsNetFloodProfileBurstEnabled",
-        "maximum_interval_between_bursts": "rsNetFloodProfileBurstAttackPeriod",
+        "maximum_interval_between_bursts": "rsNetFloodProfileNoBurstTimeout",
         "learning_suppression_threshold": "rsNetFloodProfileLearningSuppressionThreshold",
-        "footprint_strictness": "rsNetFloodProfileFootprintStrictness",
-        "bdos_rate_limit": "rsNetFloodProfileRateLimit",
         "user_defined_rate_limit": "rsNetFloodProfileUserDefinedRateLimit",
-        "user_defined_rate_limit_unit": "rsNetFloodProfileUserDefinedRateLimitUnit",
-        "adv_udp_detection": "rsNetFloodProfileAdvUdpDetection",
-        "udp_excluded_ports": "rsNetFloodProfileUdpExcludedPorts"
+        "user_defined_rate_limit_unit": "rsNetFloodProfileUserDefinedRateLimitUnit"
     }
 
     mapped = {}
-
     for key, value in params.items():
         if key not in FIELD_MAP:
             continue
-
         mapped_key = FIELD_MAP[key]
 
-        # Enum mapping
         if key in ENUM_MAPS:
             mapped_value = ENUM_MAPS[key].get(str(value).lower())
             if mapped_value is None:
@@ -236,22 +242,20 @@ def map_netflood_profile_parameters(params):
             mapped[mapped_key] = mapped_value
             continue
 
-        # Range validations
-        if key in ["bandwidth_in", "bandwidth_out"]:
+        if key in ["inbound_traffic", "outbound_traffic"]:
             ivalue = int(value)
             if not (1 <= ivalue <= 1342177280):
                 raise ValueError(f"{key} must be between 1 and 1342177280")
             mapped[mapped_key] = str(ivalue)
             continue
 
-        if key.endswith("_in_quota") or key.endswith("_out_quota"):
+        if key.endswith("_quota"):
             ivalue = int(value)
             if not (0 <= ivalue <= 100):
                 raise ValueError(f"{key} must be between 0 and 100")
             mapped[mapped_key] = str(ivalue)
             continue
 
-        # User-defined rate limit validation
         if key == "user_defined_rate_limit":
             ivalue = int(value)
             if not (0 <= ivalue <= 400_000_000):
@@ -259,7 +263,6 @@ def map_netflood_profile_parameters(params):
             mapped[mapped_key] = str(ivalue)
             continue
 
-        # User-defined rate limit unit validation
         if key == "user_defined_rate_limit_unit":
             UNIT_MAP = {"kbps": "0", "mbps": "1", "gbps": "2"}
             mapped_value = UNIT_MAP.get(str(value).lower())
@@ -268,7 +271,6 @@ def map_netflood_profile_parameters(params):
             mapped[mapped_key] = mapped_value
             continue
 
-        # learning_suppression_threshold validation (0-50)
         if key == "learning_suppression_threshold":
             ivalue = int(value)
             if not (0 <= ivalue <= 50):
@@ -276,15 +278,12 @@ def map_netflood_profile_parameters(params):
             mapped[mapped_key] = str(ivalue)
             continue
 
-        # Direct mapping (stringified)
         mapped[mapped_key] = str(value)
 
     return mapped
 
-
 def main():
     run_module()
-
 
 if __name__ == '__main__':
     main()
