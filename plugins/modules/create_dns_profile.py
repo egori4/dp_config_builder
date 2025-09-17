@@ -2,9 +2,10 @@
 """
 Unified Ansible module to create DNS Protection profiles on DefensePro devices.
 
-This module follows the same unified architecture pattern as create_bdos_profile.py.
-- Accepts a list of DNS profiles to create in a single/multiple device.
-- Supports check mode, logging, error handling, and parameter mapping with inline validation.
+- Accepts a list of DNS profiles for creation per device.
+- Supports check mode, logging, error handling, and parameter mapping.
+- User-friendly enums (enable/disable, block_and_report/report_only, etc.)
+  are translated into DefensePro API values.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -21,7 +22,6 @@ def run_module():
     debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
-    # Extract provider and params
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
     dns_profiles = module.params['dns_profiles']
@@ -45,29 +45,20 @@ def run_module():
         errors = []
 
         if module.check_mode:
-            if dns_profiles:
-                planned_operations = [
-                    {
-                        'profile_name': profile.get('name', 'unnamed_profile'),
-                        'params': profile.get('params', {})
-                    }
-                    for profile in dns_profiles
-                ]
-                result.update({
-                    'changed': True,
-                    'response': {
-                        'preview_mode': True,
-                        'planned_operations': planned_operations
-                    }
-                })
-            else:
-                result.update({
-                    'changed': False,
-                    'response': {
-                        'preview_mode': True,
-                        'message': 'No DNS profiles configured for creation'
-                    }
-                })
+            planned_operations = [
+                {
+                    'profile_name': profile.get('name', 'unnamed_profile'),
+                    'params': profile.get('params', {})
+                }
+                for profile in dns_profiles
+            ]
+            result.update({
+                'changed': bool(dns_profiles),
+                'response': {
+                    'preview_mode': True,
+                    'planned_operations': planned_operations
+                }
+            })
 
         else:
             if dns_profiles:
@@ -157,35 +148,77 @@ def run_module():
 def map_dns_profile_parameters(params):
     """
     Map user-friendly DNS Protection parameters to DefensePro API values.
+    Supports status toggles: enable/disable → 1/2
     """
 
     ENUM_MAPS = {
         "action": {"report_only": "0", "block_and_report": "1"},
         "manual_trigger": {"enable": "1", "disable": "2"},
+        "packet_report": {"enable": "1", "disable": "2"},
+        "packet_trace": {"enable": "1", "disable": "2"},
+        "subdomains_wl_learning": {"enable": "1", "disable": "2"},
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
-        "packet_report": {"enable": "1", "disable": "2"}
+
+        # Status toggles (1=enable, 2=disable)
+        "a_status": {"enable": "1", "disable": "2"},
+        "mx_status": {"enable": "1", "disable": "2"},
+        "ptr_status": {"enable": "1", "disable": "2"},
+        "aaaa_status": {"enable": "1", "disable": "2"},
+        "text_status": {"enable": "1", "disable": "2"},
+        "soa_status": {"enable": "1", "disable": "2"},
+        "naptr_status": {"enable": "1", "disable": "2"},
+        "srv_status": {"enable": "1", "disable": "2"},
+        "other_status": {"enable": "1", "disable": "2"},
     }
 
     FIELD_MAP = {
+        # Core quotas & expected traffic
         "expected_qps": "rsDnsProtProfileExpectedQps",
-        "action": "rsDnsProtProfileAction",
         "max_allow_qps": "rsDnsProtProfileMaxAllowQps",
-        "manual_trigger": "rsDnsProtProfileManualTriggerStatus",
-        "footprint_strictness": "rsDnsProtProfileFootprintStrictness",
-        "packet_report": "rsDnsProtProfilePacketReportStatus",
-        "learning_suppression_threshold": "rsDnsProtProfileLearningSuppressionThreshold",
         "a_quota": "rsDnsProtProfileDnsAQuota",
         "mx_quota": "rsDnsProtProfileDnsMxQuota",
         "ptr_quota": "rsDnsProtProfileDnsPtrQuota",
         "aaaa_quota": "rsDnsProtProfileDnsAaaaQuota",
         "text_quota": "rsDnsProtProfileDnsTextQuota",
         "soa_quota": "rsDnsProtProfileDnsSoaQuota",
-        "DNS Other Quota": "rsDnsProtProfileDnsOtherQuota"
+        "naptr_quota": "rsDnsProtProfileDnsNaptrQuota",
+        "srv_quota": "rsDnsProtProfileDnsSrvQuota",
+        "other_quota": "rsDnsProtProfileDnsOtherQuota",
 
+        # Status toggles
+        "a_status": "rsDnsProtProfileDnsAStatus",
+        "mx_status": "rsDnsProtProfileDnsMxStatus",
+        "ptr_status": "rsDnsProtProfileDnsPtrStatus",
+        "aaaa_status": "rsDnsProtProfileDnsAaaaStatus",
+        "text_status": "rsDnsProtProfileDnsTextStatus",
+        "soa_status": "rsDnsProtProfileDnsSoaStatus",
+        "naptr_status": "rsDnsProtProfileDnsNaptrStatus",
+        "srv_status": "rsDnsProtProfileDnsSrvStatus",
+        "other_status": "rsDnsProtProfileDnsOtherStatus",
+
+        # Action & learning
+        "action": "rsDnsProtProfileAction",
+        "manual_trigger": "rsDnsProtProfileManualTriggerStatus",
+        "manual_trigger_act_thresh": "rsDnsProtProfileManualTriggerActThresh",
+        "manual_trigger_term_thresh": "rsDnsProtProfileManualTriggerTermThresh",
+        "manual_trigger_max_qps_target": "rsDnsProtProfileManualTriggerMaxQpsTarget",
+        "manual_trigger_act_period": "rsDnsProtProfileManualTriggerActPeriod",
+        "manual_trigger_term_period": "rsDnsProtProfileManualTriggerTermPeriod",
+        "manual_trigger_escalate_period": "rsDnsProtProfileManualTriggerEscalatePeriod",
+
+        # Logging / debugging
+        "packet_report": "rsDnsProtProfilePacketReportStatus",
+        "packet_trace": "rsDnsProtProfilePacketTraceStatus",
+
+        # Advanced
+        "sig_rate_lim_target": "rsDnsProtProfileSigRateLimTarget",
+        "query_name_sensitivity": "rsDnsProtProfileQueryNameMonitoringSensitivity",
+        "subdomains_wl_learning": "rsDnsProtProfileSubdomainsWLLearningState",
+        "learning_suppression_threshold": "rsDnsProtProfileLearningSuppressionThreshold",
+        "footprint_strictness": "rsDnsProtProfileFootprintStrictness",
     }
 
     mapped = {}
-
     for key, value in params.items():
         if key not in FIELD_MAP:
             continue
@@ -196,27 +229,10 @@ def map_dns_profile_parameters(params):
         if key in ENUM_MAPS:
             mapped_value = ENUM_MAPS[key].get(str(value).lower())
             if mapped_value is None:
-                raise ValueError(f"Invalid value '{value}' for {key}. Allowed: {list(ENUM_MAPS[key].keys())}")
+                raise ValueError(f"Invalid enum value '{value}' for {key}. Allowed: {list(ENUM_MAPS[key].keys())}")
             mapped[mapped_key] = mapped_value
-            continue
-
-        # Range validations
-        if key in ["DNS Expected Qps", "DNS Max Allow Qps"]:
-            ivalue = int(value)
-            if not (0 <= ivalue <= 400000000):
-                raise ValueError(f"{key} must be between 0 and 400000000")
-            mapped[mapped_key] = str(ivalue)
-            continue
-
-        if key == "DNS Learning Suppression Threshold":
-            ivalue = int(value)
-            if not (0 <= ivalue <= 50):
-                raise ValueError(f"{key} must be between 0 and 50")
-            mapped[mapped_key] = str(ivalue)
-            continue
-
-        # Direct mapping
-        mapped[mapped_key] = str(value)
+        else:
+            mapped[mapped_key] = str(value)
 
     return mapped
 
