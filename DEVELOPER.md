@@ -222,7 +222,7 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
-3. **BDoS Modules** (`plugins/modules/`)
+5. **BDoS Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -233,7 +233,7 @@ dp_config_builder/
      - List-based filtering support for get operations
    - **Modules**: `create_bdos_profile.py`, `edit_bdos_profile.py`, `delete_bdos_profile.py`, `get_bdos_profile.py`
 
-5. **Security Policy Modules** (`plugins/modules/`)
+6. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
