@@ -40,7 +40,18 @@ bdos_profiles:
   - name: "bdos_profile_2"  # Add more profiles as needed
 
 # Notes:
-# - If filter_bdos_profiles is empty, all BDoS profiles on the device(s) will be included
+# - If bdos_profiles is empty, all BDoS profiles on the device(s) will be included
 # - Useful for querying, editing, or deleting specific BDoS profiles
+# - Each entry must include 'name' key
+
+###################### Get DNS Profile ##########################
+# Filter DNS profiles by name, or leave empty list to include all profiles
+dns_profiles:
+  - name: "dns_profile_1"  # Optional: specify profile name to filter
+  - name: "dns_profile_2"  # Add more profiles as needed
+
+# Notes:
+# - If dns_profiles is empty, all DNS profiles on the device(s) will be included
+# - Useful for querying, editing, or deleting specific dns profiles
 # - Each entry must include 'name' key
 

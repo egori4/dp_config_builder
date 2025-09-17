@@ -130,6 +130,13 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
+### DNS Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
+| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
+| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
+| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 ### Security Policy Management
 
 | Playbook | Purpose | Documentation |
@@ -232,6 +239,18 @@ ansible-playbook playbooks/get_bdos_profile.yml
 
 # Delete BDoS Profile (uses delete_bdos_profile module)
 ansible-playbook playbooks/delete_bdos_profile.yml
+
+# Get all DNS profiles from devices
+ansible-playbook playbooks/get_dns_profile.yml
+
+# Create new DNS profiles
+ansible-playbook playbooks/create_dns_profile.yml
+
+# Edit existing DNS profiles
+ansible-playbook playbooks/edit_dns_profile.yml
+
+# Delete DNS profiles
+ansible-playbook playbooks/delete_dns_profile.yml
 ```
 
 

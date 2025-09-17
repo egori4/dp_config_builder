@@ -75,6 +75,31 @@ ansible-playbook playbooks/create_security_policy.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
+
+# Get all BDoS profiles from devices
+ansible-playbook playbooks/get_bdos_profile.yml
+
+# Create new BDoS profiles
+ansible-playbook playbooks/create_bdos_profile.yml
+
+# Edit existing BDoS profiles
+ansible-playbook playbooks/edit_bdos_profile.yml
+
+# Delete BDoS profiles
+ansible-playbook playbooks/delete_bdos_profile.yml
+
+# Get all DNS profiles from devices
+ansible-playbook playbooks/get_dns_profile.yml
+
+# Create new DNS profiles
+ansible-playbook playbooks/create_dns_profile.yml
+
+# Edit existing DNS profiles
+ansible-playbook playbooks/edit_dns_profile.yml
+
+# Delete DNS profiles
+ansible-playbook playbooks/delete_dns_profile.yml
+
 ```
 
 ## Common Workflows
@@ -276,7 +301,38 @@ ansible-playbook --check playbooks/delete_bdos_profile.yml
 ansible-playbook playbooks/delete_bdos_profile.yml
 ```
 
-### Workflow 10: Create Security Policies with Profile Bindings
+### Workflow 10 : Create New DNS Profiles
+
+# 1. Define your DNS profiles
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansible-playbook --check playbooks/create_dns_profile.yml
+```
+# 3. Apply configuration
+```bash
+ansible-playbook playbooks/create_dns_profile.yml
+```
+### Workflow 10a : Edit Existing DNS Profile
+```bash
+nano vars/edit_vars.yml
+ansible-playbook --check playbooks/edit_dns_profile.yml
+ansible-playbook playbooks/edit_dns_profile.yml
+```
+### Workflow 10b : Get DNS Profile
+```bash
+ansible-playbook playbooks/get_dns_profile.yml
+```
+### Workflow 10c : Delete DNS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_dns_profile.yml
+ansible-playbook playbooks/delete_dns_profile.yml
+```
+
+### Workflow 11: Create Security Policies with Profile Bindings
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -309,7 +365,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 11: Apply DefensePro Policy Updates
+### Workflow 12: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -635,31 +691,140 @@ bdos_profiles:
 # Get all BDoS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_bdos_profile.yml
-
-# Filter by specific profile names (configure in get_vars.yml)
-filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
-# filter_bdos_profile_names: []                                # Show all profiles (default)
-
-#### Delete BDoS Profiles  ####
+bdos_profiles:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"                               # Show all profiles (default)
+```
+### Delete BDoS Profiles
 ```yaml
 # Delete BDoS profiles by name
-delete_bdos_profiles:
+bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
 ```
 
 #### Bdos profile Notes:
 
-name: MANDATORY – Unique profile name.
-state: Optional – enable or disable (default: enable).
-action: Required – choose between report_only or block_and_report.
-Flood toggles (syn_flood, udp_flood, etc.): Enable/disable specific protocol flood detection.
-Traffic limits (inbound/outbound): Mandatory; define baseline traffic thresholds (1–1342177280).
-Quota values: Define % share of traffic per protocol (0–100).
-Rate limiting: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
-Advanced controls: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
-Control flags: create_bdos_profiles can be toggled independently to enable/disable orchestration.
+*** name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: Required – choose between report_only or block_and_report.
+*** Flood toggles (syn_flood, udp_flood, etc.) ***: Enable/disable specific protocol flood detection.
+*** Traffic limits (inbound/outbound) ***: Mandatory; define baseline traffic thresholds (1–1342177280).
+*** Quota values ***: Define % share of traffic per protocol (0–100).
+*** Rate limiting ***: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
+*** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
+*** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
+#### Create DNS Profiles  ####
+```yaml
+# Define DNS profiles to create on each device
+# Configure DNS profiles in `vars/create_vars.yml`:
+# OPTIONAL: DNS profiles (only define if creating new ones)
+dns_profiles:
+  - name: "dns_profile_1"               # MANDATORY: Profile name
+    state: "enable"                     # OPTIONAL: enable, disable (default: enable)
+    params:
+      action: "block_and_report"        # OPTIONAL: report_only, block_and_report (default: block_and_report)
+      expected_qps: 1000                # OPTIONAL: 0–400000000 (default: 0)
+      max_allow_qps: 5000               # OPTIONAL: 0–400000000 (default: 0)
+
+      # Manual trigger configuration
+      manual_trigger: "disable"         # OPTIONAL: enable, disable (default: disable)
+      manual_trigger_act_thresh: 2000   # OPTIONAL: ≥ termination threshold
+      manual_trigger_term_thresh: 1000  # OPTIONAL
+      manual_trigger_max_qps_target: 3000
+      manual_trigger_act_period: 30     # OPTIONAL: seconds
+      manual_trigger_term_period: 15
+      manual_trigger_escalate_period: 60
+
+      # Logging / debug
+      packet_report: "enable"           # OPTIONAL: enable, disable (default: disable)
+
+      # Advanced detection
+      query_name_sensitivity: 2         # OPTIONAL: integer level (device-specific)
+      subdomains_wl_learning: "enable"  # OPTIONAL: enable, disable (default: disable)
+      learning_suppression_threshold: 10 # OPTIONAL: 0–50 (default: 0)
+      footprint_strictness: "medium"    # OPTIONAL: low, medium, high (default: low)
+      sig_rate_lim_target: 200          # OPTIONAL: signature rate limit target
+
+      # Record quotas
+      a_quota: 100                      # OPTIONAL
+      mx_quota: 50
+      ptr_quota: 20
+      aaaa_quota: 50
+      text_quota: 10
+      soa_quota: 5
+      naptr_quota: 5
+      srv_quota: 10
+      other_quota: 5
+
+      # Record statuses (enable/disable)
+      a_status: "enable"
+      mx_status: "enable"
+      ptr_status: "enable"
+      aaaa_status: "enable"
+      text_status: "enable"
+      soa_status: "enable"
+      naptr_status: "disable"
+      srv_status: "disable"
+      other_status: "enable"
+
+  # Minimal example (only mandatory parameter)
+  - name: "dns_profile_1"         # MANDATORY
+    # All other parameters use defaults
+```
+### Editing DNS Profiles (Partial Updates)
+```yml
+
+# Edit existing DNS profiles - ONLY specify what you want to change
+dns_profiles:
+  - profile_name: "dns_profile"   # MANDATORY: must specify which profile to edit
+    params:
+      action: "report_only"                     # OPTIONAL: report_only, block_and_report
+      expected_qps: 2000                        # OPTIONAL: Update expected QPS
+      max_allow_qps: 8000                       # OPTIONAL: Update max QPS
+      a_status: "disable"                       # OPTIONAL: Disable A record protection
+      mx_status: "enable"                       # OPTIONAL: Enable MX record protection
+      footprint_strictness: "high"              # OPTIONAL: Update detection sensitivity
+      packet_report: "disable"                  # OPTIONAL: Change logging/reporting
+      packet_trace: "enable"                    # OPTIONAL: Enable packet trace
+      a_in_quota: 40                            # OPTIONAL: % share for A record (0–100)
+      mx_in_quota: 30                           # OPTIONAL: % share for MX record (0–100)
+      cname_in_quota: 20                        # OPTIONAL: % share for CNAME record (0–100)
+      other_in_quota: 10                        # OPTIONAL: % share for other records (0–100)
+      a_out_quota: 35                           # OPTIONAL: % share for outbound A record (0–100)
+      mx_out_quota: 25                          # OPTIONAL: % share for outbound MX record (0–100)
+      cname_out_quota: 15                      # OPTIONAL: % share for outbound CNAME record (0–100)
+      other_out_quota: 5                        # OPTIONAL: % share for other outbound (0–100)
+```
+### Get DNS Profiles
+```yml
+# Get all DNS profiles from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_dns_profile.yml
+
+dns_profiles:
+  - "dns_profile_1"
+  - "dns_profile_2"          # Show all profiles (default)
+```
+### Delete DNS Profiles
+```yml
+# Delete DNS profiles by name
+dns_profiles:
+  - "dns_profile_1"
+  - "dns_profile_2"
+```
+### DNS Profile Notes:
+
+*** name ***: MANDATORY – Unique profile name
+*** state ***: Optional – enable or disable (default: enable)
+*** action ***: REQUIRED – choose between report_only or block_and_report
+*** Query-type toggles ***: Optional – enable/disable detection for specific query types (a_query, aaaa_query, mx_query, ns_query, ptr_query, soa_query, srv_query, txt_query)
+*** Traffic limits ***: MANDATORY – baseline DNS query thresholds in queries per second (inbound_qps, outbound_qps)
+*** Quota values ***: Optional – percentage share per query type (0–100%)
+*** Rate limiting ***: Optional – select predefined (normal_edge, suspect_edge) or user_defined with unit and value
+*** Advanced controls ***: Optional – includes NXDOMAIN handling, malformed query detection, response rate limiting, protocol anomaly checks, footprint strictness, learning suppression thresholds
+*** Control flags ***: Use to enable/disable each creation stage independently
 
 
 ### Security Policy Configuration
