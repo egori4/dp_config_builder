@@ -87,7 +87,6 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
-<<<<<<< HEAD
 
 # Get all DNS profiles from devices
 ansible-playbook playbooks/get_dns_profile.yml
@@ -112,8 +111,6 @@ ansible-playbook playbooks/edit_oos_profile.yml
 
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
-=======
->>>>>>> bdos_Egor_v0.1.3_from_Rahul
 ```
 
 ## Common Workflows
@@ -652,10 +649,6 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
-<<<<<<< HEAD
-
-=======
->>>>>>> bdos_Egor_v0.1.3_from_Rahul
 ### Create BDOS Profile configuration ###
 ```yaml
 # Define BDoS profiles to create on each device
@@ -725,18 +718,16 @@ bdos_profiles:
       udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
     # All other parameters remain unchanged
 ```
-
-
 #### Get BDoS Profiles  ####
 ```yaml
 # Get all BDoS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_bdos_profile.yml
-# Filter by specific profile names (configure in get_vars.yml)
+# Filter by specific profile names 
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"                         
-
+```
 #### Delete BDoS Profiles  ####
 ```yaml
 # Delete BDoS profiles by name
@@ -754,11 +745,8 @@ bdos_profiles:
 *** Traffic limits (inbound/outbound) ***: Mandatory; define baseline traffic thresholds (1–1342177280).
 *** Quota values ***: Define % share of traffic per protocol (0–100).
 *** Rate limiting ***: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
-<<<<<<< HEAD
 *** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
-=======
 *** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, udp packet rate detection sensitivit, and advanced UDP detection.
->>>>>>> bdos_Egor_v0.1.3_from_Rahul
 *** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
 #### Create DNS Profiles  ####

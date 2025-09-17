@@ -275,8 +275,6 @@ ansible-playbook playbooks/edit_oos_profile.yml
 ansible-playbook playbooks/delete_oos_profile.yml
 ```
 
-
-
 todo 
 
 add get policy
