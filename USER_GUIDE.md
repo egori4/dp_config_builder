@@ -87,19 +87,6 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
-
-# Get all DNS profiles from devices
-ansible-playbook playbooks/get_dns_profile.yml
-
-# Create new DNS profiles
-ansible-playbook playbooks/create_dns_profile.yml
-
-# Edit existing DNS profiles
-ansible-playbook playbooks/edit_dns_profile.yml
-
-# Delete DNS profiles
-ansible-playbook playbooks/delete_dns_profile.yml
-
 ```
 
 ## Common Workflows
@@ -651,11 +638,9 @@ bdos_profiles:
       maximum_interval_between_bursts: 60        # OPTIONAL: 1–60 minutes (default: 10)
       learning_suppression_threshold: 10         # OPTIONAL: 0–50 (default: 0)
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
-
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
       user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
       user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
-
       adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
 
   # Minimal example (only mandatory parameter)
@@ -691,11 +676,11 @@ bdos_profiles:
 # Get all BDoS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_bdos_profile.yml
-bdos_profiles:
-  - "BDOS_Profile_5"
-  - "BDOS_Profile_6"                               # Show all profiles (default)
-```
-### Delete BDoS Profiles
+# Filter by specific profile names (configure in get_vars.yml)
+filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
+# filter_bdos_profile_names: []                                # Show all profiles (default)
+
+#### Delete BDoS Profiles  ####
 ```yaml
 # Delete BDoS profiles by name
 bdos_profiles:

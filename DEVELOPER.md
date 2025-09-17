@@ -229,29 +229,7 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
-5. **BDoS Profile Modules** (`plugins/modules/`)
-   - **Enhancement**: All modules follow consistent unified pattern
-   - **Key Features**:
-     - Single device call with batch processing (moved from YAML loops to Python)
-     - Enhanced error handling using `cc._request` methods
-     - Structured `debug_info` and comprehensive logging
-     - Check mode with preview functionality showing exact operations
-     - Formatted output with success/failure indicators
-     - List-based filtering support for get operations
-   - **Modules**: `create_bdos_profile.py`, `edit_bdos_profile.py`, `delete_bdos_profile.py`, `get_bdos_profile.py`
-
-6. **Network Class Modules** (`plugins/modules/`)
-   - **Enhancement**: All modules follow consistent unified pattern
-   - **Key Features**:
-     - Single device call with batch processing (moved from YAML loops to Python)
-     - Enhanced error handling using `cc._request` methods
-     - Structured `debug_info` and comprehensive logging
-     - Check mode with preview functionality showing exact operations
-     - Formatted output with success/failure indicators
-     - List-based filtering support for get operations
-   - **Modules**: `create_dns_profile.py`, `edit_dns_profile.py`, `delete_dns_profile.py`, `get_dns_profile.py`
-
-7. **Security Policy Modules** (`plugins/modules/`)
+5. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -621,8 +599,11 @@ Usage:
 Call edit_bdos_profile once per device, passing list of profiles to edit.
 Each profile dict must include profile_name (mandatory) and any parameters to change
 
+####################### Get BDoS Profile ##########################
 #### Get BDoS Profile 
 ```json
+GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+
 GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 
 Response:
@@ -684,14 +665,14 @@ Response:
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
 
-### Delete BDoS Profile
+### Delete BDoS Profile ###
 ```yml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}
 
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
-```
+  ```
 ***Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion
