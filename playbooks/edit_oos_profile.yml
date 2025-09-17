@@ -1,5 +1,5 @@
 ---
-- name: Edit OOS (Stateful) profiles
+- name: Edit OOS profiles
   hosts: cc
   gather_facts: no
   vars_files:

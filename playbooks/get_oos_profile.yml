@@ -1,5 +1,5 @@
 ---
-- name: Get OOS (Stateful) profiles
+- name: Get OOS profiles
   hosts: cc
   gather_facts: no
   vars_files:

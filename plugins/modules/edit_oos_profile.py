@@ -1,6 +1,6 @@
 # plugins/modules/edit_oos_profile.py
 """
-Unified Ansible module to edit existing OOS (Stateful) profiles on DefensePro devices.
+Unified Ansible module to edit existing OOS profiles on DefensePro devices.
 
 - Accepts a list of OOS profiles for editing per device.
 - Supports check mode, logging, error handling, and parameter mapping.

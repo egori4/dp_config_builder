@@ -1,6 +1,6 @@
-# plugins/modules/dp_delete_oos_profile.py
+# plugins/modules/delete_oos_profile.py
 """
-Ansible module to delete OOS/Stateful profiles on Radware DefensePro devices,
+Ansible module to delete OOS profiles on Radware DefensePro devices,
 with verification to ensure the profile is actually removed.
 """
 

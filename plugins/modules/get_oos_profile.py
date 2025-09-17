@@ -1,6 +1,6 @@
 # plugins/modules/get_oos_profile.py
 """
-Ansible module to fetch DefensePro OOS (Stateful) profiles via CyberController API.
+Ansible module to fetch DefensePro OOS profiles via CyberController API.
 
 - Fetches all Stateful profiles from a DefensePro device.
 - Maps API response values back to user-friendly keys (reverse of create/edit logic).

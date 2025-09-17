@@ -1,6 +1,6 @@
 # plugins/modules/create_oos_profile.py
 """
-Unified Ansible module to create or manage DefensePro OOS (Stateful) profiles.
+Unified Ansible module to create or manage DefensePro OOS profiles.
 
 - Accepts a list of OOS profiles for creation per device.
 - Supports check mode, logging, error handling, and parameter mapping.

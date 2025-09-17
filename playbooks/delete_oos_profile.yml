@@ -1,5 +1,5 @@
 ---
-- name: Delete OOS/Stateful Profiles from DefensePro
+- name: Delete OOS Profiles from DefensePro
   hosts: cc
   gather_facts: no
   vars_files:
@@ -19,7 +19,7 @@
           when: not (skip_device_lock | default(false))
 
         # Delete profiles per device
-        - name: Delete OOS/Stateful profiles
+        - name: Delete OOS profiles
           delete_oos_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
