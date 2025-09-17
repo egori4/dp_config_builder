@@ -207,3 +207,64 @@ security_policies:
 # - ert_attackers_feed_profile: ERT Active Attackers Feed profile
 # - geo_feed_profile: Geolocation profile
 # - out_of_state_profile: Out-of-state profile
+
+########################## BDoS Profiles ##########################
+# Define BDOS profiles to create on each device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this section if you only want to use existing BDoS profiles
+
+bdos_profiles:
+  - name: "BDOS_Profile_50"
+    params:
+      action: "report_only"                   # Options: report_only, block_and_report
+      syn_flood: "enable"                     # Options: enable, disable
+      udp_flood: "enable"                     # Options: enable, disable
+      igmp_flood: "enable"                    # Options: enable, disable
+      icmp_flood: "enable"                    # Options: enable, disable
+      tcp_ack_fin_flood: "enable"             # Options: enable, disable
+      tcp_rst_flood: "enable"                 # Options: enable, disable
+      tcp_syn_ack_flood: "enable"             # Options: enable, disable
+      tcp_frag_flood: "enable"                # Options: enable, disable
+      udp_frag_flood: "enable"                # Options: enable, disable
+      inbound_traffic: 1000000                # 1 to 1342177280 (bps)
+      outbound_traffic: 500000                # 1 to 1342177280 (bps)
+      tcp_in_quota: 80                         # 0-100 (%)
+      udp_in_quota: 50                         # 0-100 (%)
+      icmp_in_quota: 10                        # 0-100 (%)
+      igmp_in_quota: 50                        # 0-100 (%)
+      tcp_out_quota: 80                        # 0-100 (%)
+      udp_out_quota: 50                        # 0-100 (%)
+      icmp_out_quota: 10                        # 0-100 (%)
+      igmp_out_quota: 50                        # 0-100 (%)
+      transparent_optimization: "enable"       # Options: enable, disable
+      packet_report: "enable"                  # Options: enable, disable
+      burst_attack: "enable"                   # Options: enable, disable
+      maximum_interval_between_bursts: 32      # Minutes
+      learning_suppression_threshold: 10       # 0-50
+      footprint_strictness: "medium"           # Options: low, medium, high
+      udp_packet_rate_detection_sensitivity: "low"  # Options: Ignore_or_Disable, low, medium, high
+      bdos_rate_limit: "user_defined"          # Options: disable, normal_edge, suspect_edge, user_defined
+      user_defined_rate_limit: 500             # 0-4000 (rate value)
+      user_defined_rate_limit_unit: "mbps"     # Options: kbps, mbps, gbps
+      adv_udp_detection: "enable"              # Options: enable, disable
+
+# Parameter Descriptions:
+# - action: What to do when a flood is detected
+# - *_flood: Enable/disable detection of specific attack type
+# - inbound_traffic / outbound_traffic: Max traffic allowed (bps)
+# - *_in_quota / *_out_quota: Traffic quota per protocol (%)
+# - transparent_optimization: Optimize traffic without blocking
+# - packet_report: Enable detailed packet reporting
+# - burst_attack: Detect burst attacks
+# - maximum_interval_between_bursts: Interval in minutes to define burst
+# - learning_suppression_threshold: Suppress alerts during learning (0-50)
+# - footprint_strictness: Sensitivity of footprint analysis
+# - udp_packet_rate_detection_sensitivity: Sensitivity of UDP flood detection
+# - bdos_rate_limit: Rate limit mode
+# - user_defined_rate_limit / unit: Custom rate limit
+# - adv_udp_detection: Advanced UDP detection toggle
+
+# Usage Scenarios:
+# 1. Create new BDoS profiles: Define bdos_profiles
+# 2. Use existing BDoS profiles only: Skip this section and reference them elsewhere
+

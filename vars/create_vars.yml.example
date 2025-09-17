@@ -98,7 +98,7 @@ cl_profiles:
 # 2. Create profiles only: Skip cl_protections, define cl_profiles with existing protection names
 # 3. Create both: Define both cl_protections and cl_profiles
 
-########################## BDoS Profile ##########################
+
 ########################## BDoS Profiles ##########################
 # Define BDOS profiles to create on each device
 # All parameters use user-friendly values that are automatically mapped to API values
