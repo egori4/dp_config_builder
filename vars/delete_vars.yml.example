@@ -90,3 +90,41 @@ cl_protection_deletions:
 # - Delete other standalone protections
 # - Define both sections with different protection names
 
+###################### BDOS Profile Deletions ##########################
+# Define DNS profiles to delete on each device
+bdos_profiles:
+  - name: "bdos_profile_1"  # MANDATORY: Policy name to delete
+  - name: "bdos_profile_2"
+
+# BDoS Profile Deletion Notes:
+# - name: The name of the BDoS profile to delete (as configured on the device)
+# - The playbook will delete all combinations of dp_ip × bdos_profiles
+# - Deletion is permanent - ensure you have backups if needed
+# - If a BDoS profile is attached to protections or policies, ensure it is detached before deletion
+# - Use the get_bdos_profiles module (if available) to discover existing BDoS profiles
+# - Order of operations: Remove BDoS profile from all associations before deleting the profile itself
+# - You can mix BDoS profile deletions with other deletions in the same playbook run
+
+########################## Security Policy Deletions ########################
+# Define security policies to delete
+# Two deletion modes supported:
+# 1. "policy_only" - Delete only the security policy (default, safer)
+# 2. "policy_and_profiles" - Delete policy and attempt cleanup of associated profiles
+
+delete_security_policies:
+  # Example: Simple policy deletion (recommended for most cases)
+  - policy_name: "test_security_policy"           # MANDATORY: Policy name to delete
+    deletion_mode: "policy_only"                  # OPTIONAL: Default deletion mode
+  
+  # Example: Complex deletion with profile cleanup
+  - policy_name: "old_security_policy"           # MANDATORY: Policy name to delete
+    deletion_mode: "policy_and_profiles"          # OPTIONAL: Also attempts profile cleanup(if not in use by other policies)
+  
+  # Example: Using default deletion mode (policy_only)
+  # - policy_name: "another_policy"               # deletion_mode defaults to "policy_only"
+
+# Security Policy Deletion Notes:
+# - policy_name: MANDATORY - Must be an existing security policy name
+# - deletion_mode: OPTIONAL - Controls deletion behavior:
+#   * "policy_only" (default): Simple DELETE on policy endpoint
+#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
