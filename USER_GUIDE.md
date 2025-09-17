@@ -46,14 +46,14 @@ cp update_vars_example.yml update_vars.yml  # Edit variables as needed
 
 ### 2. Run Operations
 ```bash
-# Retrieve DNS profiles
-ansible-playbook playbooks/get_dns_profile.yml
+# See what network classes exist
+ansible-playbook playbooks/get_network_class.yml
 
-# Create new DNS profiles
-ansible-playbook playbooks/create_dns_profile.yml
+# Create new network classes
+ansible-playbook playbooks/create_network_class.yml
 
-# Edit existing DNS profiles  
-ansible-playbook playbooks/edit_dns_profile.yml
+# Edit existing network classes  
+ansible-playbook playbooks/edit_network_class.yml
 
 # Delete network classes
 ansible-playbook playbooks/delete_network_class.yml
@@ -79,34 +79,34 @@ ansible-playbook playbooks/edit_security_policy.yml
 
 ## Common Workflows
 
-### Workflow 1: Create New dns profile
+### Workflow 1: Create New Network Classes
 ```bash
 # 1. Edit your requirements
-nano vars/create_dns_vars.yml
+nano vars/create_vars.yml
 
 # 2. Test first (dry run)
-ansible-playbook --check playbooks/create_dns_profile.yml
+ansible-playbook --check playbooks/create_network_class.yml
 
 # 3. Apply changes
-ansible-playbook playbooks/create_dns_profile.yml
+ansible-playbook playbooks/create_network_class.yml
 ```
 
-### Workflow 2: Modify Existing dns profile
+### Workflow 2: Modify Existing Networks
 ```bash
 # 1. See current state
-ansible-playbook playbooks/get_dns_profile.yml
+ansible-playbook playbooks/get_network_class.yml
 
 # 2. Define your changes
-nano vars/edit_dns_vars.yml
+nano vars/edit_vars.yml
 
 # 3. Test first (dry run)
-ansible-playbook --check playbooks/edit_dns_profile.yml
+ansible-playbook --check playbooks/edit_network_class.yml
 
 # 4. Apply changes
-ansible-playbook playbooks/edit_dns_profile.yml
+ansible-playbook playbooks/edit_network_class.yml
 ```
 
-### Workflow 3: Delete dns profile
+### Workflow 3: Clean Up Networks
 ```bash
 # 1. Identify what to delete
 ansible-playbook playbooks/get_network_class.yml
@@ -244,7 +244,40 @@ ansible-playbook playbooks/delete_cl_profiles.yml
 - **Delete protections only**: Skip `cl_profile_deletions`, define `cl_protection_deletions` with standalone protections
 - **Complete cleanup**: Define both sections - remove from profiles first, then delete protections
 
-### Workflow 9: Create Security Policies with Profile Bindings
+
+### Workflow 9 :Create New BDoS Profiles
+```bash
+# 1. Define your BDoS profiles
+nano vars/create_vars.yml
+
+# 2. Test first (dry run)
+ansible-playbook --check playbooks/create_bdos_profile.yml
+
+# 3. Apply configuration
+ansible-playbook playbooks/create_bdos_profile.yml
+```
+
+### Workflow 9a :Edit Existing BDoS Profile
+```bash
+nano vars/edit_vars.yml
+ansible-playbook --check playbooks/edit_bdos_profile.yml
+ansible-playbook playbooks/edit_bdos_profile.yml
+```
+
+#### workflow 9b :Get BDoS Profile
+```bash
+ansible-playbook playbooks/get_bdos_profile.yml
+```
+
+#### workflow 9c : Delete BDoS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_bdos_profile.yml
+ansible-playbook playbooks/delete_bdos_profile.yml
+```
+
+### Workflow 10: Create Security Policies with Profile Bindings
+
 ```bash
 # 1. Configure your orchestration settings  
 nano vars/create_vars.yml
@@ -276,7 +309,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 10: Apply DefensePro Policy Updates
+### Workflow 11: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -296,36 +329,6 @@ ansible-playbook playbooks/update_policies.yml
 # Option C: Override target devices (alternative to editing vars file)
 ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.32','10.105.192.33']"
 ```
-#### Workflow 11 :Create New BDoS Profiles
-```bash
-# 1. Define your BDoS profiles
-nano vars/create_vars.yml
-
-# 2. Test first (dry run)
-ansible-playbook --check playbooks/create_bdos_profile.yml
-
-# 3. Apply configuration
-ansible-playbook playbooks/create_bdos_profile.yml
-'''
-
-### Workflow 11a :Edit Existing BDoS Profile
-```bash
-nano vars/edit_vars.yml
-ansible-playbook --check playbooks/edit_bdos_profile.yml
-ansible-playbook playbooks/edit_bdos_profile.yml
-'''
-
-#### workflow 11b :Get BDoS Profile
-```bash
-ansible-playbook playbooks/get_bdos_profile.yml
-'''
-
-#### workflow 11c : Delete BDoS Profile
-```bash
-nano vars/delete_vars.yml
-ansible-playbook --check playbooks/delete_bdos_profile.yml
-ansible-playbook playbooks/delete_bdos_profile.yml
-'''
 
 **Policy Update Features**:
 - **Automatic integration**: Policies applied automatically during orchestration
@@ -333,6 +336,7 @@ ansible-playbook playbooks/delete_bdos_profile.yml
 - **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
 - **Safety confirmation**: Optional interactive prompts to prevent accidental updates
 - **Per-device processing**: Updates applied individually with proper locking
+
 
 
 ## Configuration Files
@@ -351,6 +355,7 @@ filter_class_names: []  # Show all classes (default)
 filter_cl_profile_names: []  # Show all profiles (default)
 # filter_cl_profile_names: ["profile1", "profile2"]  # Filter specific profiles
 ```
+
 
 ### CyberController Connection (`vars/cc.yml`)
 ```yaml
@@ -384,6 +389,7 @@ delete_networks:
   - {class_name: "web_servers", index: 0}
   - {class_name: "old_servers", index: 1}
 ```
+
 ### Connection Limit Profiles - Complete Configuration Reference
 
 **Important**: Both `cl_protections` and `cl_profiles` sections are completely optional. You can define one, another or both, based on your needs.
@@ -551,6 +557,111 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
+
+### Create BDOS Profile configuration ###
+```yaml
+# Define BDoS profiles to create on each device
+# Configure bdos policies  `vars/create_vars.yml`:
+# OPTIONAL: BDoS profiles (only define if creating new ones)
+bdos_profiles:
+  - name: "bdos_profile_5"           # MANDATORY: Profile name
+    state: "enable"                              # OPTIONAL: enable, disable (default: enable)
+    params:
+      action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
+      syn_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
+      udp_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
+      igmp_flood: "enable"                       # OPTIONAL: enable, disable (default: disable)
+      icmp_flood: "enable"                       # OPTIONAL: enable, disable (default: disable)
+      tcp_ack_fin_flood: "enable"                # OPTIONAL: enable, disable (default: disable)
+      tcp_rst_flood: "enable"                    # OPTIONAL: enable, disable (default: disable)
+      tcp_syn_ack_flood: "enable"                # OPTIONAL: enable, disable (default: disable)
+      tcp_frag_flood: "enable"                   # OPTIONAL: enable, disable (default: disable)
+      udp_frag_flood: "enable"                   # OPTIONAL: enable, disable (default: disable)
+
+      inbound_traffic: 1000000                   # Mandatory
+      outbound_traffic: 500000                   # Mandatory
+      tcp_in_quota: 80                           # OPTIONAL: 0–100 (% share)
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+
+      transparent_optimization: "enable"         # OPTIONAL: enable, disable (default: disable)
+      packet_report: "enable"                    # OPTIONAL: enable, disable (default: disable)
+      burst_attack: "disable"                    # OPTIONAL: enable, disable (default: disable)
+      maximum_interval_between_bursts: 60        # OPTIONAL: 1–60 minutes (default: 10)
+      learning_suppression_threshold: 10         # OPTIONAL: 0–50 (default: 0)
+      footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
+
+      bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
+      user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
+      user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
+
+      adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
+
+  # Minimal example (only mandatory parameter)
+  - name: "bdos_profile5"                         # MANDATORY
+    # All other parameters use defaults
+
+
+
+### Editing BDoS Profiles (Partial Updates) ###
+```yaml
+# Edit existing BDoS profiles - ONLY specify what you want to change
+bdos_profiles:
+  - profile_name: "bdos_comprehensive_example"   # MANDATORY: must specify which profile to edit
+    params:
+      action: "report_only"                      # OPTIONAL: Change action only
+
+  - profile_name: "bdos_minimal"                 # MANDATORY
+    params:
+      inbound_traffic: 2000000                   # OPTIONAL: Change threshold
+      outbound_traffic: 1000000                  # OPTIONAL: Change threshold
+
+  - profile_name: "bdos_custom"                  # MANDATORY
+    params:
+      syn_flood: "disable"                       # OPTIONAL: Disable SYN flood detection
+      udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
+      footprint_strictness: "high"               # OPTIONAL: Update detection sensitivity
+    # All other parameters remain unchanged
+```
+
+
+#### Get BDoS Profiles  ####
+```yaml
+# Get all BDoS profiles from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_bdos_profile.yml
+
+# Filter by specific profile names (configure in get_vars.yml)
+filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
+# filter_bdos_profile_names: []                                # Show all profiles (default)
+
+#### Delete BDoS Profiles  ####
+```yaml
+# Delete BDoS profiles by name
+delete_bdos_profiles:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"
+```
+
+#### Bdos profile Notes:
+
+name: MANDATORY – Unique profile name.
+state: Optional – enable or disable (default: enable).
+action: Required – choose between report_only or block_and_report.
+Flood toggles (syn_flood, udp_flood, etc.): Enable/disable specific protocol flood detection.
+Traffic limits (inbound/outbound): Mandatory; define baseline traffic thresholds (1–1342177280).
+Quota values: Define % share of traffic per protocol (0–100).
+Rate limiting: Select predefined (normal_edge, suspect_edge) or user_defined with unit and value.
+Advanced controls: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
+Control flags: create_bdos_profiles can be toggled independently to enable/disable orchestration.
+
+
+
 ### Security Policy Configuration
 
 Configure security policies with profile bindings in `vars/create_vars.yml`:
@@ -566,7 +677,7 @@ security_policy_config:
 security_policies:
   - policy_name: "web_server_protection"
     state: "enable"                        # enable, disable
-    action: "block"                        # block, report_only
+    action: "block_and_report"                        # block_and_report, report_only
     src_network: "any"                     # Source network class
     dst_network: "web_servers"             # Destination network class  
     direction: "oneway"                    # oneway, twoway
@@ -592,7 +703,6 @@ security_policies:
 - **direction**: MANDATORY - Traffic direction to match
 - **Profile bindings**: All optional - leave empty string for no binding
 - **Control flags**: Use to enable/disable each creation stage independently
-
 ## Troubleshooting
 
 ### "No inventory" or "module not found" errors
@@ -651,12 +761,12 @@ ansible-playbook playbooks/get_cl_profiles.yml
 
 ###  **Always Discover First**
 ```bash
-ansible-playbook playbooks/get_dns_profile.yml
+ansible-playbook playbooks/get_network_class.yml
 ```
 
 ###  **Test Before Applying**
 ```bash
-ansible-playbook --check playbooks/edit_dns_profile.yml
+ansible-playbook --check playbooks/edit_network_class.yml
 ```
 
 ###  **Start with One Device**
@@ -669,15 +779,15 @@ dp_ip:
 ###  **Keep Backups**
 ```bash
 # Save current state before major changes
-ansible-playbook playbooks/get_dns_profile.yml > backup_$(date +%Y%m%d).log
+ansible-playbook playbooks/get_network_class.yml > backup_$(date +%Y%m%d).log
 ```
 
 ###  **Use Descriptive Names**
 ```yaml
 netclasses:
-  - name: "dns_profilename"      # Good: Clear purpose
+  - name: "web_servers_dmz"      # Good: Clear purpose
     # vs
-  - name: "dns1"                 # Bad: Unclear
+  - name: "net1"                 # Bad: Unclear
 ```
 
 ## Getting Help

@@ -116,12 +116,10 @@ dp_config_builder/
 ### BDoS Profile Management
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
-| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-bdos-profiles)             |
-| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-bdos-profiles)               |
-| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-bdos-profiles)             |
-| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-bdos-profiles-with-filtering) |
-
-
+| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
+| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
+| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
+| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
 
 ### Connection Limit Profiles
 
@@ -200,9 +198,48 @@ dp_config_builder/
 cd vars/
 cp create_vars.yml.example create_vars.yml
 # Edit create_vars.yml with your networks and devices
-
 ansible-playbook playbooks/create_network_class.yml
+
+# Connection Limit Profiles Example
+ansible-playbook playbooks/create_cl_profiles.yml
+
+# Edit Connection Limit Protections (uses edit_cl_configuration module)
+ansible-playbook playbooks/edit_cl_protections.yml
+
+# Get Connection Limit Profiles (uses get_cl_configuration module)
+ansible-playbook playbooks/get_cl_profiles.yml
+
+# Delete Connection Limit Profiles (uses delete_cl_configuration module)
+ansible-playbook playbooks/delete_cl_profiles.yml
+
+# Security Policy Creation (using vars/create_vars.yml configuration)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Security Policy Editing (using vars/edit_vars.yml configuration)  
+ansible-playbook playbooks/edit_security_policy.yml
+
+# Security Policy Deletion (using vars/delete_vars.yml configuration)
+ansible-playbook playbooks/delete_security_policy.yml
+
+# Create BDoS Profile
+ansible-playbook playbooks/create_bdos_profile.yml
+
+# Edit BDoS Profile (uses edit_bdos_profile module)
+ansible-playbook playbooks/edit_bdos_profile.yml
+
+# Get BDoS Profile (uses get_bdos_profile module)
+ansible-playbook playbooks/get_bdos_profile.yml
+
+# Delete BDoS Profile (uses delete_bdos_profile module)
+ansible-playbook playbooks/delete_bdos_profile.yml
 ```
+
+
+
+todo 
+
+add get policy
+documentation
 
 ## Version History
 
