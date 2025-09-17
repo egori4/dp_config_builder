@@ -222,6 +222,17 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
+3. **BDoS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_bdos_profile.py`, `edit_bdos_profile.py`, `delete_bdos_profile.py`, `get_bdos_profile.py`
+
 5. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
@@ -277,10 +288,10 @@ dp_config_builder/
 ### BDoS Profile Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
-| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
-| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
-| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
 
 
 ### Security Policy Management
@@ -584,8 +595,9 @@ Call edit_bdos_configuration once per device, passing list of profiles to edit.
 Each profile dict must include profile_name (mandatory) and any parameters to change
 
 ####################### Get BDoS Profile ##########################
-GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewRulesTable
 ```json
+GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+
 Response:
 {
     "rsNetFloodProfileTable": [
@@ -644,19 +656,18 @@ Response:
 #Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
-```
+
 ### Delete BDoS Profile ###
-DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{profile_name}
 ```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
-  ```
+```
 ***Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion
 - Order of deletion handled automatically
-- Both names and indexes supported internally (no need to provide index)
 
 ### Edit Security Policy
 ```python
