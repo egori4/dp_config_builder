@@ -66,96 +66,106 @@ The DefensePro Configuration Builder follows a layered architecture with clear s
 ```
 dp_config_builder/
 ├── 📁 Configuration Files
-│   ├── ansible.cfg              # Ansible runtime configuration
-│   ├── ansible_example.cfg      # Template for ansible.cfg  
-│   ├── inventory.ini            # Ansible hosts (usually just 'cc')
-│   └── inventory_example.ini    # Template for inventory.ini
-├── 
-├── 📁 Documentation  
-│   ├── README.md                # Project overview and quick start
-│   ├── USER_GUIDE.md            # Step-by-step operational guide
-│   └── DEVELOPER.md             # Technical architecture (this file)
-├── 
+│   ├── ansible.cfg
+│   ├── ansible_example.cfg
+│   ├── inventory.ini
+│   └── inventory_example.ini
+│
+├── 📁 Documentation
+│   ├── README.md
+│   ├── USER_GUIDE.md
+│   └── DEVELOPER.md
+│
 ├── 📁 playbooks/                # ORCHESTRATION LAYER
 │   ├── 🎯 Network Class Operations
-│   │   ├── create_network_class.yml    
-│   │   ├── edit_network_class.yml      
-│   │   ├── delete_network_class.yml    
-│   │   └── get_network_class.yml       
-│   ├── 🎯 Connection Limit Operations  
-│   │   ├── create_cl_profiles.yml      
-│   │   ├── edit_cl_protections.yml     
-│   │   ├── get_cl_profiles.yml         
-│   │   └── delete_cl_profiles.yml      
+│   │   ├── create_network_class.yml
+│   │   ├── edit_network_class.yml
+│   │   ├── delete_network_class.yml
+│   │   └── get_network_class.yml
+│   ├── 🎯 Connection Limit Operations
+│   │   ├── create_cl_profiles.yml
+│   │   ├── edit_cl_protections.yml
+│   │   ├── get_cl_profiles.yml
+│   │   └── delete_cl_profiles.yml
 │   ├── 🎯 BDoS Flood Profile Operations
-│   │   ├── create_bdos_profile.yml     
-│   │   ├── edit_bdos_profile.yml       
-│   │   ├── delete_bdos_profile.yml     
-│   │   └── get_bdos_profile.yml        
+│   │   ├── create_bdos_profile.yml
+│   │   ├── edit_bdos_profile.yml
+│   │   ├── delete_bdos_profile.yml
+│   │   └── get_bdos_profile.yml
 │   ├── 🎯 DNS Protection Profile Operations
-│   │   ├── create_dns_profile.yml      # Create DNS Protection profiles
-│   │   ├── edit_dns_profile.yml        # Modify existing DNS profiles
-│   │   ├── delete_dns_profile.yml      # Remove DNS Protection profiles
-│   │   └── get_dns_profile.yml         # Query DNS Protection profiles
+│   │   ├── create_dns_profile.yml
+│   │   ├── edit_dns_profile.yml
+│   │   ├── delete_dns_profile.yml
+│   │   └── get_dns_profile.yml
+│   ├── 🎯 OOS/Stateful Profile Operations
+│   │   ├── create_oos_profile.yml
+│   │   ├── edit_oos_profile.yml
+│   │   ├── delete_oos_profile.yml
+│   │   └── get_oos_profile.yml
 │   ├── 🎯 Security Policy Operations
-│   │   ├── create_security_policy.yml  
-│   │   ├── edit_security_policy.yml    
-│   │   └── delete_security_policy.yml  
+│   │   ├── create_security_policy.yml
+│   │   ├── edit_security_policy.yml
+│   │   └── delete_security_policy.yml
 │   ├── 📊 Runtime Data (auto-created)
-│   │   ├── log/                        
-│   │   │   └── log_YYYYMMDD.log        
-│   │   └── tmp/                        
-│   │       └── radware_cc_sessions/    
-├── 
-├── 📁 plugins/                 # BUSINESS LOGIC & UTILITIES
-│   ├── 📁 modules/             # BUSINESS LOGIC LAYER
+│   │   ├── log/
+│   │   │   └── log_YYYYMMDD.log
+│   │   └── tmp/
+│   │       └── radware_cc_sessions/
+│
+├── 📁 plugins/
+│   ├── 📁 modules/
 │   │   ├── 🔧 Network Class Modules
-│   │   │   ├── create_network_class.py  
-│   │   │   ├── edit_network_class.py    
-│   │   │   ├── delete_network_class.py  
-│   │   │   └── get_network_class.py     
+│   │   │   ├── create_network_class.py
+│   │   │   ├── edit_network_class.py
+│   │   │   ├── delete_network_class.py
+│   │   │   └── get_network_class.py
 │   │   ├── 🔧 Connection Limit Modules
-│   │   │   ├── create_cl_configuration.py  
-│   │   │   ├── edit_cl_configuration.py    
-│   │   │   ├── get_cl_configuration.py     
-│   │   │   └── delete_cl_configuration.py  
+│   │   │   ├── create_cl_configuration.py
+│   │   │   ├── edit_cl_configuration.py
+│   │   │   ├── get_cl_configuration.py
+│   │   │   └── delete_cl_configuration.py
 │   │   ├── 🔧 BDoS Flood Profile Modules
-│   │   │   ├── create_bdos_profile.py      
-│   │   │   ├── edit_bdos_profile.py        
-│   │   │   ├── delete_bdos_profile.py      
-│   │   │   └── get_bdos_profile.py         
+│   │   │   ├── create_bdos_profile.py
+│   │   │   ├── edit_bdos_profile.py
+│   │   │   ├── delete_bdos_profile.py
+│   │   │   └── get_bdos_profile.py
 │   │   ├── 🔧 DNS Protection Profile Modules
-│   │   │   ├── create_dns_profile.py       # Batch creation with validation
-│   │   │   ├── edit_dns_profile.py         # Modify DNS profiles
-│   │   │   ├── delete_dns_profile.py       # Batch deletion with error handling
-│   │   │   └── get_dns_profile.py          # Query DNS profiles
+│   │   │   ├── create_dns_profile.py
+│   │   │   ├── edit_dns_profile.py
+│   │   │   ├── delete_dns_profile.py
+│   │   │   └── get_dns_profile.py
+│   │   ├── 🔧 OOS/Stateful Profile Modules
+│   │   │   ├── create_oos_profile.py
+│   │   │   ├── edit_oos_profile.py
+│   │   │   ├── delete_oos_profile.py
+│   │   │   └── get_oos_profile.py
 │   │   ├── 🔧 Security Policy Modules
-│   │   │   ├── create_security_policy.py   
-│   │   │   ├── edit_security_policy.py     
-│   │   │   └── delete_security_policy.py   
+│   │   │   ├── create_security_policy.py
+│   │   │   ├── edit_security_policy.py
+│   │   │   └── delete_security_policy.py
 │   │   └── 🔧 Device Management
-│   │       ├── dp_lock.py                  
-│   │       └── dp_unlock.py                
-│   └── 📁 module_utils/        # INFRASTRUCTURE LAYER
-│       ├── radware_cc.py                
-│       └── logger.py                    
-├── 
-├── 📁 vars/                    # CONFIGURATION & DATA LAYER
+│   │       ├── dp_lock.py
+│   │       └── dp_unlock.py
+│   └── 📁 module_utils/
+│       ├── radware_cc.py
+│       └── logger.py
+│
+├── 📁 vars/
 │   ├── 🔗 Connection Configuration
-│   │   ├── cc.yml                     
-│   │   └── cc_example.yml             
+│   │   ├── cc.yml
+│   │   └── cc_example.yml
 │   ├── 🎯 Operation Variables
-│   │   ├── create_vars.yml            
-│   │   ├── edit_vars.yml              
-│   │   ├── delete_vars.yml            
-│   │   ├── get_vars.yml               
-│   │   └── update_vars.yml            
+│   │   ├── create_vars.yml
+│   │   ├── edit_vars.yml
+│   │   ├── delete_vars.yml
+│   │   ├── get_vars.yml
+│   │   └── update_vars.yml
 │   └── 📋 Variable Templates
-│       ├── create_vars.yml.example    
-│       ├── edit_vars.yml.example      
-│       ├── delete_vars.yml.example    
-│       ├── get_vars.yml.example       
-│       └── update_vars_example.yml    
+│       ├── create_vars.yml.example
+│       ├── edit_vars.yml.example
+│       ├── delete_vars.yml.example
+│       ├── get_vars.yml.example
+│       └── update_vars_example.yml
 
 ```
 
@@ -250,7 +260,19 @@ dp_config_builder/
      - Formatted output with success/failure indicators
      - List-based filtering support for get operations
    - **Modules**: `create_dns_profile.py`, `edit_dns_profile.py`, `delete_dns_profile.py`, `get_dns_profile.py`
-7. **Security Policy Modules** (`plugins/modules/`)
+
+7. **OOS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
+
+8. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -318,6 +340,14 @@ dp_config_builder/
 | **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
 | **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+
+### OOS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 
 ### Security Policy Management
 
@@ -511,8 +541,6 @@ cl_protection_deletions:
 - **Enhanced validation**: Check mode validates both names and indexes against device state
 
 
-
-## Profile operations
 ###  Create BDoS Profile 
 ```json
 POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
@@ -694,6 +722,7 @@ bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
 ```
+
 ***Key Features:
 - Profiles cannot be deleted if still associated with any dependent settings
 - Module validates existence before deletion
@@ -855,6 +884,113 @@ bdos_profiles:
 - Module validates existence before deletion
 - Order of deletion handled automatically
 
+###  Create OOS Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsStatefulProfileTable/{profile_name}
+"rsStatefulProfileTable": [
+        {
+            "rsSTATFULProfileName": "CDN_DNS",
+            "rsSTATFULProfileTcpStatus": "1",
+            "rsSTATFULProfileDnsStatus": "null",
+            "rsSTATFULProfileactThreshold": "5000",
+            "rsSTATFULProfileIcmpStatus": "null",
+            "rsSTATFULProfiletermThreshold": "4000",
+            "rsSTATFULProfileHttpStatus": "null",
+            "rsSTATFULProfilesynAckAllow": "1",
+            "rsSTATFULProfileHttpsStatus": "null",
+            "rsSTATFULProfilePacketTraceStatus": "2",
+            "rsSTATFULProfileSmtpStatus": "null",
+            "rsSTATFULProfilePacketReportStatus": "1",
+            "rsSTATFULProfilePop3Status": "null",
+            "rsSTATFULProfileRisk": "2",
+            "rsSTATFULProfileImapStatus": "null",
+            "rsSTATFULProfileAction": "1",
+            "rsSTATFULProfilenoEntryForOOSpacketsInSTduringGP": "2",
+            "rsSTATFULProfileGPAfterUpdatePolicyorIdleState": "30",
+            "rsSTATFULProfileEnableIdleState": "2",
+            "rsSTATFULProfileIdleStateBandwidthThreshold": "10000",
+            "rsSTATFULProfileIdleStateTimer": "10"
+        }
+```
+##### Edit OOS Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsStatefulProfileTable/{profile_name}
+
+"rsStatefulProfileTable": [
+        {
+            "rsSTATFULProfileName": "CDN_DNS",
+            "rsSTATFULProfileTcpStatus": "1",
+            "rsSTATFULProfileDnsStatus": "null",
+            "rsSTATFULProfileactThreshold": "5000",
+            "rsSTATFULProfileIcmpStatus": "null",
+            "rsSTATFULProfiletermThreshold": "4000",
+            "rsSTATFULProfileHttpStatus": "null",
+            "rsSTATFULProfilesynAckAllow": "1",
+            "rsSTATFULProfileHttpsStatus": "null",
+            "rsSTATFULProfilePacketTraceStatus": "2",
+            "rsSTATFULProfileSmtpStatus": "null",
+            "rsSTATFULProfilePacketReportStatus": "1",
+            "rsSTATFULProfilePop3Status": "null",
+            "rsSTATFULProfileRisk": "2",
+            "rsSTATFULProfileImapStatus": "null",
+            "rsSTATFULProfileAction": "1",
+            "rsSTATFULProfilenoEntryForOOSpacketsInSTduringGP": "2",
+            "rsSTATFULProfileGPAfterUpdatePolicyorIdleState": "30",
+            "rsSTATFULProfileEnableIdleState": "2",
+            "rsSTATFULProfileIdleStateBandwidthThreshold": "10000",
+            "rsSTATFULProfileIdleStateTimer": "10"
+        }
+```
+Usage:
+Call edit_oos_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get OOS Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsStatefulProfileTable/{profile_name}
+
+Response:
+"rsStatefulProfileTable": [
+        {
+            "rsSTATFULProfileName": "CDN_DNS",
+            "rsSTATFULProfileTcpStatus": "1",
+            "rsSTATFULProfileDnsStatus": "null",
+            "rsSTATFULProfileactThreshold": "5000",
+            "rsSTATFULProfileIcmpStatus": "null",
+            "rsSTATFULProfiletermThreshold": "4000",
+            "rsSTATFULProfileHttpStatus": "null",
+            "rsSTATFULProfilesynAckAllow": "1",
+            "rsSTATFULProfileHttpsStatus": "null",
+            "rsSTATFULProfilePacketTraceStatus": "2",
+            "rsSTATFULProfileSmtpStatus": "null",
+            "rsSTATFULProfilePacketReportStatus": "1",
+            "rsSTATFULProfilePop3Status": "null",
+            "rsSTATFULProfileRisk": "2",
+            "rsSTATFULProfileImapStatus": "null",
+            "rsSTATFULProfileAction": "1",
+            "rsSTATFULProfilenoEntryForOOSpacketsInSTduringGP": "2",
+            "rsSTATFULProfileGPAfterUpdatePolicyorIdleState": "30",
+            "rsSTATFULProfileEnableIdleState": "2",
+            "rsSTATFULProfileIdleStateBandwidthThreshold": "10000",
+            "rsSTATFULProfileIdleStateTimer": "10"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_oos_profile once per device
+#Optional filtering: filter_bdos_profile_names: ["OOS_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete OOS Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}
+
+oos_profiles:
+  - "OOS_Profile_5"
+  - "OOS_Profile_6"
+```
 
 ### Edit Security Policy
 ```python

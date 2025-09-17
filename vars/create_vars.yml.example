@@ -223,3 +223,39 @@ dns_profiles:
 # Usage Scenarios:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
+
+################################## OOS/Stateful Profile Create Variables ###############################
+# Define OOS profiles to create on each device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this section if you only want to use existing OOS profiles
+
+oos_profiles:
+  # Example: Create OOS profile "oos_profile_50" with multiple parameters
+  - name: "oos_profile_50"                  # Mandatory: exact profile name
+    action: "block_and_report"              # Options: report_only, block_and_report
+    syn_ack_allow: "enable"                 # Options: enable, disable
+    packet_report: "enable"                 # Options: enable, disable
+    risk: "high"                            # Options: low, medium, high
+    idle_state: "enable"                    # Options: enable, disable
+    idle_state_bandwidth_threshold: 1000    # Optional numeric threshold
+    idle_state_timer: 60                     # Optional numeric threshold
+    act_threshold: 2000                      # Optional numeric threshold
+    term_threshold: 1000                     # Optional numeric threshold
+
+  # Example: Minimal creation with only mandatory name
+  - name: "oos_profile_51"
+    # All other parameters use defaults
+
+  #Parameter Descriptions for OOS/Stateful Profiles:
+         name: Mandatory – unique profile name
+         action: What to do when an anomaly is detected (report_only / block_and_report)
+         syn_ack_allow: Enable/disable SYN-ACK allowance
+         packet_report: Enable/disable detailed reporting
+         idle_state: Enable/disable idle state monitoring
+         idle_state_bandwidth_threshold: Bandwidth threshold for idle state (numeric)
+         idle_state_timer: Idle state timer in seconds (numeric)
+         act_threshold / term_threshold: Traffic thresholds 
+
+## Usage Scenarios:
+   # Create new OOS profiles: Define oos_profiles as above
+   # Use existing OOS profiles only: Skip this section and reference them in edit/delete playbooks

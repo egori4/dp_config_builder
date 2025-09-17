@@ -1,31 +1,62 @@
 ---
-- name: Delete OOS (Stateful) profiles on all devices
+- name: Delete OOS/Stateful Profiles from DefensePro
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/delete_vars.yml
+    - ../vars/delete_vars.yml  # contains dp_ip (list) and oos_profiles (list of dicts)
 
   tasks:
     - block:
+        # Lock each device first
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-
-        - name: Delete each OOS profile on all devices
-          loop: "{{ dp_ip | product(oos_profiles) | list }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1 }}"
+            label: "Device: {{ item }}"
+          when: not (skip_device_lock | default(false))
+
+        # Delete profiles per device
+        - name: Delete OOS/Stateful profiles
           delete_oos_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item.0 }}"
-            name: "{{ item.1 }}"
+            name: "{{ item.1.name }}"
+          loop: "{{ dp_ip | product(oos_profiles) | list }}"
+          loop_control:
+            label: "Device: {{ item.0 }}, Profile: {{ item.1.name }}"
+          register: delete_results
+
+        # Display deletion results
+        - name: Display deletion results
+          debug:
+            msg: |
+              Device: {{ item.item.0 }}, Profile: {{ item.item.1.name }}
+              Status: {% if item.changed %}Deleted successfully{% else %}Not deleted{% endif %}
+              Response: {{ item.response }}
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device/Profile: {{ item.item.0 }}/{{ item.item.1.name }}"
+
+        # Apply policy updates per device
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: not (skip_policy_updates | default(false))
 
       always:
+        # Unlock devices
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          when: not (skip_device_lock | default(false))

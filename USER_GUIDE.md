@@ -99,6 +99,18 @@ ansible-playbook playbooks/edit_dns_profile.yml
 
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
+
+# Get all OOS profiles from devices
+ansible-playbook playbooks/get_oos_profile.yml
+
+# Create new OOS profiles
+ansible-playbook playbooks/create_oos_profile.yml
+
+# Edit existing OOS profiles
+ansible-playbook playbooks/edit_oos_profile.yml
+
+# Delete OOS profiles
+ansible-playbook playbooks/delete_oos_profile.yml
 ```
 
 ## Common Workflows
@@ -331,7 +343,32 @@ ansible-playbook --check playbooks/delete_dns_profile.yml
 ansible-playbook playbooks/delete_dns_profile.yml
 ```
 
-### Workflow 11: Create Security Policies with Profile Bindings
+### Workflow 11 : Create New OOS Profiles
+
+# 1.Define your OOS profiles
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansible-playbook --check playbooks/create_oos_profile.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_oos_profile.yml
+```
+### Workflow 11b : Get OOS Profile
+```bash
+ansible-playbook playbooks/get_oos_profile.yml
+```
+### Workflow 11c : Delete OOS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_oos_profile.yml
+ansible-playbook playbooks/delete_oos_profile.yml
+```
+
+### Workflow 12: Create Security Policies with Profile Bindings
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -364,7 +401,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 12: Apply DefensePro Policy Updates
+### Workflow 13: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -823,6 +860,81 @@ dns_profiles:
 *** Advanced controls ***: Optional – includes NXDOMAIN handling, malformed query detection, response rate limiting, protocol anomaly checks, footprint strictness, learning suppression thresholds
 *** Control flags ***: Use to enable/disable each creation stage independently
 
+### Create OOS Profiles ###
+# Define OOS profiles to create on each device
+# Configure OOS profiles in `vars/create_vars.yml`:
+# OPTIONAL: OOS profiles (only define if creating new ones)
+
+```yaml
+oos_profiles:
+  - name: "oos_profile_1"            # MANDATORY: Profile name
+    state: "enable"                  # OPTIONAL: enable, disable (default: enable)
+    params:
+      action: "block_and_report"     # OPTIONAL: report_only, block_and_report (default: block_and-report)
+      syn_ack_allow: "enable"        # OPTIONAL: enable, disable (default: enable)
+      packet_report: "enable"        # OPTIONAL: enable, disable (default: disable)
+      risk: "medium"                 # OPTIONAL: low, medium, high (default: medium)
+      act_threshold: 1000            # OPTIONAL: action threshold
+      term_threshold: 500            # OPTIONAL: termination threshold
+      idle_state: "enable"           # OPTIONAL: enable, disable (default: disable)
+      idle_state_bandwidth_threshold: 1000  # OPTIONAL: threshold for idle state
+      idle_state_timer: 30           # OPTIONAL: seconds for idle timeout
+```
+  # Minimal example (only mandatory parameter)
+  - name: "oos_profile_2"             # MANDATORY
+    # All other parameters use defaults
+
+### Editing OOS Profiles (Partial Updates)
+```yaml
+# Edit existing OOS profiles - ONLY specify what you want to change
+oos_profiles:
+  - profile_name: "oos_profile_1"     # MANDATORY: must specify which profile to edit
+    params:
+      action: "report_only"           # OPTIONAL: report_only, block_and_report
+      syn_ack_allow: "disable"        # OPTIONAL: enable, disable
+      packet_report: "disable"        # OPTIONAL: enable, disable
+      risk: "high"                    # OPTIONAL: low, medium, high
+      act_threshold: 1500             # OPTIONAL: activation threshold
+      term_threshold: 800             # OPTIONAL: termination threshold
+      idle_state: "disable"           # OPTIONAL: enable, disable
+```
+
+### Get OOS Profiles
+
+# Get all OOS profiles from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_oos_profile.yml
+```yaml
+oos_profiles:
+  - "oos_profile_1"
+  - "oos_profile_2"                  # Show all profiles (default)
+```
+
+### Delete OOS Profiles
+
+# Delete OOS profiles by name
+```yaml
+oos_profiles:
+  - "oos_profile_1"
+  - "oos_profile_2"
+```
+
+### Notes for OOS Profiles
+
+*** name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: REQUIRED – choose between report_only or block_and_report.
+*** syn_ack_allow ***: Optional – enable/disable SYN-ACK handling.
+*** packet_report ***: Optional – enable/disable packet logging.
+*** risk ***: Optional – low, medium, or high risk profile.
+*** Thresholds ***
+    act_threshold: activation threshold.
+    term_threshold: termination threshold.
+    Idle state controls:
+    idle_state: enable/disable.
+    idle_state_bandwidth_threshold: threshold for idle state.
+    idle_state_timer: seconds for idle timeout.
+    Control flags: Use to enable/disable each stage independently.
 
 ### Security Policy Configuration
 
