@@ -1,14 +1,15 @@
 ---
-- name: Delete OOS Profiles from DefensePro
+- name: Delete Specific OOS Profiles from DefensePro
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/delete_vars.yml  # contains dp_ip (list) and oos_profiles (list of dicts)
+    - ../vars/delete_vars.yml   # contains dp_ip (list of device IPs) and oos_profiles (list of profile names)
 
   tasks:
     - block:
-        # Lock each device first
+
+        # Lock devices
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -18,29 +19,37 @@
             label: "Device: {{ item }}"
           when: not (skip_device_lock | default(false))
 
-        # Delete profiles per device
-        - name: Delete OOS profiles
+        # Delete OOS profiles
+        - name: Delete OOS profiles from devices
           delete_oos_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.name }}"
-          loop: "{{ dp_ip | product(oos_profiles) | list }}"
+            dp_ip: "{{ item }}"
+            oos_profiles: "{{ oos_profiles | map(attribute='name') | list }}"
+            verify: true
+          loop: "{{ dp_ip }}"
+          register: OOS_delete_results
           loop_control:
-            label: "Device: {{ item.0 }}, Profile: {{ item.1.name }}"
-          register: delete_results
+            label: "Device: {{ item }}"
 
-        # Display deletion results
+        # Display deletion results with color highlighting
         - name: Display deletion results
+          vars:
+            formatted_output: |
+              {% for result in OOS_delete_results.results %}
+              Device: {{ result.item }}
+              {% for profile_info in result.response %}
+                {% set status = profile_info.get('response', {}).get('status', 'deleted') %}
+                {% if profile_info.get('failed') %}
+                  Profile: {{ profile_info.profile }} 
+                  Error: {{ profile_info.get('response', {}).get('error', 'Unknown') }}
+                {% else %}
+                  Profile: {{ profile_info.profile }} was deleted successfully
+                {% endif %}
+              {% endfor %}
+              {% endfor %}
           debug:
-            msg: |
-              Device: {{ item.item.0 }}, Profile: {{ item.item.1.name }}
-              Status: {% if item.changed %}Deleted successfully{% else %}Not deleted{% endif %}
-              Response: {{ item.response }}
-          loop: "{{ delete_results.results }}"
-          loop_control:
-            label: "Device/Profile: {{ item.item.0 }}/{{ item.item.1.name }}"
+            msg: "{{ formatted_output.split('\n') }}"
 
-        # Apply policy updates per device
         - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"
@@ -48,9 +57,13 @@
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Applying policies: {{ item }}"
-          when: not (skip_policy_updates | default(false))
+          when: 
+            - not (skip_policy_updates | default(false))
+            - OOS_delete_results is defined
+            - OOS_delete_results.changed | default(false)
 
       always:
+
         # Unlock devices
         - name: Unlock device(s)
           dp_unlock:
