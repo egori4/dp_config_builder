@@ -888,7 +888,7 @@ oos_profiles:
 ```yaml
 # Edit existing OOS profiles - ONLY specify what you want to change
 oos_profiles:
-  - profile_name: "oos_profile_1"     # MANDATORY: must specify which profile to edit
+  - name: "oos_profile_1"     # MANDATORY: must specify which profile to edit
     params:
       action: "report_only"           # OPTIONAL: report_only, block_and_report
       syn_ack_allow: "disable"        # OPTIONAL: enable, disable
@@ -897,6 +897,8 @@ oos_profiles:
       act_threshold: 1500             # OPTIONAL: activation threshold
       term_threshold: 800             # OPTIONAL: termination threshold
       idle_state: "disable"           # OPTIONAL: enable, disable
+      idle_state_bandwidth_threshold: 1000  # OPTIONAL: threshold for idle state
+      idle_state_timer: 30           # OPTIONAL: seconds for idle timeout
 ```
 
 ### Get OOS Profiles

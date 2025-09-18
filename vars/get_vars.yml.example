@@ -32,3 +32,9 @@ filter_cl_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names
 # filter_cl_profile_names: ["cl_prof_egor_test10"]  # Show only one profile
 # filter_cl_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
 # filter_cl_profile_names: []  # Show all profiles (default)
+
+###################### Get OOS Profile ##########################
+# Define OOS profiles to Get on each device
+oos_profiles:
+  - name: "CDN_DNS"             # Must exactly match the profile name on the device
+  - name: "OOS_Agile_Network"

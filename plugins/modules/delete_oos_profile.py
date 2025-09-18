@@ -1,127 +1,202 @@
 # plugins/modules/delete_oos_profile.py
 """
-Ansible module to delete OOS profiles on Radware DefensePro devices,
-with verification to ensure the profile is actually removed.
+Unified Ansible module to delete one or multiple OOS/Stateful profiles
+on Radware DefensePro devices.
+
+Supports:
+- Multiple profiles per device
+- Check mode
+- Optional verification step
+- Graceful skip of non-existent profiles
 """
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.radware_cc import RadwareCC
 from ansible.module_utils.logger import Logger
+import traceback
 
 DOCUMENTATION = r'''
 ---
-module: dp_delete_oos_profile
-short_description: Delete OOS/Stateful profile on Radware DefensePro
+module: delete_oos_profile
+short_description: Delete OOS/Stateful profiles on DefensePro
 description:
-  - Deletes an OOS/Stateful profile on a DefensePro device.
-  - Confirms deletion by verifying the profile no longer exists.
+  - Deletes one or more OOS/Stateful profiles on DefensePro devices via Radware CC API.
+  - Optionally verifies deletion by checking the profile table.
+  - Skips non-existent profiles gracefully without failing.
 options:
   provider:
+    description:
+      - Connection details for Radware CC
     type: dict
     required: true
+    suboptions:
+      cc_ip:
+        description: Radware CC IP
+        type: str
+        required: true
+      username:
+        type: str
+        required: true
+      password:
+        type: str
+        required: true
+      log_level:
+        description: Logging verbosity (disabled, info, debug)
+        type: str
+        required: false
+        default: disabled
   dp_ip:
+    description: DefensePro device IP
     type: str
     required: true
-  name:
-    type: str
+  oos_profiles:
+    description:
+      - List of OOS/Stateful profile names to delete
+    type: list
     required: true
+  verify:
+    description:
+      - Whether to verify deletion by querying the profile table
+    type: bool
+    required: false
+    default: true
+author:
+  - "Your Name"
 '''
 
 EXAMPLES = r'''
-- name: Delete OOS profile from a device
-  dp_delete_oos_profile:
+- name: Delete multiple OOS profiles
+  delete_oos_profile:
     provider:
       cc_ip: 10.105.193.3
       username: radware
       password: radware
+      log_level: debug
     dp_ip: 10.105.192.32
-    name: Test1
+    oos_profiles:
+      - Test1
+      - Test2
+    verify: true
 '''
 
 RETURN = r'''
-changed:
-  description: Whether the profile was deleted
-  type: bool
 response:
-  description: Raw API response from delete and verification
-  type: dict
+  description: API response per profile
+  type: list
 debug_info:
-  description: Debugging information
+  description: Request and response debug details
   type: dict
 '''
 
+# -------------------------------
+# Helpers
+# -------------------------------
+def build_api_path(dp_ip, profile_name):
+    """Construct API endpoint path for OOS profile deletion."""
+    return f"/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}/"
+
+def verify_profile_absence(cc, provider_ip, dp_ip, profile_name):
+    """Verify that a profile no longer exists in the table."""
+    path = f"/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable"
+    url = f"https://{provider_ip}{path}"
+    resp = cc._get(url)
+    try:
+        data = resp.json()
+    except ValueError:
+        data = {"raw_text": resp.text}
+    existing_profiles = data.get("rsStatefulProfileTable", [])
+    return not any(p.get("rsStatefulProfileName") == profile_name for p in existing_profiles), data
+
+# -------------------------------
+# Main Module Logic
+# -------------------------------
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
         dp_ip=dict(type='str', required=True),
-        name=dict(type='str', required=True)
+        oos_profiles=dict(type='list', required=True),
+        verify=dict(type='bool', required=False, default=True),
     )
 
-    result = dict(changed=False, response={}, debug_info={})
+    result = dict(changed=False, response=[], debug_info={})
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
-    profile_name = module.params['name']
+    oos_profiles = module.params['oos_profiles']
+    verify = module.params['verify']
     log_level = provider.get('log_level', 'disabled')
     logger = Logger(verbosity=log_level)
-    debug_info = {}
+
+    # Validate provider fields
+    for key in ('cc_ip', 'username', 'password'):
+        if key not in provider or not provider[key]:
+            module.fail_json(msg=f"Missing required provider field: {key}", **result)
 
     try:
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
                        log_level=log_level, logger=logger)
 
-        path = f"/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}"
-        url = f"https://{provider['cc_ip']}{path}"
+        for profile_name in oos_profiles:
+            path = build_api_path(dp_ip, profile_name)
+            url = f"https://{provider['cc_ip']}{path}"
+            result['debug_info'].setdefault('requests', []).append({"method": "DELETE", "url": url})
+            logger.info(f"Deleting OOS profile '{profile_name}' on {dp_ip}")
 
-        debug_info['delete_request'] = {'method': 'DELETE', 'url': url}
-        logger.info(f"Deleting OOS/Stateful profile '{profile_name}' on {dp_ip}")
+            if module.check_mode:
+                result['response'].append({"profile": profile_name, "msg": "Check mode - not deleted"})
+                continue
 
-        if module.check_mode:
-            result['changed'] = True
-            module.exit_json(msg=f"Check mode: profile '{profile_name}' would be deleted.", **result)
+            try:
+                resp = cc._delete(url)
+                status_code = resp.status_code
+                result['debug_info'].setdefault('responses', []).append({"profile": profile_name, "status_code": status_code})
 
-        # Send DELETE request
-        resp = cc._delete(url)
-        debug_info['delete_status_code'] = resp.status_code
+                data = resp.json() if resp.content else {"status": "deleted"}
+                logger.debug(f"Response JSON: {data}")
 
-        try:
-            resp_data = resp.json()
-        except ValueError:
-            resp_data = {'raw_text': resp.text}
-        debug_info['delete_response'] = resp_data
+                if status_code not in (200, 204):
+                    # Non-existent or failed deletion → skip gracefully
+                    data.setdefault('error', f"HTTP {status_code}")
+                    result['response'].append({"profile": profile_name, "response": data, "failed": True})
+                    logger.warning(f"Profile '{profile_name}' may not exist or deletion failed: {data}")
+                    continue
 
-        if resp.status_code not in (200, 201):
-            module.fail_json(msg=f"Failed to delete profile '{profile_name}': HTTP {resp.status_code}", debug_info=debug_info, **result)
+                # Verification step
+                if verify:
+                    verified, verify_data = verify_profile_absence(cc, provider['cc_ip'], dp_ip, profile_name)
+                    result['debug_info'].setdefault('verify', []).append({"profile": profile_name, "verified": verified})
+                    if not verified:
+                        result['response'].append({
+                            "profile": profile_name,
+                            "response": data,
+                            "failed": True,
+                            "msg": "Profile still exists after deletion"
+                        })
+                        logger.error(f"Profile '{profile_name}' still exists after deletion")
+                        continue
 
-        # Verify deletion
-        verify_path = f"/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable"
-        verify_url = f"https://{provider['cc_ip']}{verify_path}"
-        verify_resp = cc._get(verify_url)
-        debug_info['verify_status_code'] = verify_resp.status_code
-        try:
-            verify_data = verify_resp.json()
-        except ValueError:
-            verify_data = {'raw_text': verify_resp.text}
-        debug_info['verify_response'] = verify_data
+                result['response'].append({"profile": profile_name, "response": data})
+                result['changed'] = True
 
-        existing_profiles = verify_data.get('rsStatefulProfileTable', [])
-        if any(p.get('rsStatefulProfileName') == profile_name for p in existing_profiles):
-            module.fail_json(msg=f"Profile '{profile_name}' still exists after deletion!", debug_info=debug_info, **result)
+            except Exception as ex:
+                result['response'].append({
+                    "profile": profile_name,
+                    "response": {"error": str(ex), "traceback": traceback.format_exc()},
+                    "failed": True
+                })
+                logger.error(f"Exception deleting OOS profile '{profile_name}': {ex}")
 
-        logger.info(f"Profile '{profile_name}' deleted successfully")
-        result['changed'] = True
-        result['response'] = resp_data
+        module.exit_json(**result)
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+        module.fail_json(msg=str(e), **result)
 
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
-
+# -------------------------------
+# Entrypoint
+# -------------------------------
 def main():
     run_module()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
