@@ -239,17 +239,18 @@ dns_profiles:
 
 oos_profiles:
   # Example: Create OOS profile "oos_profile_50" with multiple parameters
-  - name: "oos_profile_50"                  # Mandatory: exact profile name
+  - name: "OOS_Profile_1"                  # Mandatory: exact profile name
     params:
-    action: "block_and_report"              # Options: report_only, block_and_report
-    syn_ack_allow: "enable"                 # Options: enable, disable
-    packet_report: "enable"                 # Options: enable, disable
-    risk: "high"                            # Options: low, medium, high
-    idle_state: "enable"                    # Options: enable, disable
-    idle_state_bandwidth_threshold: 1000    # Optional numeric threshold
-    idle_state_timer: 60                     # Optional numeric threshold
-    act_threshold: 2000                      # Optional numeric threshold
-    term_threshold: 1000                     # Optional numeric threshold
+      action: block_and_report             # Options: report_only, block_and_report
+      act_threshold: 5000                  # Optional numeric threshold      
+      term_threshold: 4000                 # Optional numeric threshold
+      risk: "high"                         # Options: low, medium, high
+      idle_state: "enable"                 # Options: enable, disable
+      syn_ack_allow: enable                # Options: enable, disable
+      packet_report: enable                # Options: enable, disable
+      idle_state: disable                  # Options: enable, disable
+      idle_state_bandwidth_threshold: 10000 # Optional numeric threshold
+      idle_state_timer: 10                  # Optional numeric threshold
 
   # Example: Minimal creation with only mandatory name
   - name: "oos_profile_51"

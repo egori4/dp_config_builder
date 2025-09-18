@@ -125,9 +125,8 @@ dns_profiles:
 ##################### OOS Profile Deletions #######################
 # Define OOS profiles to delete on each device
 oos_profiles:
-  - name: "oos_profile_1"  # MANDATORY: Policy name to delete
-  - name: "oos_profile_2"
-
+  - name: "OOS_Profile_1"             # Must exactly match the profile name on the device
+  - name: "OOS_Profile_2"
 
 ## OOS Profile Deletion Notes:
 - profile_name: The exact name of the OOS profile to delete
