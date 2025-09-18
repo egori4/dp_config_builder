@@ -27,7 +27,7 @@
             oos_profiles: "{{ oos_profiles | map(attribute='name') | list }}"
             verify: true
           loop: "{{ dp_ip }}"
-          register: delete_results
+          register: OOS_delete_results
           loop_control:
             label: "Device: {{ item }}"
 
@@ -35,7 +35,7 @@
         - name: Display deletion results
           vars:
             formatted_output: |
-              {% for result in delete_results.results %}
+              {% for result in OOS_delete_results.results %}
               Device: {{ result.item }}
               {% for profile_info in result.response %}
                 {% set status = profile_info.get('response', {}).get('status', 'deleted') %}
@@ -49,6 +49,18 @@
               {% endfor %}
           debug:
             msg: "{{ formatted_output.split('\n') }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - OOS_delete_results is defined
+            - OOS_delete_results.changed | default(false)
 
       always:
 
