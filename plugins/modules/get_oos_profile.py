@@ -35,7 +35,7 @@ def run_module():
         "syn_ack_allow": {"1": "enable", "2": "disable"},
         "packet_report": {"1": "enable", "2": "disable"},
         "action": {"0": "report_only", "1": "block_and_report"},
-        "risk": {"0": "low", "1": "medium", "2": "high"},
+        "risk": {"1": "low", "2": "medium", "3": "high"},
         "idle_state": {"1": "enable", "2": "disable"}
     }
 
