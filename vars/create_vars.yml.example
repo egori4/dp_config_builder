@@ -246,14 +246,14 @@ oos_profiles:
     # All other parameters use defaults
 
   #Parameter Descriptions for OOS/Stateful Profiles:
-         name: Mandatory – unique profile name
-         action: What to do when an anomaly is detected (report_only / block_and_report)
-         syn_ack_allow: Enable/disable SYN-ACK allowance
-         packet_report: Enable/disable detailed reporting
-         idle_state: Enable/disable idle state monitoring
-         idle_state_bandwidth_threshold: Bandwidth threshold for idle state (numeric)
-         idle_state_timer: Idle state timer in seconds (numeric)
-         act_threshold / term_threshold: Traffic thresholds 
+        # name: Mandatory – unique profile name
+        # action: What to do when an anomaly is detected (report_only / block_and_report)
+        # syn_ack_allow: Enable/disable SYN-ACK allowance
+        # packet_report: Enable/disable detailed reporting
+        # idle_state: Enable/disable idle state monitoring
+        # idle_state_bandwidth_threshold: Bandwidth threshold for idle state (numeric)
+        # idle_state_timer: Idle state timer in seconds (numeric)
+        # act_threshold / term_threshold: Traffic thresholds 
 
 ## Usage Scenarios:
    # Create new OOS profiles: Define oos_profiles as above

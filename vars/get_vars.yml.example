@@ -44,10 +44,10 @@ filter_bdos_profile_names: ["bdos_profile_1","bdos_profile_2"]  # Set to list of
 ###################### Get OOS Profile ##########################
 # Define OOS profiles to Get on each device
 oos_profiles:
-  - name: "CDN_DNS"             # Must exactly match the profile name on the device
-  - name: "OOS_Agile_Network"
+ # - name: "oos_profile1"             # Must exactly match the profile name on the device
+ # - name: "oos_profile2"
 
   # Notes:
-# - If oos_profiles is empty, all OOS profiles on the device(s) will be included
-# - Useful for querying, editing, or deleting specific OOS profiles
-# - Each entry must include 'name' key
+# - If all entries in oos_profiles are commented out or the list is empty, all OOS profiles on the device(s) will be included.
+# - To filter for specific profiles, list them as: - name: "oos_profile1"
+# - Each entry must include a 'name' key.

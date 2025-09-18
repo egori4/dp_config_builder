@@ -247,14 +247,14 @@ oos_profiles:
 # name: Mandatory – exact profile name to edit (use get_oos_profile to verify)
 # Only specify parameters you want to change – unspecified parameters remain unchanged
 # Supported OOS Profile Parameters:
-        action: report_only / block_and_report
-        syn_ack_allow: enable / disable
-        packet_report: enable / disable
-        idle_state: enable / disable
-        idle_state_bandwidth_threshold: numeric value
-        idle_state_timer: numeric value
-        act_threshold: numeric value
-        term_threshold: numeric value
+        # action: report_only / block_and_report
+        # syn_ack_allow: enable / disable
+        # packet_report: enable / disable
+        # idle_state: enable / disable
+        # idle_state_bandwidth_threshold: numeric value
+        # idle_state_timer: numeric value
+        # act_threshold: numeric value
+        # term_threshold: numeric value
 
 ################################## Security Policies Variables ###############################
 # Define security policies to edit
