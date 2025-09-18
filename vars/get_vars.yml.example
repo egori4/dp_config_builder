@@ -1,5 +1,5 @@
 ---
-# get_vars.yml.example - Template for getting network class variables
+# get_vars.yml.example - Template for getting variables
 # Copy this file to get_vars.yml and customize with your environment details
 
 # Target DefensePro devices - add or remove IP addresses as needed
@@ -32,3 +32,17 @@ filter_cl_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names
 # filter_cl_profile_names: ["cl_prof_egor_test10"]  # Show only one profile
 # filter_cl_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
 # filter_cl_profile_names: []  # Show all profiles (default)
+
+########################## Security Policy Filter variables ##########################
+# Filter by specific security policy names, or leave empty list for all policies
+filter_security_policy_names: []  # Set to list of policy names to filter, or leave empty for all
+
+# Examples:
+# filter_security_policy_names: []                    # Get all security policies (default)
+# filter_security_policy_names: ["web_server_policy"] # Get only "web_server_policy" policy  
+# filter_security_policy_names: ["web_server_policy", "db_server_policy"]  # Get multiple specific policies
+
+# Notes:
+# - filter_security_policy_names: Optional filter to get specific security policies (leave empty for all)
+# - This operation is read-only and safe to run anytime
+# - Use this to discover existing security policies before creating, editing, or deleting
