@@ -84,6 +84,110 @@ edit_cl_protections:
 # - packet_report: "enable", "disable" (Detailed packet reporting)
 # - protection_type: "cps", "concurrent_connections" (Detection type: Connections Per Second vs Total Active Connections)
 
+
+################################## BDoS Profile Edit Variables ###############################
+# Define BDoS profiles to edit
+# Each profile requires profile_name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+
+bdos_profiles:
+  # Example: Edit BDoS profile "BDOS_Profile_50", changing multiple parameters
+  - profile_name: "BDOS_Profile_50"          # Mandatory: exact name of the profile to edit
+    action: "block_and_report"               # Options: report_only, block_and_report
+    syn_flood: "disable"                     # Options: enable, disable
+    udp_flood: "enable"                      # Options: enable, disable
+    igmp_flood: "disable"                    # Options: enable, disable
+    icmp_flood: "enable"                     # Options: enable, disable
+    tcp_ack_fin_flood: "enable"              # Options: enable, disable
+    tcp_rst_flood: "disable"                 # Options: enable, disable
+    tcp_syn_ack_flood: "enable"              # Options: enable, disable
+    tcp_frag_flood: "enable"                 # Options: enable, disable
+    udp_frag_flood: "disable"                # Options: enable, disable
+    inbound_traffic: 2000000                 # 1 to 1342177280 (bps)
+    outbound_traffic: 1000000                # 1 to 1342177280 (bps)
+    tcp_in_quota: 90                          # 0-100 (%)
+    udp_in_quota: 60                          # 0-100 (%)
+    icmp_in_quota: 20                         # 0-100 (%)
+    igmp_in_quota: 60                         # 0-100 (%)
+    tcp_out_quota: 90                         # 0-100 (%)
+    udp_out_quota: 60                         # 0-100 (%)
+    icmp_out_quota: 20                         # 0-100 (%)
+    igmp_out_quota: 60                         # 0-100 (%)
+    transparent_optimization: "disable"       # Options: enable, disable
+    packet_report: "enable"                   # Options: enable, disable
+    burst_attack: "disable"                   # Options: enable, disable
+    maximum_interval_between_bursts: 20       # Minutes
+    learning_suppression_threshold: 15        # 0-50
+    footprint_strictness: "high"              # Options: low, medium, high
+    udp_packet_rate_detection_sensitivity: "medium"  # Options: Ignore_or_Disable, low, medium, high
+    bdos_rate_limit: "normal_edge"            # Options: disable, normal_edge, suspect_edge, user_defined
+    user_defined_rate_limit: 1000             # 0-4000 (only applicable if bdos_rate_limit=user_defined)
+    user_defined_rate_limit_unit: "mbps"      # Options: kbps, mbps, gbps
+    adv_udp_detection: "enable"               # Options: enable, disable
+
+  # Example: Edit minimal parameters of another BDoS profile
+  # - profile_name: "BDOS_Profile_75"
+  #   action: "report_only"
+  #   inbound_traffic: 1500000
+  #   outbound_traffic: 750000
+
+# Notes for BDoS Profiles:
+# - profile_name: Mandatory - exact profile name to edit (get from DefensePro UI)
+# - Only specify parameters you want to change - unspecified parameters keep their current values
+#
+# ALL SUPPORTED BDoS PROFILE PARAMETERS:
+# - action: "report_only", "block_and_report"
+# - *_flood: "enable", "disable" (Enable or disable detection for specific flood types)
+# - inbound_traffic / outbound_traffic: Max traffic allowed (bps)
+# - *_in_quota / *_out_quota: Traffic quota per protocol (%)
+# - transparent_optimization: "enable", "disable"
+# - packet_report: "enable", "disable"
+# - burst_attack: "enable", "disable"
+# - maximum_interval_between_bursts: Interval in minutes
+# - learning_suppression_threshold: 0-50
+# - footprint_strictness: "low", "medium", "high"
+# - udp_packet_rate_detection_sensitivity: "Ignore_or_Disable", "low", "medium", "high"
+# - bdos_rate_limit: "disable", "normal_edge", "suspect_edge", "user_defined"
+# - user_defined_rate_limit: Numeric value 0-4000 (only if user_defined)
+# - user_defined_rate_limit_unit: "kbps", "mbps", "gbps"
+# - adv_udp_detection: "enable", "disable"
+
+################################## OOS Profile Edit Variables ###############################
+# Define OOS profiles to edit
+# Each profile requires name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+
+oos_profiles:
+  # Example: Edit OOS profile "oos_profile_50", changing multiple parameters
+  - name: "oos_profile_50"                   # Mandatory: exact name of the profile to edit
+    action: "block_and_report"               # Options: report_only, block_and_report
+    syn_ack_allow: "enable"                  # Options: enable, disable
+    packet_report: "enable"                  # Options: enable, disable
+    idle_state: "enable"                     # Options: enable, disable
+    idle_state_bandwidth_threshold: 1000     # Optional numeric threshold
+    idle_state_timer: 60                      # Optional numeric threshold
+    act_threshold: 2000                       # Optional numeric threshold,Activation threshold
+    term_threshold: 1000                      # Optional numeric threshold,termination threshold
+
+  # Example: Minimal update for another OOS profile
+  # - name: "oos_profile_75"
+  #   action: "report_only"
+  #   packet_report: "disable"
+
+# Notes for OOS Profiles:
+
+# name: Mandatory – exact profile name to edit (use get_oos_profile to verify)
+# Only specify parameters you want to change – unspecified parameters remain unchanged
+# Supported OOS Profile Parameters:
+        action: report_only / block_and_report
+        syn_ack_allow: enable / disable
+        packet_report: enable / disable
+        idle_state: enable / disable
+        idle_state_bandwidth_threshold: numeric value
+        idle_state_timer: numeric value
+        act_threshold: numeric value
+        term_threshold: numeric value
+
 ################################## Security Policies Variables ###############################
 # Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit

@@ -1,0 +1,57 @@
+---
+- name: Get OOS profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Get OOS profiles
+          get_oos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: OOS_get_results
+
+        - name: Display OOS profiles
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.oos_profiles | length > 0 %}
+              
+              OOS Profiles fetched ({{ item.oos_profiles | length }}):
+              {% for profile in item.oos_profiles %}
+                - Name: {{ profile.name }}
+                  Parameters:
+                  {% for k, v in profile.params.items() %}
+                    {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              
+              No OOS profiles found.
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ OOS_get_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

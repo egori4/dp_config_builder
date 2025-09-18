@@ -91,6 +91,39 @@ cl_protection_deletions:
 # - Define both sections with different protection names
 
 
+###################### BDOS Profile Deletions ##########################
+# Define DNS profiles to delete on each device
+bdos_profiles:
+  - name: "bdos_profile_1"  # MANDATORY: Policy name to delete
+  - name: "bdos_profile_2"
+
+# BDoS Profile Deletion Notes:
+# - name: The name of the BDoS profile to delete (as configured on the device)
+# - The playbook will delete all combinations of dp_ip × bdos_profiles
+# - Deletion is permanent - ensure you have backups if needed
+# - If a BDoS profile is attached to protections or policies, ensure it is detached before deletion
+# - Use the get_bdos_profiles module (if available) to discover existing BDoS profiles
+# - Order of operations: Remove BDoS profile from all associations before deleting the profile itself
+# - You can mix BDoS profile deletions with other deletions in the same playbook run
+
+
+##################### OOS Profile Deletions #######################
+# OPTIONAL: Remove OOS profiles from devices
+# Note: Only specify profiles to delete by name
+
+oos_profiles:
+  - profile_name: "oos_profile_50"
+  - profile_name: "oos_profile_51"
+
+
+## OOS Profile Deletion Notes:
+- profile_name: The exact name of the OOS/Stateful profile to delete
+- Only specify the profiles you want to remove; all others remain untouched
+- Use get_oos_profile module to discover existing profiles
+- The playbook will delete all combinations of dp_ip × oos_profile_deletions
+- Deletion is permanent – ensure you have backups or exported configurations if needed
+
+
 ########################## Security Policy Deletions ########################
 # Define security policies to delete
 # Two deletion modes supported:
@@ -113,6 +146,4 @@ delete_security_policies:
 # - policy_name: MANDATORY - Must be an existing security policy name
 # - deletion_mode: OPTIONAL - Controls deletion behavior:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
-#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
-# 
-
+#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
