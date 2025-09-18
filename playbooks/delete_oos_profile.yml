@@ -40,11 +40,10 @@
               {% for profile_info in result.response %}
                 {% set status = profile_info.get('response', {}).get('status', 'deleted') %}
                 {% if profile_info.get('failed') %}
-                  Profile: {{ profile_info.profile }}  \033[91mFAILED\033[0m
+                  Profile: {{ profile_info.profile }} 
                   Error: {{ profile_info.get('response', {}).get('error', 'Unknown') }}
                 {% else %}
-                  Profile: {{ profile_info.profile }}  \033[92mOK\033[0m
-                  Status: {{ status }}
+                  Profile: {{ profile_info.profile }} was deleted successfully
                 {% endif %}
               {% endfor %}
               {% endfor %}

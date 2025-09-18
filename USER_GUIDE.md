@@ -729,11 +729,11 @@ bdos_profiles:
 # Get all BDoS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_bdos_profile.yml
-# Filter by specific profile names 
-bdos_profiles:
-  - "BDOS_Profile_5"
-  - "BDOS_Profile_6"                         
-```
+
+# Filter by specific profile names (configure in get_vars.yml)
+filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
+# filter_bdos_profile_names: []                                # Show all profiles (default)
+
 #### Delete BDoS Profiles  ####
 ```yaml
 # Delete BDoS profiles by name
@@ -922,8 +922,8 @@ oos_profiles:
 # Delete OOS profiles by name
 ```yaml
 oos_profiles:
-  - "oos_profile_1"
-  - "oos_profile_2"
+  - name: "oos_profile_1"
+  - name: "oos_profile_2"
 ```
 
 ### Notes for OOS Profiles
@@ -942,13 +942,6 @@ oos_profiles:
     idle_state_bandwidth_threshold: threshold for idle state.
     idle_state_timer: seconds for idle timeout.
     Control flags: Use to enable/disable each stage independently.
-
-**Security Policy Configuration Notes**:
-- **policy_name**: MANDATORY - Unique policy name
-- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
-- **direction**: MANDATORY - Traffic direction to match
-- **Profile bindings**: All optional - leave empty string for no binding
-- **Control flags**: Use to enable/disable each creation stage independently
 
 ### Security Policy Configuration
 

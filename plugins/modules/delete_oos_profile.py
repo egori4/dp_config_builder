@@ -142,6 +142,7 @@ def run_module():
             url = f"https://{provider['cc_ip']}{path}"
             result['debug_info'].setdefault('requests', []).append({"method": "DELETE", "url": url})
             logger.info(f"Deleting OOS profile '{profile_name}' on {dp_ip}")
+            logger.debug(f"METHOD: DELETE, URL is {url}")
 
             if module.check_mode:
                 result['response'].append({"profile": profile_name, "msg": "Check mode - not deleted"})
@@ -153,7 +154,7 @@ def run_module():
                 result['debug_info'].setdefault('responses', []).append({"profile": profile_name, "status_code": status_code})
 
                 data = resp.json() if resp.content else {"status": "deleted"}
-                logger.debug(f"Response JSON: {data}")
+                logger.debug(f"Response code: {status_code}, Response JSON: {data}")
 
                 if status_code not in (200, 204):
                     # Non-existent or failed deletion → skip gracefully

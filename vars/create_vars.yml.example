@@ -235,7 +235,6 @@ oos_profiles:
       act_threshold: 5000                  # Optional numeric threshold      
       term_threshold: 4000                 # Optional numeric threshold
       risk: "high"                         # Options: info,low, medium, high
-      idle_state: "enable"                 # Options: enable, disable
       syn_ack_allow: enable                # Options: enable, disable
       packet_report: enable                # Options: enable, disable
       idle_state: disable                  # Options: enable, disable

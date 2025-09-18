@@ -151,7 +151,7 @@ def map_oos_profile_parameters(params):
         "packet_report": {"enable": "1", "disable": "2"},
         "packet_trace": {"enable": "1", "disable": "2"},
         "action": {"report_only": "0", "block_and_report": "1"},
-        "risk": {"info": "0", "low": "1", "medium": "2", "high": "3"},
+        "risk": {"info": "1", "low": "2", "medium": "3", "high": "4"},
         "idle_state": {"enable": "1", "disable": "2"}
     }
 

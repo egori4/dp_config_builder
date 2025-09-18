@@ -30,7 +30,7 @@ def format_oos_profile_for_display(raw_profile_data):
         "syn_ack_allow": {"1": "enable", "2": "disable"},
         "packet_report": {"1": "enable", "2": "disable"},
         "action": {"0": "report_only", "1": "block_and_report"},
-        "risk": {"info": "0", "low": "1", "medium": "2", "high": "3"},
+        "risk": {"info": "1", "low": "2", "medium": "3", "high": "4"},
         "idle_state": {"1": "enable", "2": "disable"}
     }
 

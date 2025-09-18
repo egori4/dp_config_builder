@@ -151,7 +151,7 @@ dp_config_builder/
 
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
-| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-10-create-security-policies-with-profile-bindings) |
+| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
 | `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
 | `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
 | `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
@@ -230,16 +230,16 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete Connection Limit Profiles (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Create BDoS Profile (uses create_bdos_profile module))
+# Create BDoS profiles (uses create_bdos_profile module)
 ansible-playbook playbooks/create_bdos_profile.yml
 
-# Edit BDoS Profile (uses edit_bdos_profile module)
+# Edit existing BDoS profiles (uses edit_bdos_profile module)
 ansible-playbook playbooks/edit_bdos_profile.yml
 
-# Get BDoS Profile (uses get_bdos_profile module)
+# Get BDoS profiles (uses get_bdos_profile module)
 ansible-playbook playbooks/get_bdos_profile.yml
 
-# Delete BDoS Profile (uses delete_bdos_profile module)
+# Delete BDoS profiles (uses delete_bdos_profile module)
 ansible-playbook playbooks/delete_bdos_profile.yml
 
 # Get all DNS profiles from devices
@@ -274,12 +274,8 @@ ansible-playbook playbooks/edit_security_policy.yml
 
 # Security Policy Deletion (using vars/delete_vars.yml configuration)
 ansible-playbook playbooks/delete_security_policy.yml
-```
 
-todo 
 
-add get policy
-documentation
 
 ## Version History
 
@@ -292,9 +288,10 @@ documentation
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.5 | Ongoing | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 |       | Resrved for Rahul(BDOS)|
+| v0.1.3 | Ongoing | Added BDOS functionality|
 | v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
