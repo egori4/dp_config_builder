@@ -288,8 +288,8 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
-| v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.5 | 2025-09-18 | Added OOS functionality |
+| v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
 | v0.1.3 |       | Resrved for Rahul(BDOS)|
 | v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
