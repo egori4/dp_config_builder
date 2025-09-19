@@ -721,7 +721,7 @@ dns_profiles:
   - name: "dns_profile_1"               # MANDATORY: Profile name
     state: "enable"                     # OPTIONAL: enable, disable (default: enable)
     params:
-      action: "block_and_report"        # OPTIONAL: report_only, block_and_report (default: block_and_report)
+      action: "block_&_report"        # OPTIONAL: report_only, block_&_report (default: block_and_report)
       expected_qps: 1000                # OPTIONAL: 0–400000000 (default: 0)
       max_allow_qps: 5000               # OPTIONAL: 0–400000000 (default: 0)
 
@@ -730,19 +730,14 @@ dns_profiles:
       manual_trigger_act_thresh: 2000   # OPTIONAL: ≥ termination threshold
       manual_trigger_term_thresh: 1000  # OPTIONAL
       manual_trigger_max_qps_target: 3000
-      manual_trigger_act_period: 30     # OPTIONAL: seconds
-      manual_trigger_term_period: 15
-      manual_trigger_escalate_period: 60
 
       # Logging / debug
       packet_report: "enable"           # OPTIONAL: enable, disable (default: disable)
 
       # Advanced detection
       query_name_sensitivity: 2         # OPTIONAL: integer level (device-specific)
-      subdomains_wl_learning: "enable"  # OPTIONAL: enable, disable (default: disable)
-      learning_suppression_threshold: 10 # OPTIONAL: 0–50 (default: 0)
+      learning_suppression_threshold: 10 # OPTIONAL: 0–100 (default: 0)
       footprint_strictness: "medium"    # OPTIONAL: low, medium, high (default: low)
-      sig_rate_lim_target: 200          # OPTIONAL: signature rate limit target
 
       # Record quotas
       a_quota: 100                      # OPTIONAL
@@ -766,6 +761,7 @@ dns_profiles:
       srv_status: "disable"
       other_status: "enable"
 
+  # Note - If you enable manual trigger , you must disable all query.Also termination thresholds must be less than activation thresholds.
   # Minimal example (only mandatory parameter)
   - name: "dns_profile_1"         # MANDATORY
     # All other parameters use defaults
@@ -777,7 +773,7 @@ dns_profiles:
 dns_profiles:
   - name: "dns_profile_10"
     params:
-      action: "report_only"                     # OPTIONAL: report_only, block_and_report
+      action: "report_only"                     # OPTIONAL: report_only, block_&_report
       expected_qps: 2000                        # OPTIONAL: Update expected QPS
       max_allow_qps: 8000                       # OPTIONAL: Update max QPS
       a_status: "disable"                       # OPTIONAL: Disable A record protection

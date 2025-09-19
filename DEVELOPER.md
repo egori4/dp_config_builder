@@ -250,6 +250,7 @@ dp_config_builder/
      - Formatted output with success/failure indicators
      - List-based filtering support for get operations
    - **Modules**: `create_dns_profile.py`, `edit_dns_profile.py`, `delete_dns_profile.py`, `get_dns_profile.py`
+
 7. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
@@ -731,16 +732,12 @@ POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileManualTriggerActThresh": "0",
             "rsDnsProtProfileManualTriggerTermThresh": "0",
             "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
-            "rsDnsProtProfileManualTriggerActPeriod": "3",
-            "rsDnsProtProfileManualTriggerTermPeriod": "3",
-            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
-            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
-            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
+# Note - If you enable manual trigger , you must disable all query.Also termination thresholds must be less than activation thresholds.
 ```
 ##### Edit BDoS Profile 
 ```json
@@ -773,13 +770,8 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileManualTriggerActThresh": "0",
             "rsDnsProtProfileManualTriggerTermThresh": "0",
             "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
-            "rsDnsProtProfileManualTriggerActPeriod": "3",
-            "rsDnsProtProfileManualTriggerTermPeriod": "3",
-            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
-            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
-            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
