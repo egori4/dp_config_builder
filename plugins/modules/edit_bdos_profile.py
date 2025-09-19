@@ -214,6 +214,7 @@ def map_netflood_profile_parameters(params):
         "user_defined_rate_limit": "rsNetFloodProfileUserDefinedRateLimit",
         "user_defined_rate_limit_unit": "rsNetFloodProfileUserDefinedRateLimitUnit",
         "adv_udp_detection": "rsNetFloodProfileAdvUdpDetection",
+        "udp_packet_rate_detection_sensitivity": "rsNetFloodProfileLevelOfReuglarzation",
         "udp_excluded_ports": "rsNetFloodProfileUdpExcludedPorts"
     }
 
