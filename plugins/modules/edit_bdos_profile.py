@@ -170,6 +170,7 @@ def map_netflood_profile_parameters(params):
         "action": {"report_only": "0", "block_and_report": "1"},
         "burst_attack": {"enable": "1", "disable": "2"},
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
+        "udp_packet_rate_detection_sensitivity": {"Ignore": "1", "low": "2", "medium": "3", "high": "4"},
         "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
         "packet_report": {"enable": "1", "disable": "2"},
         "adv_udp_detection": {"enable": "1", "disable": "2"}
