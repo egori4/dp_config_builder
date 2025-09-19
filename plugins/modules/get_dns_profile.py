@@ -14,6 +14,8 @@ from ansible.module_utils.radware_cc import RadwareCC
 
 # Reverse mapping for API fields → user-friendly
 REVERSE_FIELD_MAP = {
+    "rsDnsProtProfileAction": "action",
+    "rsDnsProtProfilePacketReportStatus": "packet_report",
     "rsDnsProtProfileExpectedQps": "expected_qps",
     "rsDnsProtProfileMaxAllowQps": "max_allow_qps",
     "rsDnsProtProfileDnsAQuota": "a_quota",
@@ -34,22 +36,17 @@ REVERSE_FIELD_MAP = {
     "rsDnsProtProfileDnsNaptrStatus": "naptr_status",
     "rsDnsProtProfileDnsSrvStatus": "srv_status",
     "rsDnsProtProfileDnsOtherStatus": "other_status",
-    "rsDnsProtProfileAction": "action",
-    "rsDnsProtProfileManualTriggerStatus": "manual_trigger",
-    "rsDnsProtProfilePacketReportStatus": "packet_report",
-    "rsDnsProtProfilePacketTraceStatus": "packet_trace",
-    "rsDnsProtProfileSubdomainsWLLearningState": "subdomains_wl_learning",
     "rsDnsProtProfileFootprintStrictness": "footprint_strictness",
     "rsDnsProtProfileLearningSuppressionThreshold": "learning_suppression_threshold",
-}
+    "rsDnsProtProfileManualTriggerStatus": "manual_trigger"
 
-# Reverse mapping for numeric values → user-friendly
+}
 REVERSE_ENUM_MAPS = {
-    "rsDnsProtProfileAction": {"0": "report_only", "1": "block_and_report"},
+    "rsDnsProtProfileAction": {"0": "report_only", "1": "block_&_report"},
     "rsDnsProtProfileManualTriggerStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfilePacketReportStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfilePacketTraceStatus": {"1": "enable", "2": "disable"},
-    "rsDnsProtProfileSubdomainsWLLearningState": {"1": "enable", "2": "disable"},
+    "rsDnsProtProfileSubdomainsWLLearningState": {"0": "enable", "1": "disable"},
     "rsDnsProtProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsDnsProtProfileDnsAStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfileDnsMxStatus": {"1": "enable", "2": "disable"},

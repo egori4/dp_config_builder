@@ -10,6 +10,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 # Reverse mapping for user-friendly field names
 REVERSE_FIELD_MAP = {
+    "rsDnsProtProfileAction": "action",
     "rsDnsProtProfileDnsAStatus": "a_status",
     "rsDnsProtProfileDnsMxStatus": "mx_status",
     "rsDnsProtProfileDnsPtrStatus": "ptr_status",
@@ -30,7 +31,7 @@ REVERSE_FIELD_MAP = {
     "rsDnsProtProfileDnsNaptrQuota": "naptr_quota",
     "rsDnsProtProfileDnsSrvQuota": "srv_quota",
     "rsDnsProtProfileDnsOtherQuota": "other_quota",
-    "rsDnsProtProfileAction": "action",
+    "rsDnsProtProfileFootprintStrictness": "footprint_strictness",
     "rsDnsProtProfileManualTriggerStatus": "manual_trigger",
     "rsDnsProtProfileManualTriggerActThresh": "manual_trigger_act_thresh",
     "rsDnsProtProfileManualTriggerTermThresh": "manual_trigger_term_thresh",
@@ -39,20 +40,17 @@ REVERSE_FIELD_MAP = {
     "rsDnsProtProfileManualTriggerTermPeriod": "manual_trigger_term_period",
     "rsDnsProtProfileManualTriggerEscalatePeriod": "manual_trigger_escalate_period",
     "rsDnsProtProfilePacketReportStatus": "packet_report",
-    "rsDnsProtProfilePacketTraceStatus": "packet_trace",
     "rsDnsProtProfileSigRateLimTarget": "sig_rate_lim_target",
     "rsDnsProtProfileQueryNameMonitoringSensitivity": "query_name_sensitivity",
-    "rsDnsProtProfileSubdomainsWLLearningState": "subdomains_wl_learning",
-    "rsDnsProtProfileLearningSuppressionThreshold": "learning_suppression_threshold",
-    "rsDnsProtProfileFootprintStrictness": "footprint_strictness"
+    "rsDnsProtProfileSubdomainsWLLearningState": "subdomains_allow_list",
+    "rsDnsProtProfileLearningSuppressionThreshold": "learning_suppression_threshold"
 }
 
 # Reverse mapping for enum values
 REVERSE_ENUM_MAPS = {
-    "rsDnsProtProfileAction": {"0": "report_only", "1": "block_and_report"},
+    "rsDnsProtProfileAction": {"0": "report_only", "1": "block_&_report"},
     "rsDnsProtProfileManualTriggerStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfilePacketReportStatus": {"1": "enable", "2": "disable"},
-    "rsDnsProtProfilePacketTraceStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfileSubdomainsWLLearningState": {"1": "enable", "2": "disable"},
     "rsDnsProtProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsDnsProtProfileDnsAStatus": {"1": "enable", "2": "disable"},
@@ -202,11 +200,11 @@ def run_module():
 def map_dns_profile_parameters(params):
     """Map user-friendly DNS parameters to DefensePro API values."""
     ENUM_MAPS = {
-        "action": {"report_only": "0", "block_and_report": "1"},
+        "action": {"report_only": "0", "block_&_report": "1"},
         "manual_trigger": {"enable": "1", "disable": "2"},
         "packet_report": {"enable": "1", "disable": "2"},
         "packet_trace": {"enable": "1", "disable": "2"},
-        "subdomains_wl_learning": {"enable": "1", "disable": "2"},
+        "subdomains_allow_list": {"enable": "1", "disable": "2"},
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
         "a_status": {"enable": "1", "disable": "2"},
         "mx_status": {"enable": "1", "disable": "2"},
@@ -249,10 +247,9 @@ def map_dns_profile_parameters(params):
         "manual_trigger_term_period": "rsDnsProtProfileManualTriggerTermPeriod",
         "manual_trigger_escalate_period": "rsDnsProtProfileManualTriggerEscalatePeriod",
         "packet_report": "rsDnsProtProfilePacketReportStatus",
-        "packet_trace": "rsDnsProtProfilePacketTraceStatus",
         "sig_rate_lim_target": "rsDnsProtProfileSigRateLimTarget",
         "query_name_sensitivity": "rsDnsProtProfileQueryNameMonitoringSensitivity",
-        "subdomains_wl_learning": "rsDnsProtProfileSubdomainsWLLearningState",
+        "subdomains_allow_list": "rsDnsProtProfileSubdomainsWLLearningState",
         "learning_suppression_threshold": "rsDnsProtProfileLearningSuppressionThreshold",
         "footprint_strictness": "rsDnsProtProfileFootprintStrictness"
     }
