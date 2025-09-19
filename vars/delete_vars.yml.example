@@ -91,7 +91,7 @@ cl_protection_deletions:
 # - Define both sections with different protection names
 
 ###################### BDOS Profile Deletions ##########################
-# Define DNS profiles to delete on each device
+# Define BDOS profiles to delete on each device
 bdos_profiles:
   - name: "bdos_profile_1"  # MANDATORY: Policy name to delete
   - name: "bdos_profile_2"
