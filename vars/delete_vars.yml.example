@@ -90,39 +90,8 @@ cl_protection_deletions:
 # - Delete other standalone protections
 # - Define both sections with different protection names
 
-####################### BDoS Profile Deletions ##################
-# OPTIONAL: Remove BDoS profiles from devices
-# Note: Only specify profiles to delete by name
-
-bdos_profiles:
-  - profile_name: "BDOS_Profile_50"
-  - profile_name: "BDOS_Profile_51"
-
-## BDoS Profile Deletion Notes:
-- profile_name: The exact name of the BDoS profile to delete
-- Only specify the profiles you want to remove; all others remain untouched
-- Use get_bdos_profile module to discover existing profiles
-- The playbook will delete all combinations of dp_ip × bdos_profile_deletions
-- Deletion is permanent – ensure you have backups or exported configurations if needed
-
-##################### DNS Profile Deletions #######################
-# OPTIONAL: Remove DNS profiles from devices
-# Note: Only specify profiles to delete by name
-
-dns_profiles:
-  - profile_name: "DNS_Profile_50"
-  - profile_name: "DNS_Profile_51"
-
-
-## DNS Profile Deletion Notes:
-- profile_name: The exact name of the DNS profile to delete
-- Only specify the profiles you want to remove; all others remain untouched
-- Use get_dns_profile module to discover existing profiles
-- The playbook will delete all combinations of dp_ip × dns_profile_deletions
-- Deletion is permanent – ensure you have backups or exported configurations if needed
-
 ###################### BDOS Profile Deletions ##########################
-# Define DNS profiles to delete on each device
+# Define BDOS profiles to delete on each device
 bdos_profiles:
   - name: "bdos_profile_1"  # MANDATORY: Policy name to delete
   - name: "bdos_profile_2"
@@ -135,20 +104,6 @@ bdos_profiles:
 # - Use the get_bdos_profiles module (if available) to discover existing BDoS profiles
 # - Order of operations: Remove BDoS profile from all associations before deleting the profile itself
 # - You can mix BDoS profile deletions with other deletions in the same playbook run
-
-
-##################### OOS Profile Deletions #######################
-# Define OOS profiles to delete on each device
-oos_profiles:
-  - name: "OOS_Profile_1"             # Must exactly match the profile name on the device
-  - name: "OOS_Profile_2"
-
-## OOS Profile Deletion Notes:
-# - profile_name: The exact name of the OOS profile to delete
-# - Only specify the profiles you want to remove; all others remain untouched
-# - Use get_oos_profile module to discover existing profiles
-# - The playbook will delete all combinations of dp_ip × oos_profile_deletions
-# - Deletion is permanent – ensure you have backups or exported configurations if needed
 
 ########################## Security Policy Deletions ########################
 # Define security policies to delete
@@ -172,4 +127,4 @@ delete_security_policies:
 # - policy_name: MANDATORY - Must be an existing security policy name
 # - deletion_mode: OPTIONAL - Controls deletion behavior:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
-#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
+#   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
