@@ -291,7 +291,7 @@ def map_netflood_profile_parameters(params):
         "footprint_strictness": "rsNetFloodProfileFootprintStrictness",
         "bdos_rate_limit": "rsNetFloodProfileRateLimit",
         "packet_report": "rsNetFloodProfilePacketReportStatus",
-        "udp_ packet_rate_detection_sensitivity": "rsNetFloodProfileLevelOfReuglarzation",
+        "udp_packet_rate_detection_sensitivity": "rsNetFloodProfileLevelOfReuglarzation",
         "adv_udp_detection": "rsNetFloodProfileAdvUdpDetection",
         "inbound_traffic": "rsNetFloodProfileBandwidthIn",
         "outbound_traffic": "rsNetFloodProfileBandwidthOut",
