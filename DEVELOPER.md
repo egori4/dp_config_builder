@@ -597,61 +597,60 @@ Each profile dict must include profile_name (mandatory) and any parameters to ch
 GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 
 Response:
-{
-    "rsNetFloodProfileTable": [
-        {
-            "rsNetFloodProfileName": "BDoS_Test1",
-            "rsNetFloodProfileTcpStatus": "2",
-            "rsNetFloodProfileTcpSynStatus": "2",
-            "rsNetFloodProfileUdpStatus": "2",
-            "rsNetFloodProfileIgmpStatus": "2",
-            "rsNetFloodProfileIcmpStatus": "2",
-            "rsNetFloodProfileTcpFinAckStatus": "2",
-            "rsNetFloodProfileTcpRstStatus": "2",
-            "rsNetFloodProfileTcpPshAckStatus": "2",
-            "rsNetFloodProfileTcpSynAckStatus": "2",
-            "rsNetFloodProfileTcpFragStatus": "2",
-            "rsNetFloodProfileBandwidthIn": "40000",
-            "rsNetFloodProfileBandwidthOut": "40000",
-            "rsNetFloodProfileTcpInQuota": "75",
-            "rsNetFloodProfileUdpInQuota": "50",
-            "rsNetFloodProfileIcmpInQuota": "3",
-            "rsNetFloodProfileIgmpInQuota": "3",
-            "rsNetFloodProfileTcpOutQuota": "75",
-            "rsNetFloodProfileUdpOutQuota": "50",
-            "rsNetFloodProfileIcmpOutQuota": "3",
-            "rsNetFloodProfileIgmpOutQuota": "3",
-            "rsNetFloodProfileTransparentOptimization": "2",
-            "rsNetFloodProfileAction": "1",
-            "rsNetFloodProfileLevelOfReuglarzation": "2",
-            "rsNetFloodProfileBurstEnabled": "1",
-            "rsNetFloodProfileNoBurstTimeout": "30",
-            "rsNetFloodProfileBurstAttackThreshold": "5",
-            "rsNetFloodProfileBurstAttackPeriod": "12",
-            "rsNetFloodProfileOverMitigationStatus": "2",
-            "rsNetFloodProfileOverMitigationThreshold": "25",
-            "rsNetFloodProfileLearningSuppressionThreshold": "0",
-            "rsNetFloodProfileFootprintStrictness": "0",
-            "rsNetFloodProfileRateLimit": "0",
-            "rsNetFloodProfileUserDefinedRateLimit": "0",
-            "rsNetFloodProfileUserDefinedRateLimitUnit": "0",
-            "rsNetFloodProfileAdvUdpDetection": "2",
-            "rsNetFloodProfileUdpExcludedPorts": "None",
-            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
-            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
-            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
-            "rsNetFloodProfilePacketReportStatus": "1",
-            "rsNetFloodProfilePacketTraceStatus": "2",
-            "rsNetFloodProfileUdpFragStatus": "2",
-            "rsNetFloodProfileUdpFragInQuota": "25",
-            "rsNetFloodProfileUdpFragOutQuota": "25"
-        }
+ {
+    "msg": [
+        "Device: 10.105.192.32",
+        "BDOS Profiles Found (1 entries):",
+        "  Profile: BDOS_Profile_50",
+        "  --------------------------------------------------",
+        "  Basic Configuration:",
+        "      profile_name                        BDOS_Profile_50",
+        "      syn_flood                           enable",
+        "      udp_flood                           enable",
+        "      igmp_flood                          enable",
+        "      icmp_flood                          enable",
+        "      tcp_ack_fin_flood                   enable",
+        "      tcp_rst_flood                       enable",
+        "      tcp_psh_ack_flood                   disable",
+        "      tcp_syn_ack_flood                   enable",
+        "      tcp_frag_flood                      enable",
+        "      udp_frag_flood                      enable",
+        "      transparent_optimization            enable",
+        "      action                              report_only",
+        "      burst_attack                        enable",
+        "      footprint_strictness                medium",
+        "      bdos_rate_limit                     user_defined",
+        "      packet_report                       enable",
+        "      udp_packet_rate_detection_sensitivity medium",
+        "      adv_udp_detection                   enable",
+        "      inbound_traffic                     1000000",
+        "      outbound_traffic                    500000",
+        "      tcp_in_quota                        80",
+        "      udp_in_quota                        50",
+        "      icmp_in_quota                       10",
+        "      igmp_in_quota                       50",
+        "      tcp_out_quota                       80",
+        "      udp_out_quota                       50",
+        "      icmp_out_quota                      10",
+        "      igmp_out_quota                      50",
+        "      maximum_interval_between_bursts     32",
+        "      learning_suppression_threshold      10",
+        "      user_defined_rate_limit             500",
+        "      user_defined_rate_limit_unit        mbps",
+        "    --------------------------------------------------",
+        "",
+        "Summary:",
+        "  - Total entries: 1",
+        "  - Unique profiles: 1",
+        "  - Profile names: BDOS_Profile_50",
+        "  - Filter applied: True",
+        ""
     ]
 }
 ```
 #Usage:-
 #Call get_bdos_profile once per device
-#Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
+#Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_50"]
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
 

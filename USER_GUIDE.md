@@ -70,8 +70,6 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete connection limit profiles and protections (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-
-
 # Get all BDoS profiles from devices
 ansible-playbook playbooks/get_bdos_profile.yml
 
@@ -581,10 +579,9 @@ cl_profiles:
 # Define BDoS profiles to create on each device
 # OPTIONAL: BDoS profiles (only define if creating new ones)
 bdos_profiles:
-  - name: "bdos_profile_5"                       # MANDATORY: Profile name
-    state: "enable"                              # OPTIONAL: enable, disable (default: enable)
+  - name: "BDOS_Profile_50"                      # Mandatory 
     params:
-      action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
+      action: "block_&_report"                 # OPTIONAL: report_only, block_&_report (default: block_&_report)
       syn_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
       udp_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
       igmp_flood: "enable"                       # OPTIONAL: enable, disable (default: disable)
@@ -609,7 +606,7 @@ bdos_profiles:
       transparent_optimization: "enable"         # OPTIONAL: enable, disable (default: disable)
       packet_report: "enable"                    # OPTIONAL: enable, disable (default: disable)
       burst_attack: "disable"                    # OPTIONAL: enable, disable (default: disable)
-      maximum_interval_between_bursts: 60        # OPTIONAL: 1–60 minutes (default: 10)
+      maximum_interval_between_bursts: 60        # OPTIONAL: 1–10080 minutes (default: 30)
       learning_suppression_threshold: 10         # OPTIONAL: 0–50 (default: 0)
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
@@ -627,18 +624,29 @@ bdos_profiles:
 ### Editing BDoS Profiles (Partial Updates) ###
 ```yaml
 # Edit existing BDoS profiles - ONLY specify what you want to change
+# Note - If you are editing bandwidth and quota same time then you have to run the playbook twice. 
 bdos_profiles:
-  - profile_name: "bdos_comprehensive_example"   # MANDATORY: must specify which profile to edit
+  - name: "BDOS_Profile_50"
     params:
-      action: "report_only"                      # OPTIONAL: Change action only
+      action: "report_only"                      # OPTIONAL: report_only/block_&_report
 
-  - profile_name: "bdos_minimal"                 # MANDATORY
+  - name: "BDOS_Profile_40"
     params:
+      action: "report_only"
       inbound_traffic: 2000000                   # OPTIONAL: Change threshold
       outbound_traffic: 1000000                  # OPTIONAL: Change threshold
+      tcp_in_quota: 80                           # OPTIONAL: 0–100 (% share)
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
 
-  - profile_name: "bdos_custom"                  # MANDATORY
+  - name: "BDOS_Profile_30"
     params:
+      action: "report_only"
       syn_flood: "disable"                       # OPTIONAL: Disable SYN flood detection
       udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
       footprint_strictness: "high"        # OPTIONAL: Update detection sensitivity

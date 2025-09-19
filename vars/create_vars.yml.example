@@ -107,7 +107,7 @@ cl_profiles:
 bdos_profiles:
   - name: "BDOS_Profile_50"
     params:
-      action: "report_only"                   # Options: report_only, block_and_report
+      action: "report_only"                   # Options: report_only, block_&_report
       syn_flood: "enable"                     # Options: enable, disable
       udp_flood: "enable"                     # Options: enable, disable
       igmp_flood: "enable"                    # Options: enable, disable

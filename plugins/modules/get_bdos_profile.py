@@ -1,109 +1,86 @@
 # plugins/modules/get_bdos_profile.py
 """
-Ansible module to fetch DefensePro BDoS profiles via Radware CyberController API.
+Ansible module to fetch DefensePro BDOS profiles via CyberController API.
 
-This module handles retrieval of BDoS Flood profiles with filtering support,
-following the unified pattern from other enhanced modules.
+- Fetches all BDOS (NetFlood) profiles from a DefensePro device.
+- Maps API response values back to user-friendly keys (reverse of create/edit logic).
+- Returns structured response with raw, formatted, and summary data.
 """
-
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.logger import Logger
+from ansible.module_utils.radware_cc import RadwareCC
+
+# Reverse mapping from API field names to user-friendly names
+REVERSE_FIELD_MAP = {
+    "rsNetFloodProfileAction": "action",
+    "rsNetFloodProfileBandwidthIn": "inbound_traffic",
+    "rsNetFloodProfileBandwidthOut": "outbound_traffic",
+    "rsNetFloodProfilePacketReportStatus": "packet_report",
+    "rsNetFloodProfileTcpSynStatus": "syn_flood",
+    "rsNetFloodProfileUdpStatus": "udp_flood",
+    "rsNetFloodProfileIgmpStatus": "igmp_flood",
+    "rsNetFloodProfileIcmpStatus": "icmp_flood",
+    "rsNetFloodProfileTcpFinAckStatus": "tcp_ack_fin_flood",
+    "rsNetFloodProfileTcpRstStatus": "tcp_rst_flood",
+    "rsNetFloodProfileTcpSynAckStatus": "tcp_syn_ack_flood",
+    "rsNetFloodProfileTcpFragStatus": "tcp_frag_flood",
+    "rsNetFloodProfileUdpFragStatus": "udp_frag_flood",
+    "rsNetFloodProfileTransparentOptimization": "transparent_optimization",
+    "rsNetFloodProfileBurstEnabled": "burst_attack",
+    "rsNetFloodProfileNoBurstTimeout": "maximum_interval_between_bursts",
+    "rsNetFloodProfileRateLimit": "bdos_rate_limit",
+    "rsNetFloodProfileUserDefinedRateLimit": "user_defined_rate_limit",
+    "rsNetFloodProfileUserDefinedRateLimitUnit": "user_defined_rate_limit_unit",
+    "rsNetFloodProfileLearningSuppressionThreshold": "learning_suppression_threshold",
+    "rsNetFloodProfileFootprintStrictness": "footprint_strictness",
+    "rsNetFloodProfileLevelOfReuglarzation": "udp_packet_rate_detection_sensitivity",
+    "rsNetFloodProfileAdvUdpDetection": "adv_udp_detection",
+    "rsNetFloodProfileTcpInQuota": "tcp_in_quota",
+    "rsNetFloodProfileUdpInQuota": "udp_in_quota",
+    "rsNetFloodProfileIcmpInQuota": "icmp_in_quota",
+    "rsNetFloodProfileIgmpInQuota": "igmp_in_quota",
+    "rsNetFloodProfileTcpOutQuota": "tcp_out_quota",
+    "rsNetFloodProfileUdpOutQuota": "udp_out_quota",
+    "rsNetFloodProfileIcmpOutQuota": "icmp_out_quota",
+    "rsNetFloodProfileIgmpOutQuota": "igmp_out_quota"
+
+}
+
+# Map API numeric values to user-friendly strings
+REVERSE_ENUM_MAPS = {
+    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_&_report"},
+    "rsNetFloodProfileTcpSynStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileUdpStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileIgmpStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileIcmpStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpFinAckStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpRstStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpSynAckStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpFragStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileUdpFragStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTransparentOptimization": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileBurstEnabled": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfilePacketReportStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileAdvUdpDetection": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
+    "rsNetFloodProfileUserDefinedRateLimitUnit": {"0": "kbps", "1": "mbps", "2": "gbps"},
+    "rsNetFloodProfileLevelOfReuglarzation": {"1": "ignore", "2": "low", "3": "medium", "4": "high"},
+    "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"}
+}
 
 def format_bdos_profile_for_display(raw_profile_data):
     """
-    Convert raw BDoS profile API data to user-friendly format using the same
-    field mappings as create_bdos_profile.py for consistency.
+    Convert raw BDOS API data into user-friendly dictionary
     """
-    
-    # Reverse mappings from API fields to user-friendly names
-    FIELD_MAP_REVERSE = {
-        "rsIDSNewRulesName": "profile_name",
-        "rsIDSNewRulesState": "status",
-        "rsIDSNewRulesAction": "action",
-        "rsIDSNewRulesSource": "source",
-        "rsIDSNewRulesDestination": "destination", 
-        "rsIDSNewRulesDirection": "direction",
-        "rsIDSNewRulesPortmask": "portmask",
-        "rsIDSNewRulesPriority": "priority",
-        "rsIDSNewRulesVlanTagGroup": "vlan_tag_group",
-        "rsIDSNewRulesPacketReportingStatus": "packet_reporting_status",
-        "rsIDSNewRulesPacketReportingEnforcement": "packet_reporting_enforcement",
-        "rsIDSNewRulesPacketTraceStatus": "packet_trace_status",
-        "rsIDSNewRulesPacketTraceEnforcement": "packet_trace_enforcement",
-        
-        # Protection profiles
-        "rsIDSNewRulesProfileNetflood": "netflood_profile",
-        "rsIDSNewRulesProfileAppsec": "appsec_profile", 
-        "rsIDSNewRulesProfileConlmt": "connection_limit_profile",
-        "rsIDSNewRulesProfileStateful": "stateful_profile",
-        "rsIDSNewRulesProfileScanning": "scanning_profile",
-        "rsIDSNewRulesProfileSynprotection": "syn_protection_profile",
-        "rsIDSNewRulesProfileDNS": "dns_profile",
-        "rsIDSNewRulesProfileHttpsflood": "https_flood_profile",
-        "rsIDSNewRulesProfileErtAttackersFeed": "ert_attackers_feed_profile",
-        "rsIDSNewRulesProfileTrafficFilters": "traffic_filters_profile",
-        "rsIDSNewRulesProfileGeoFeed": "geo_feed_profile",
-        "rsIDSNewRulesProfileQdos": "qdos_profile",
-        
-        # CDN settings
-        "rsIDSNewRulesCdnAction": "cdn_action",
-        "rsIDSNewRulesCdnHandling": "cdn_handling",
-        "rsIDSNewRulesCdnHandlingHttps": "cdn_handling_https",
-        "rsIDSNewRulesCdnHandlingSig": "cdn_handling_sig",
-        "rsIDSNewRulesCdnHandlingSyn": "cdn_handling_syn",
-        "rsIDSNewRulesCdnHandlingTF": "cdn_handling_tf",
-        "rsIDSNewRulesCdnTrueIpCustomHdr": "cdn_true_ip_custom_header",
-        "rsIDSNewRulesCdnHdrNotFoundFallback": "cdn_header_not_found_fallback",
-        "rsIDSNewRulesCdnTrueClientIpHdr": "cdn_true_client_ip_header",
-        "rsIDSNewRulesCdnXForwardedForHdr": "cdn_x_forwarded_for_header",
-        "rsIDSNewRulesCdnForwardedHdr": "cdn_forwarded_header",
-        
-        # Other fields
-        "rsIDSNewRulesInstanceId": "instance_id",
-        "rsIDSNewRulesMPLSRDGroup": "mpls_rd_group",
-        "rsIDSQuarantineStatusInPolicy": "quarantine_status",
-        "rsIDSServiceName": "service_name",
-        "rsIDSNewRulesDnsSDAllowListEnforce": "dns_sd_allow_list_enforce"
-    }
-    
-    # Value mappings to human-readable format
-    VALUE_MAPS = {
-        "status": {"1": "enabled", "2": "disabled"},
-        "action": {"0": "report_only", "1": "block_and_report"},
-        "direction": {"1": "inbound", "2": "outbound", "3": "bidirectional"},
-        "packet_reporting_status": {"1": "enabled", "2": "disabled"},
-        "packet_reporting_enforcement": {"1": "enabled", "2": "disabled"},
-        "packet_trace_status": {"1": "enabled", "2": "disabled"},
-        "packet_trace_enforcement": {"1": "enabled", "2": "disabled"},
-        "cdn_action": {"1": "enabled", "2": "disabled"},
-        "cdn_handling": {"1": "enabled", "2": "disabled"},
-        "cdn_handling_https": {"1": "enabled", "2": "disabled"},
-        "cdn_handling_sig": {"1": "enabled", "2": "disabled"},
-        "cdn_handling_syn": {"1": "enabled", "2": "disabled"},
-        "cdn_handling_tf": {"1": "enabled", "2": "disabled"},
-        "cdn_header_not_found_fallback": {"1": "enabled", "2": "disabled"},
-        "cdn_true_client_ip_header": {"1": "enabled", "2": "disabled"},
-        "cdn_x_forwarded_for_header": {"1": "enabled", "2": "disabled"},
-        "cdn_forwarded_header": {"1": "enabled", "2": "disabled"},
-        "quarantine_status": {"1": "enabled", "2": "disabled"},
-        "dns_sd_allow_list_enforce": {"1": "enabled", "2": "disabled"}
-    }
-    
-    formatted = {}
-    
-    for api_field, raw_value in raw_profile_data.items():
-        # Skip empty or null values
-        if not raw_value or raw_value in ["", "OBSOLETE"]:
+    formatted = {"profile_name": raw_profile_data.get("rsNetFloodProfileName", "N/A")}
+    for api_field, user_field in REVERSE_FIELD_MAP.items():
+        value = raw_profile_data.get(api_field)
+        if value is None:
             continue
-            
-        # Get user-friendly field name
-        user_field = FIELD_MAP_REVERSE.get(api_field, api_field)
-        
-        # Apply value mapping if available
-        if user_field in VALUE_MAPS and str(raw_value) in VALUE_MAPS[user_field]:
-            formatted[user_field] = VALUE_MAPS[user_field][str(raw_value)]
+        if api_field in REVERSE_ENUM_MAPS:
+            formatted[user_field] = REVERSE_ENUM_MAPS[api_field].get(str(value), value)
         else:
-            formatted[user_field] = raw_value
-    
+            formatted[user_field] = value
     return formatted
 
 def run_module():
@@ -112,106 +89,56 @@ def run_module():
         dp_ip=dict(type='str', required=True),
         filter_bdos_profile_names=dict(type='list', required=False, default=[])
     )
-    
+
     result = dict(changed=False, response={})
     debug_info = {}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    
-    # Extract provider and setup logging
+
     provider = module.params['provider']
     dp_ip = module.params['dp_ip']
     filter_bdos_profile_names = module.params['filter_bdos_profile_names']
-    
+
     log_level = provider.get('log_level', 'disabled')
-    
-    from ansible.module_utils.logger import Logger
     logger = Logger(verbosity=log_level)
-    
-    debug_info['input'] = {
-        'dp_ip': dp_ip,
-        'filter_bdos_profile_names': filter_bdos_profile_names,
-        'filter_count': len(filter_bdos_profile_names) if filter_bdos_profile_names else 0
-    }
-    
+    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
+                   log_level=log_level, logger=logger)
+
     try:
-        from ansible.module_utils.radware_cc import RadwareCC
-        cc = RadwareCC(provider['cc_ip'], provider['username'], 
-                      provider['password'], log_level=log_level, logger=logger)
-        
-        # Get BDoS profiles from device
-        url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable"
-        
-        logger.info(f"Getting BDoS profile info for device {dp_ip}")
-        if filter_bdos_profile_names:
-            logger.info(f"Filtering for profile names: {filter_bdos_profile_names}")
-        else:
-            logger.info("Getting all BDoS profiles (no filter)")
-        
-        logger.debug(f"Request URL: {url}")
-        
+        url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable"
+        logger.info(f"Fetching BDOS profiles from device {dp_ip}")
         resp = cc._get(url)
         data = resp.json()
-        
-        logger.debug(f"Response status: {resp.status_code}")
-        logger.debug(f"Raw response: {data}")
-        
-        # Process and filter the response
-        bdos_table = data.get('rsIDSNewRulesTable', [])
-        
+
+        profiles_raw = data.get('rsNetFloodProfileTable', [])
+        debug_info['profiles_raw_count'] = len(profiles_raw)
+
+        # Apply filter if provided
         if filter_bdos_profile_names:
-            # Filter by profile names
-            filtered_table = []
-            for entry in bdos_table:
-                profile_name = entry.get('rsIDSNewRulesName', '')
-                if profile_name in filter_bdos_profile_names:
-                    filtered_table.append(entry)
-            
-            logger.info(f"Filtered {len(bdos_table)} entries to {len(filtered_table)} matching profile names")
-            bdos_table = filtered_table
-        else:
-            logger.info(f"Retrieved {len(bdos_table)} BDoS profile entries")
-        
-        # Organize data by profile for better structure
-        profiles_summary = {}
-        formatted_profiles = {}
-        
-        for entry in bdos_table:
-            profile_name = entry.get('rsIDSNewRulesName', '')
-            if profile_name not in profiles_summary:
-                profiles_summary[profile_name] = []
-                formatted_profiles[profile_name] = []
-            
-            profiles_summary[profile_name].append(entry)
-            # Add user-friendly formatted version
-            formatted_entry = format_bdos_profile_for_display(entry)
-            formatted_profiles[profile_name].append(formatted_entry)
-        
+            profiles_raw = [p for p in profiles_raw if p.get('rsNetFloodProfileName') in filter_bdos_profile_names]
+            logger.info(f"Filtered profiles to: {filter_bdos_profile_names}")
+
+        formatted_profiles = [format_bdos_profile_for_display(entry) for entry in profiles_raw]
+
+        profile_names = [p.get("profile_name") for p in formatted_profiles]
+
         result['response'] = {
-            'rsIDSNewRulesTable': bdos_table,
+            'rsNetFloodProfileTable': profiles_raw,
             'formatted_profiles': formatted_profiles,
             'summary': {
-                'total_entries': len(bdos_table),
-                'unique_profiles': len(profiles_summary),
-                'profile_names': list(profiles_summary.keys()),
+                'total_entries': len(profiles_raw),
+                'unique_profiles': len(set(profile_names)),
+                'profile_names': profile_names,
                 'filtered': bool(filter_bdos_profile_names),
                 'filter_applied': filter_bdos_profile_names if filter_bdos_profile_names else None
-            },
-            'profiles_breakdown': profiles_summary
+            }
         }
-        
-        debug_info['summary'] = {
-            'total_entries_retrieved': len(bdos_table),
-            'unique_profiles_found': len(profiles_summary),
-            'filter_applied': bool(filter_bdos_profile_names),
-            'profile_names_found': list(profiles_summary.keys())
-        }
-        
+
+        result['debug_info'] = debug_info
+        module.exit_json(**result)
+
     except Exception as e:
         logger.error(f"Exception: {str(e)}")
         module.fail_json(msg=str(e), debug_info=debug_info, **result)
-    
-    result['debug_info'] = debug_info
-    module.exit_json(**result)
 
 def main():
     run_module()
