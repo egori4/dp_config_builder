@@ -32,3 +32,30 @@ filter_cl_profile_names: ["cl_prof_egor_test10"]  # Set to list of profile names
 # filter_cl_profile_names: ["cl_prof_egor_test10"]  # Show only one profile
 # filter_cl_profile_names: ["cl_prof_egor_test10", "cl_prof_egor_test11"]  # Show multiple profiles
 # filter_cl_profile_names: []  # Show all profiles (default)
+
+###################### Get BDOS Profile ##########################
+# Filter BDoS profiles by name, or leave empty list to include all profiles
+bdos_profiles:
+  - name: "bdos_profile_1"  # Optional: specify profile name to filter
+  - name: "bdos_profile_2"  # Add more profiles as needed
+
+# Notes:
+# - If bdos_profiles is empty, all BDoS profiles on the device(s) will be included
+# - Useful for querying, editing, or deleting specific BDoS profiles
+# - Each entry must include 'name' key
+
+###################### Get DNS Profile ##########################
+# Filter by specific DNS profile names, or leave empty list for all profiles
+
+filter_dns_profile_names: ["dns_profile_1"]
+
+# Examples:
+# filter_dns_profile_names: ["dns_profile_1"]  # Show only one profile
+# filter_dns_profile_names: ["dns_profile_2", "DNS_Profile_2"]  # Show multiple profiles
+# filter_dns_profile_names: []  # Fetch all profiles
+
+# Notes:
+# - If dns_profiles is empty, all DNS profiles on the device(s) will be included
+# - Useful for querying, editing, or deleting specific dns profiles
+# - Each entry must include 'name' key
+

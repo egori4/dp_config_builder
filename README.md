@@ -121,6 +121,15 @@ dp_config_builder/
 | `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
 | `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
 
+### DNS Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
+| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
+| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
+| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
+
+
 ### Connection Limit Profiles
 
 | Playbook | Purpose | Documentation |
@@ -130,31 +139,6 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
-### DNS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
-| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
-| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
-| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
-
-### OOS Profile Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_oos_profile.yml` | Create new OOS profile        | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-oos-profile)  |
-| `edit_oos_profile.yml`   | Modify existing OOS Profile   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-oos-profile)   |
-| `delete_oos_profile.yml` | Remove OOS profile            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-oos-profile) |
-| `get_oos_profile.yml`    | Query current OOS Profile     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-oos-profile)    |
-
-### Security Policy Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
-| `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
-| `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
-| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
 
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
@@ -165,6 +149,15 @@ dp_config_builder/
 -  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
+
+### Security Policy Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-9-create-security-policies-with-profile-bindings) |
+| `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
+| `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
+| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-10-apply-defensepro-policy-updates) |
 
 **Security Policy Features**:
 - **Unified orchestration**: Single playbook creates profiles and security policies
@@ -214,7 +207,6 @@ dp_config_builder/
 # Network Classes Example
 cd vars/
 cp create_vars.yml.example create_vars.yml
-```
 # Edit create_vars.yml with your networks and devices
 ansible-playbook playbooks/create_network_class.yml
 
@@ -230,16 +222,25 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete Connection Limit Profiles (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Create BDoS profiles (uses create_bdos_profile module)
+# Security Policy Creation (using vars/create_vars.yml configuration)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Security Policy Editing (using vars/edit_vars.yml configuration)  
+ansible-playbook playbooks/edit_security_policy.yml
+
+# Security Policy Deletion (using vars/delete_vars.yml configuration)
+ansible-playbook playbooks/delete_security_policy.yml
+
+# Create BDoS Profile
 ansible-playbook playbooks/create_bdos_profile.yml
 
-# Edit existing BDoS profiles (uses edit_bdos_profile module)
+# Edit BDoS Profile (uses edit_bdos_profile module)
 ansible-playbook playbooks/edit_bdos_profile.yml
 
-# Get BDoS profiles (uses get_bdos_profile module)
+# Get BDoS Profile (uses get_bdos_profile module)
 ansible-playbook playbooks/get_bdos_profile.yml
 
-# Delete BDoS profiles (uses delete_bdos_profile module)
+# Delete BDoS Profile (uses delete_bdos_profile module)
 ansible-playbook playbooks/delete_bdos_profile.yml
 
 # Get all DNS profiles from devices
@@ -253,29 +254,14 @@ ansible-playbook playbooks/edit_dns_profile.yml
 
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
-
-# Get all OOS profiles from devices
-ansible-playbook playbooks/get_oos_profile.yml
-
-# Create new OOS profiles
-ansible-playbook playbooks/create_oos_profile.yml
-
-# Edit existing OOS profiles
-ansible-playbook playbooks/edit_oos_profile.yml
-
-# Delete OOS profiles
-ansible-playbook playbooks/delete_oos_profile.yml
-
-# Security Policy Creation (using vars/create_vars.yml configuration)
-ansible-playbook playbooks/create_security_policy.yml
-
-# Security Policy Editing (using vars/edit_vars.yml configuration)  
-ansible-playbook playbooks/edit_security_policy.yml
-
-# Security Policy Deletion (using vars/delete_vars.yml configuration)
-ansible-playbook playbooks/delete_security_policy.yml
+```
 
 
+
+todo 
+
+add get policy
+documentation
 
 ## Version History
 
@@ -288,10 +274,9 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
-| v0.1.5 | Ongoing | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 | Ongoing | Added BDOS functionality|
+| v0.1.3 |       | Resrved for Rahul(BDOS)|
 | v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |

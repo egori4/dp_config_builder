@@ -84,7 +84,109 @@ edit_cl_protections:
 # - packet_report: "enable", "disable" (Detailed packet reporting)
 # - protection_type: "cps", "concurrent_connections" (Detection type: Connections Per Second vs Total Active Connections)
 
-################################## Security Policies Variables ###############################
+########################## Edit BDoS Profile ##########################
+# Define BDOS profiles to create on each device
+bdos_profiles:
+  - name: "BDOS_Profile_5"
+    params:
+      action: "report_only"                  # report_only/block_and_report
+      syn_flood: "enable"                    # enable/disable
+      udp_flood: "enable"                    # enable/disable
+      igmp_flood: "enable"                 # enable/disable
+      icmp_flood: "enable"                   # enable/disable
+      tcp_ack_fin_flood: "enable"          # enable/disable
+      tcp_rst_flood: "enable"              # enable/disable
+      tcp_syn_ack_flood: "enable"          # enable/disable
+      tcp_frag_flood: "enable"             # enable/disable
+      udp_frag_flood: "enable"             # enable/disable
+      inbound_traffic: 1000000               # 1 to 1342177280
+      outbound_traffic: 500000               # 1 to 1342177280
+      tcp_in_quota: 80                        # 0-100
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+      transparent_optimization: "enable"        # enable/disable
+      packet_report: "enable"                # enable/disable
+      burst_attack: "disable"                # enable/disable
+      maximum_interval_between_bursts: 60    # minutes
+      learning_suppression_threshold: 10     # 0-50
+      footprint_strictness: "medium"         # low/medium/high
+      bdos_rate_limit: "user_defined"        # disable/normal_edge/suspect_edge/user_defined
+      user_defined_rate_limit: 500           # 0-4000
+      user_defined_rate_limit_unit: "mbps"   # kbps/mbps/gbps
+      adv_udp_detection: "enable"            # enable/disable
+
+
+################################## DNS Profile Edit Variables ###############################
+# Define DNS profiles to edit
+# Each profile requires name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+```yml
+# List of DefensePro device IPs where profiles will be created
+# DNS profiles to configure
+dns_profiles:
+  - name: "dns_profile_10"
+    params:
+      action: "block_and_report"              # ENUM: report_only, block_and_report
+      expected_qps: 4000                      # Expected QPS (0–400M)
+      max_allow_qps: 6000                     # Maximum allowed QPS
+      manual_trigger: "disable"               # ENUM: enable, disable
+      footprint_strictness: "medium"          # ENUM: low, medium, high
+      packet_report: "enable"                 # ENUM: enable, disable
+      learning_suppression_threshold: 25      # Range: 0–50
+
+      # DNS quotas
+      a_quota: 50                             # A-record quota %
+      mx_quota: 20                            # MX-record quota %
+      ptr_quota: 12                           # PTR-record quota %
+      aaaa_quota: 15                          # AAAA-record quota %
+      text_quota: 2                           # TXT-record quota %
+      soa_quota: 1                            # SOA-record quota %
+      naptr_quota: 1                          # NAPTR-record quota %
+      srv_quota: 1                            # SRV-record quota %
+      other_quota: 1                          # Other-record quota %
+
+      # Status toggles (use enable/disable instead of numeric)
+      a_status: "enable"
+      mx_status: "enable"
+      ptr_status: "enable"
+      aaaa_status: "enable"
+      text_status: "enable"
+      soa_status: "enable"
+      naptr_status: "enable"
+      srv_status: "enable"
+      other_status: "enable"
+
+      # Manual trigger thresholds
+      manual_trigger_act_thresh: 0
+      manual_trigger_term_thresh: 0
+
+# Example: Minimal update for another DNS profile
+#- name: "dns_profile_20"
+#  params:
+#    action: "block_and_report"  
+```
+### Notes for DNS Profiles:
+# name: Mandatory – exact profile name to edit (get from DefensePro UI)
+# Only specify parameters you want to change – unspecified parameters keep their current values
+# Supported DNS Profile Parameters:
+   action: report_only / block_and_report
+   expected_qps, max_allow_qps: numeric thresholds
+   manual_trigger and related fields: enable/disable and thresholds
+   packet_report: enable/disable
+   footprint_strictness: low, medium, high
+   learning_suppression_threshold: 0–50
+   query_name_sensitivity: low, medium, high
+   subdomains_wl_learning: enable/disable
+   Quotas: a_quota, mx_quota, ptr_quota, aaaa_quota, text_quota, soa_quota, naptr_quota, srv_quota, other_quota (0–100)
+   Status toggles: a_status, mx_status, ptr_status, aaaa_status, text_status, soa_status, naptr_status, srv_status, other_status (enable/disable)
+
+
+ ################################## Security Policies Variables ###############################
 # Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
@@ -137,3 +239,4 @@ edit_security_policies:
 # - ert_attackers_feed_profile: "profile_name" (ERT attackers feed profile)
 # - geo_feed_profile: "profile_name" (Geo feed profile)
 # - out_of_state_profile: "profile_name" (Out of state profile)
+  
