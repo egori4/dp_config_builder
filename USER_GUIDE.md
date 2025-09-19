@@ -579,8 +579,7 @@ cl_profiles:
 # Define BDoS profiles to create on each device
 # OPTIONAL: BDoS profiles (only define if creating new ones)
 bdos_profiles:
-  - name: "bdos_profile_5"                       # MANDATORY: Profile name
-    state: "enable"                              # OPTIONAL: enable, disable (default: enable)
+  - name: "BDOS_Profile_50"                      # Mandatory 
     params:
       action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
       syn_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
@@ -627,12 +626,13 @@ bdos_profiles:
 # Edit existing BDoS profiles - ONLY specify what you want to change
 # Note - If you are editing bandwidth and quota same time then you have to run the playbook twice. 
 bdos_profiles:
-  - profile_name: "bdos_comprehensive_example"   # MANDATORY: must specify which profile to edit
+  - name: "BDOS_Profile_50"
     params:
       action: "report_only"                      # OPTIONAL: report_only/block_and_report
 
-  - profile_name: "bdos_minimal"                 # MANDATORY
+  - name: "BDOS_Profile_40"
     params:
+      action: "report_only"
       inbound_traffic: 2000000                   # OPTIONAL: Change threshold
       outbound_traffic: 1000000                  # OPTIONAL: Change threshold
       tcp_in_quota: 80                           # OPTIONAL: 0–100 (% share)
@@ -644,8 +644,9 @@ bdos_profiles:
       icmp_out_quota: 10
       igmp_out_quota: 50
 
-  - profile_name: "bdos_custom"                  # MANDATORY
+  - name: "BDOS_Profile_30"
     params:
+      action: "report_only"
       syn_flood: "disable"                       # OPTIONAL: Disable SYN flood detection
       udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
       footprint_strictness: "high"        # OPTIONAL: Update detection sensitivity
