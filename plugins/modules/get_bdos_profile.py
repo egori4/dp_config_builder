@@ -48,7 +48,7 @@ REVERSE_FIELD_MAP = {
 
 # Map API numeric values to user-friendly strings
 REVERSE_ENUM_MAPS = {
-    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"},
+    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_&_report"},
     "rsNetFloodProfileTcpSynStatus": {"1": "enable", "2": "disable"},
     "rsNetFloodProfileUdpStatus": {"1": "enable", "2": "disable"},
     "rsNetFloodProfileIgmpStatus": {"1": "enable", "2": "disable"},

@@ -581,7 +581,7 @@ cl_profiles:
 bdos_profiles:
   - name: "BDOS_Profile_50"                      # Mandatory 
     params:
-      action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
+      action: "block_&_report"                 # OPTIONAL: report_only, block_&_report (default: block_&_report)
       syn_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
       udp_flood: "enable"                        # OPTIONAL: enable, disable (default: disable)
       igmp_flood: "enable"                       # OPTIONAL: enable, disable (default: disable)
@@ -628,7 +628,7 @@ bdos_profiles:
 bdos_profiles:
   - name: "BDOS_Profile_50"
     params:
-      action: "report_only"                      # OPTIONAL: report_only/block_and_report
+      action: "report_only"                      # OPTIONAL: report_only/block_&_report
 
   - name: "BDOS_Profile_40"
     params:

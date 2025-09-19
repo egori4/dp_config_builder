@@ -92,7 +92,7 @@ edit_cl_protections:
 bdos_profiles:
   - name: "BDOS_Profile_50"
     params:
-      action: "report_only"                  # report_only/block_and_report
+      action: "report_only"                  # report_only/block_&_report
       syn_flood: "enable"                    # enable/disable
       udp_flood: "enable"                    # enable/disable
       igmp_flood: "enable"                 # enable/disable
@@ -136,7 +136,7 @@ bdos_profiles:
 # - Only specify parameters you want to change - unspecified parameters keep their current values
 #
 # ALL SUPPORTED BDoS PROFILE PARAMETERS:
-# - action: "report_only", "block_and_report"
+# - action: "report_only", "block_&_report"
 # - *_flood: "enable", "disable" (Enable or disable detection for specific flood types)
 # - inbound_traffic / outbound_traffic: Max traffic allowed (bps)
 # - *_in_quota / *_out_quota: Traffic quota per protocol (%)

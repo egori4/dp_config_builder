@@ -167,7 +167,7 @@ def map_netflood_profile_parameters(params):
         "tcp_frag_flood": {"enable": "1", "disable": "2"},
         "udp_frag_flood": {"enable": "1", "disable": "2"},
         "transparent_optimization": {"enable": "1", "disable": "2"},
-        "action": {"report_only": "0", "block_and_report": "1"},
+        "action": {"report_only": "0", "block_&_report": "1"},
         "burst_attack": {"enable": "1", "disable": "2"},
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
         "udp_packet_rate_detection_sensitivity": {"ignore": "1", "low": "2", "medium": "3", "high": "4"},

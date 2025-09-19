@@ -67,7 +67,7 @@ REVERSE_ENUM_MAPS = {
     "rsNetFloodProfileUserDefinedRateLimitUnit": {"0": "kbps", "1": "mbps", "2": "gbps"},
     "rsNetFloodProfileLevelOfReuglarzation": {"1": "ignore", "2": "low", "3": "medium", "4": "high"},    
     "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"},
-    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"}
+    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_&_report"}
 }
 
 def reverse_map_params(params):
@@ -264,7 +264,7 @@ def map_netflood_profile_parameters(params):
         "tcp_frag_flood": {"enable": "1", "disable": "2"},
         "udp_frag_flood": {"enable": "1", "disable": "2"},
         "transparent_optimization": {"enable": "1", "disable": "2"},
-        "action": {"report_only": "0", "block_and_report": "1"},
+        "action": {"report_only": "0", "block_&_report": "1"},
         "burst_attack": {"enable": "1", "disable": "2"},
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
         "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
