@@ -65,7 +65,7 @@ REVERSE_ENUM_MAPS = {
     "rsNetFloodProfileAdvUdpDetection": {"1": "enable", "2": "disable"},
     "rsNetFloodProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsNetFloodProfileUserDefinedRateLimitUnit": {"0": "kbps", "1": "mbps", "2": "gbps"},
-    "rsNetFloodProfileLevelOfReuglarzation": {"1": "Ignore", "2": "low", "3": "medium", "4": "high"},    
+    "rsNetFloodProfileLevelOfReuglarzation": {"1": "ignore", "2": "low", "3": "medium", "4": "high"},    
     "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"},
     "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"}
 }
@@ -270,7 +270,7 @@ def map_netflood_profile_parameters(params):
         "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
         "packet_report": {"enable": "1", "disable": "2"},
         "user_defined_rate_limit_unit": {"kbps": "0", "mbps": "1", "gbps": "2"},
-        "udp_packet_rate_detection_sensitivity": {"Ignore": "1", "low": "2", "medium": "3", "high": "4"},
+        "udp_packet_rate_detection_sensitivity": {"ignore": "1", "low": "2", "medium": "3", "high": "4"},
         "adv_udp_detection": {"enable": "1", "disable": "2"}
     }
 
