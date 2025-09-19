@@ -64,7 +64,7 @@ REVERSE_ENUM_MAPS = {
     "rsNetFloodProfileAdvUdpDetection": {"1": "enable", "2": "disable"},
     "rsNetFloodProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsNetFloodProfileUserDefinedRateLimitUnit": {"0": "kbps", "1": "mbps", "2": "gbps"},
-    "rsNetFloodProfileLevelOfReuglarzation": {"1": "Ignore_or_Disable", "2": "low", "3": "medium", "4": "high"},
+    "rsNetFloodProfileLevelOfReuglarzation": {"1": "ignore", "2": "low", "3": "medium", "4": "high"},
     "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"},
     "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"}
 }
