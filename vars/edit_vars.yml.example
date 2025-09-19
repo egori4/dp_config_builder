@@ -88,40 +88,42 @@ edit_cl_protections:
 # Define BDoS profiles to edit
 # Each profile requires profile_name (mandatory) to identify which profile to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
+# Note - If you are editing bandwidth and quota same time then you have to run the playbook twice. 
 bdos_profiles:
-  # Example: Edit BDoS profile "BDOS_Profile_50", changing multiple parameters
-  - profile_name: "BDOS_Profile_50"          # Mandatory: exact name of the profile to edit
-    action: "block_and_report"               # Options: report_only, block_and_report
-    syn_flood: "disable"                     # Options: enable, disable
-    udp_flood: "enable"                      # Options: enable, disable
-    igmp_flood: "disable"                    # Options: enable, disable
-    icmp_flood: "enable"                     # Options: enable, disable
-    tcp_ack_fin_flood: "enable"              # Options: enable, disable
-    tcp_rst_flood: "disable"                 # Options: enable, disable
-    tcp_syn_ack_flood: "enable"              # Options: enable, disable
-    tcp_frag_flood: "enable"                 # Options: enable, disable
-    udp_frag_flood: "disable"                # Options: enable, disable
-    inbound_traffic: 2000000                 # 1 to 1342177280 (bps)
-    outbound_traffic: 1000000                # 1 to 1342177280 (bps)
-    tcp_in_quota: 90                          # 0-100 (%)
-    udp_in_quota: 60                          # 0-100 (%)
-    icmp_in_quota: 20                         # 0-100 (%)
-    igmp_in_quota: 60                         # 0-100 (%)
-    tcp_out_quota: 90                         # 0-100 (%)
-    udp_out_quota: 60                         # 0-100 (%)
-    icmp_out_quota: 20                         # 0-100 (%)
-    igmp_out_quota: 60                         # 0-100 (%)
-    transparent_optimization: "disable"       # Options: enable, disable
-    packet_report: "enable"                   # Options: enable, disable
-    burst_attack: "disable"                   # Options: enable, disable
-    maximum_interval_between_bursts: 20       # Minutes
-    learning_suppression_threshold: 15        # 0-50
-    footprint_strictness: "high"              # Options: low, medium, high
-    udp_packet_rate_detection_sensitivity: "medium"  # Options: Ignore_or_Disable, low, medium, high
-    bdos_rate_limit: "normal_edge"            # Options: disable, normal_edge, suspect_edge, user_defined
-    user_defined_rate_limit: 1000             # 0-4000 (only applicable if bdos_rate_limit=user_defined)
-    user_defined_rate_limit_unit: "mbps"      # Options: kbps, mbps, gbps
-    adv_udp_detection: "enable"               # Options: enable, disable
+  - name: "BDOS_Profile_50"
+    params:
+      action: "report_only"                  # report_only/block_and_report
+      syn_flood: "enable"                    # enable/disable
+      udp_flood: "enable"                    # enable/disable
+      igmp_flood: "enable"                 # enable/disable
+      icmp_flood: "enable"                   # enable/disable
+      tcp_ack_fin_flood: "enable"          # enable/disable
+      tcp_rst_flood: "enable"              # enable/disable
+      tcp_syn_ack_flood: "enable"          # enable/disable
+      tcp_frag_flood: "enable"             # enable/disable
+      udp_frag_flood: "enable"             # enable/disable
+      inbound_traffic: 1000000               # 1 to 1342177280
+      outbound_traffic: 500000               # 1 to 1342177280
+      tcp_in_quota: 80                        # 0-100
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+      transparent_optimization: "enable"        # enable/disable
+      packet_report: "enable"                   # enable/disable
+      burst_attack: "enable"                   # enable/disable
+      maximum_interval_between_bursts: 32       # minutes
+      learning_suppression_threshold: 10        # 0-50
+      footprint_strictness: "medium"            # low/medium/high
+      udp_ packet_rate_detection_sensitivity: "medium"    # Ignore_or_Disable/low/medium/high
+      bdos_rate_limit: "user_defined"           # disable/normal_edge/suspect_edge/user_defined
+      user_defined_rate_limit: 500              # 0-4000
+      user_defined_rate_limit_unit: "mbps"      # kbps/mbps/gbps
+      adv_udp_detection: "enable"               # enable/disable
+
 
   # Example: Edit minimal parameters of another BDoS profile
   # - profile_name: "BDOS_Profile_75"

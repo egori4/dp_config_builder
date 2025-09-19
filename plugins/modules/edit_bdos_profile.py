@@ -206,7 +206,7 @@ def map_netflood_profile_parameters(params):
         "packet_report": "rsNetFloodProfilePacketReportStatus",
         "action": "rsNetFloodProfileAction",
         "burst_attack": "rsNetFloodProfileBurstEnabled",
-        "maximum_interval_between_bursts": "rsNetFloodProfileBurstAttackPeriod",
+        "maximum_interval_between_bursts": "rsNetFloodProfileNoBurstTimeout",
         "learning_suppression_threshold": "rsNetFloodProfileLearningSuppressionThreshold",
         "footprint_strictness": "rsNetFloodProfileFootprintStrictness",
         "bdos_rate_limit": "rsNetFloodProfileRateLimit",

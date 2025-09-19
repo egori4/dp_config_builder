@@ -6,9 +6,84 @@ Phase 1: Create profile + apply bandwidth and core parameters (POST)
 Phase 2: Update quotas (PUT), only if Phase 1 succeeded or bandwidth already exists
 
 Supports check mode, logging, error handling, and detailed debug info.
+Provides user-friendly summary mapping API fields to human-readable names.
 """
 
 from ansible.module_utils.basic import AnsibleModule
+
+# Reverse mapping for user-friendly field names
+REVERSE_FIELD_MAP = {
+    "rsNetFloodProfileTcpSynStatus": "syn_flood",
+    "rsNetFloodProfileUdpStatus": "udp_flood",
+    "rsNetFloodProfileIgmpStatus": "igmp_flood",
+    "rsNetFloodProfileIcmpStatus": "icmp_flood",
+    "rsNetFloodProfileTcpFinAckStatus": "tcp_ack_fin_flood",
+    "rsNetFloodProfileTcpRstStatus": "tcp_rst_flood",
+    "rsNetFloodProfileTcpPshAckStatus": "tcp_psh_ack_flood",
+    "rsNetFloodProfileTcpSynAckStatus": "tcp_syn_ack_flood",
+    "rsNetFloodProfileTcpFragStatus": "tcp_frag_flood",
+    "rsNetFloodProfileUdpFragStatus": "udp_frag_flood",
+    "rsNetFloodProfileTransparentOptimization": "transparent_optimization",
+    "rsNetFloodProfileAction": "action",
+    "rsNetFloodProfileBurstEnabled": "burst_attack",
+    "rsNetFloodProfileFootprintStrictness": "footprint_strictness",
+    "rsNetFloodProfileRateLimit": "bdos_rate_limit",
+    "rsNetFloodProfilePacketReportStatus": "packet_report",
+    "rsNetFloodProfileLevelOfReuglarzation": "udp_packet_rate_detection_sensitivity",
+    "rsNetFloodProfileAdvUdpDetection": "adv_udp_detection",
+    "rsNetFloodProfileBandwidthIn": "inbound_traffic",
+    "rsNetFloodProfileBandwidthOut": "outbound_traffic",
+    "rsNetFloodProfileTcpInQuota": "tcp_in_quota",
+    "rsNetFloodProfileUdpInQuota": "udp_in_quota",
+    "rsNetFloodProfileIcmpInQuota": "icmp_in_quota",
+    "rsNetFloodProfileIgmpInQuota": "igmp_in_quota",
+    "rsNetFloodProfileTcpOutQuota": "tcp_out_quota",
+    "rsNetFloodProfileUdpOutQuota": "udp_out_quota",
+    "rsNetFloodProfileIcmpOutQuota": "icmp_out_quota",
+    "rsNetFloodProfileIgmpOutQuota": "igmp_out_quota",
+    "rsNetFloodProfileNoBurstTimeout": "maximum_interval_between_bursts",
+    "rsNetFloodProfileLearningSuppressionThreshold": "learning_suppression_threshold",
+    "rsNetFloodProfileUserDefinedRateLimit": "user_defined_rate_limit",
+    "rsNetFloodProfileUserDefinedRateLimitUnit": "user_defined_rate_limit_unit"
+}
+
+# Reverse mapping for numeric API values to user-friendly
+REVERSE_ENUM_MAPS = {
+    "rsNetFloodProfileTcpSynStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileUdpStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileIgmpStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileIcmpStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpFinAckStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpRstStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpPshAckStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpSynAckStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTcpFragStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileUdpFragStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileTransparentOptimization": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileBurstEnabled": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfilePacketReportStatus": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileAdvUdpDetection": {"1": "enable", "2": "disable"},
+    "rsNetFloodProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
+    "rsNetFloodProfileUserDefinedRateLimitUnit": {"0": "kbps", "1": "mbps", "2": "gbps"},
+    "rsNetFloodProfileLevelOfReuglarzation": {"1": "Ignore_or_Disable", "2": "low", "3": "medium", "4": "high"},    
+    "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"},
+    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"}
+}
+
+def reverse_map_params(params):
+    """Convert API field names back to user-friendly names."""
+    return {REVERSE_FIELD_MAP.get(k, k): v for k, v in params.items()}
+
+def map_api_values_to_user_friendly(api_params):
+    """Convert numeric API values to enable/disable or report_only/block_and_report."""
+    user_friendly = {}
+    for k, v in api_params.items():
+        name = REVERSE_FIELD_MAP.get(k, k)
+        if k in REVERSE_ENUM_MAPS:
+            user_friendly[name] = REVERSE_ENUM_MAPS[k].get(str(v), v)
+        else:
+            user_friendly[name] = v
+    return user_friendly
 
 def run_module():
     module_args = dict(
@@ -85,7 +160,7 @@ def run_module():
                         "rsNetFloodProfileTcpFinAckStatus", "rsNetFloodProfileTcpFragStatus",
                         "rsNetFloodProfileUdpStatus", "rsNetFloodProfileUdpFragStatus",
                         "rsNetFloodProfileIgmpStatus", "rsNetFloodProfileIcmpStatus",
-                        "rsNetFloodProfileTransparentOptimization",
+                        "rsNetFloodProfileTransparentOptimization", "rsNetFloodProfileLevelOfReuglarzation",
                         "rsNetFloodProfileRateLimit", "rsNetFloodProfileUserDefinedRateLimit",
                         "rsNetFloodProfileUserDefinedRateLimitUnit"
                     ]
@@ -136,7 +211,11 @@ def run_module():
                         'profile_name': profile_name,
                         'status': 'success',
                         'params_applied_phase1': phase1_params,
-                        'params_applied_phase2': phase2_params
+                        'params_applied_phase2': phase2_params,
+                        'user_friendly': {
+                            'phase1': map_api_values_to_user_friendly(phase1_params),
+                            'phase2': map_api_values_to_user_friendly(phase2_params)
+                        }
                     })
 
             result.update({
@@ -190,7 +269,8 @@ def map_netflood_profile_parameters(params):
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
         "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
         "packet_report": {"enable": "1", "disable": "2"},
-        "udp_ packet_rate_detection_sensitivit": {"	Ignore_or_Disable":"1","low": "2", "medium": "3", "high": "4"},
+        "user_defined_rate_limit_unit": {"kbps": "0", "mbps": "1", "gbps": "2"},
+        "udp_ packet_rate_detection_sensitivity": {"Ignore_or_Disable": "1", "low": "2", "medium": "3", "high": "4"},
         "adv_udp_detection": {"enable": "1", "disable": "2"}
     }
 
@@ -211,7 +291,7 @@ def map_netflood_profile_parameters(params):
         "footprint_strictness": "rsNetFloodProfileFootprintStrictness",
         "bdos_rate_limit": "rsNetFloodProfileRateLimit",
         "packet_report": "rsNetFloodProfilePacketReportStatus",
-        "udp_ packet_rate_detection_sensitivit": "rsNetFloodProfileLevelOfReuglarzation",
+        "udp_ packet_rate_detection_sensitivity": "rsNetFloodProfileLevelOfReuglarzation",
         "adv_udp_detection": "rsNetFloodProfileAdvUdpDetection",
         "inbound_traffic": "rsNetFloodProfileBandwidthIn",
         "outbound_traffic": "rsNetFloodProfileBandwidthOut",
