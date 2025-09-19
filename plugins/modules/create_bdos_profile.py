@@ -270,7 +270,7 @@ def map_netflood_profile_parameters(params):
         "bdos_rate_limit": {"disable": "0", "normal_edge": "1", "suspect_edge": "2", "user_defined": "3"},
         "packet_report": {"enable": "1", "disable": "2"},
         "user_defined_rate_limit_unit": {"kbps": "0", "mbps": "1", "gbps": "2"},
-        "udp_ packet_rate_detection_sensitivity": {"Ignore_or_Disable": "1", "low": "2", "medium": "3", "high": "4"},
+        "udp_packet_rate_detection_sensitivity": {"Ignore_or_Disable": "1", "low": "2", "medium": "3", "high": "4"},
         "adv_udp_detection": {"enable": "1", "disable": "2"}
     }
 
