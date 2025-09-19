@@ -12,6 +12,10 @@ from ansible.module_utils.radware_cc import RadwareCC
 
 # Reverse mapping from API field names to user-friendly names
 REVERSE_FIELD_MAP = {
+    "rsNetFloodProfileAction": "action",
+    "rsNetFloodProfileBandwidthIn": "inbound_traffic",
+    "rsNetFloodProfileBandwidthOut": "outbound_traffic",
+    "rsNetFloodProfilePacketReportStatus": "packet_report",
     "rsNetFloodProfileTcpSynStatus": "syn_flood",
     "rsNetFloodProfileUdpStatus": "udp_flood",
     "rsNetFloodProfileIgmpStatus": "igmp_flood",
@@ -22,15 +26,15 @@ REVERSE_FIELD_MAP = {
     "rsNetFloodProfileTcpFragStatus": "tcp_frag_flood",
     "rsNetFloodProfileUdpFragStatus": "udp_frag_flood",
     "rsNetFloodProfileTransparentOptimization": "transparent_optimization",
-    "rsNetFloodProfileAction": "action",
     "rsNetFloodProfileBurstEnabled": "burst_attack",
+    "rsNetFloodProfileNoBurstTimeout": "maximum_interval_between_bursts",
+    "rsNetFloodProfileLearningSuppressionThreshold": "learning_suppression_threshold",
+    "rsNetFloodProfileUserDefinedRateLimit": "user_defined_rate_limit",
+    "rsNetFloodProfileUserDefinedRateLimitUnit": "user_defined_rate_limit_unit",
     "rsNetFloodProfileFootprintStrictness": "footprint_strictness",
     "rsNetFloodProfileRateLimit": "bdos_rate_limit",
-    "rsNetFloodProfilePacketReportStatus": "packet_report",
     "rsNetFloodProfileLevelOfReuglarzation": "udp_packet_rate_detection_sensitivity",
     "rsNetFloodProfileAdvUdpDetection": "adv_udp_detection",
-    "rsNetFloodProfileBandwidthIn": "inbound_traffic",
-    "rsNetFloodProfileBandwidthOut": "outbound_traffic",
     "rsNetFloodProfileTcpInQuota": "tcp_in_quota",
     "rsNetFloodProfileUdpInQuota": "udp_in_quota",
     "rsNetFloodProfileIcmpInQuota": "icmp_in_quota",
@@ -38,15 +42,13 @@ REVERSE_FIELD_MAP = {
     "rsNetFloodProfileTcpOutQuota": "tcp_out_quota",
     "rsNetFloodProfileUdpOutQuota": "udp_out_quota",
     "rsNetFloodProfileIcmpOutQuota": "icmp_out_quota",
-    "rsNetFloodProfileIgmpOutQuota": "igmp_out_quota",
-    "rsNetFloodProfileNoBurstTimeout": "maximum_interval_between_bursts",
-    "rsNetFloodProfileLearningSuppressionThreshold": "learning_suppression_threshold",
-    "rsNetFloodProfileUserDefinedRateLimit": "user_defined_rate_limit",
-    "rsNetFloodProfileUserDefinedRateLimitUnit": "user_defined_rate_limit_unit"
+    "rsNetFloodProfileIgmpOutQuota": "igmp_out_quota"
+
 }
 
 # Map API numeric values to user-friendly strings
 REVERSE_ENUM_MAPS = {
+    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"},
     "rsNetFloodProfileTcpSynStatus": {"1": "enable", "2": "disable"},
     "rsNetFloodProfileUdpStatus": {"1": "enable", "2": "disable"},
     "rsNetFloodProfileIgmpStatus": {"1": "enable", "2": "disable"},
@@ -63,8 +65,7 @@ REVERSE_ENUM_MAPS = {
     "rsNetFloodProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsNetFloodProfileUserDefinedRateLimitUnit": {"0": "kbps", "1": "mbps", "2": "gbps"},
     "rsNetFloodProfileLevelOfReuglarzation": {"1": "ignore", "2": "low", "3": "medium", "4": "high"},
-    "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"},
-    "rsNetFloodProfileAction": {"0": "report_only", "1": "block_and_report"}
+    "rsNetFloodProfileRateLimit": {"0": "disable", "1": "normal_edge", "2": "suspect_edge", "3": "user_defined"}
 }
 
 def format_bdos_profile_for_display(raw_profile_data):
