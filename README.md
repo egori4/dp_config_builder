@@ -291,7 +291,7 @@ ansible-playbook playbooks/delete_security_policy.yml
 | v0.1.5 | Ongoing | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 | Ongoing | Added BDOS functionality|
+| v0.1.3 | 2025-09-18 | Added BDOS functionality|
 | v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
 | v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
 | v0.1.1 | 2025-08-19 | Enhanced logging, session management |
