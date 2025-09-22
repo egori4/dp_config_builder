@@ -372,6 +372,7 @@ ansible-playbook playbooks/get_oos_profile.yml
 nano vars/delete_vars.yml
 ansible-playbook --check playbooks/delete_oos_profile.yml
 ansible-playbook playbooks/delete_oos_profile.yml
+```
 
 ### Workflow 12: Create Security Policies with Profile Bindings
 
