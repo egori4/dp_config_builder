@@ -102,11 +102,11 @@ cl_profiles:
 # Define BDOS profiles to create on each device
 # All parameters use user-friendly values that are automatically mapped to API values
 # You can skip this section if you only want to use existing BDoS profiles
-```yml
+
 bdos_profiles:
   - name: "BDOS_Profile_50"
     params:
-      action: "report_only"                   # Options: report_only, block_and_report
+      action: "report_only"                   # Options: report_only, block_&_report
       syn_flood: "enable"                     # Options: enable, disable
       udp_flood: "enable"                     # Options: enable, disable
       igmp_flood: "enable"                    # Options: enable, disable
@@ -137,7 +137,7 @@ bdos_profiles:
       user_defined_rate_limit: 500             # 0-4000 (rate value)
       user_defined_rate_limit_unit: "mbps"     # Options: kbps, mbps, gbps
       adv_udp_detection: "enable"              # Options: enable, disable
-```
+
 # Parameter Descriptions:
 # - action: What to do when a flood is detected
 # - *_flood: Enable/disable detection of specific attack type
@@ -163,7 +163,6 @@ bdos_profiles:
 # Define DNS profiles to create on each device
 # All parameters use user-friendly values that are automatically mapped to API values
 # You can skip this section if you only want to use existing DNS profiles
-```yml
 # List of DefensePro device IPs where profiles will be created
 # DNS profiles to configure
 create_dns_profiles:
@@ -173,7 +172,6 @@ create_dns_profiles:
       action: "block_&_report"              # ENUM: report_only, block_and_report
       expected_qps: 1000                      # Expected QPS (0–400M)
       max_allow_qps: 5000                     # Maximum allowed QPS
-      manual_trigger: "disable"               # ENUM: enable, disable
       footprint_strictness: "medium"          # ENUM: low, medium, high
       packet_report: "enable"                 # ENUM: enable, disable
       learning_suppression_threshold: 25      # Range: 0–50
@@ -201,6 +199,7 @@ create_dns_profiles:
       other_status: "enable"
 
       # Manual trigger thresholds
+      manual_trigger: "disable"               # ENUM: enable, disable
       manual_trigger_act_thresh: 0
       manual_trigger_term_thresh: 0
 
@@ -241,7 +240,6 @@ create_dns_profiles:
       manual_trigger_act_thresh: 0
       manual_trigger_term_thresh: 0
 
-```
 ### Parameter Descriptions:
 # - action: What to do when DNS traffic anomaly is detected
 # - expected_qps / max_allow_qps: Thresholds for query rates

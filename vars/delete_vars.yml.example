@@ -90,36 +90,37 @@ cl_protection_deletions:
 # - Delete other standalone protections
 # - Define both sections with different protection names
 
-####################### BDoS Profile Deletions ##################
-# OPTIONAL: Remove BDoS profiles from devices
-# Note: Only specify profiles to delete by name
-
+###################### BDOS Profile Deletions ##########################
+# Define BDOS profiles to delete on each device
 bdos_profiles:
-  - profile_name: "BDOS_Profile_50"
-  - profile_name: "BDOS_Profile_51"
+  - name: "bdos_profile_1"  # MANDATORY: Policy name to delete
+  - name: "bdos_profile_2"
 
-## BDoS Profile Deletion Notes:
-- profile_name: The exact name of the BDoS profile to delete
-- Only specify the profiles you want to remove; all others remain untouched
-- Use get_bdos_profile module to discover existing profiles
-- The playbook will delete all combinations of dp_ip × bdos_profile_deletions
-- Deletion is permanent – ensure you have backups or exported configurations if needed
+# BDoS Profile Deletion Notes:
+# - name: The name of the BDoS profile to delete (as configured on the device)
+# - The playbook will delete all combinations of dp_ip × bdos_profiles
+# - Deletion is permanent - ensure you have backups if needed
+# - If a BDoS profile is attached to protections or policies, ensure it is detached before deletion
+# - Use the get_bdos_profiles module (if available) to discover existing BDoS profiles
+# - Order of operations: Remove BDoS profile from all associations before deleting the profile itself
+# - You can mix BDoS profile deletions with other deletions in the same playbook run
+
 
 ##################### DNS Profile Deletions #######################
 # OPTIONAL: Remove DNS profiles from devices
 # Note: Only specify profiles to delete by name
 
-dns_profiles:
+delete_dns_profiles:
   - name: "dns_profile_10"  # MANDATORY: Policy name to delete
   - name: "dns_profile_2"
 
 
 ## DNS Profile Deletion Notes:
-- profile_name: The exact name of the DNS profile to delete
-- Only specify the profiles you want to remove; all others remain untouched
-- Use get_dns_profile module to discover existing profiles
-- The playbook will delete all combinations of dp_ip × dns_profile_deletions
-- Deletion is permanent – ensure you have backups or exported configurations if needed
+# - name: The exact name of the DNS profile to delete
+# - Only specify the profiles you want to remove; all others remain untouched
+# - Use get_dns_profile module to discover existing profiles
+# - The playbook will delete all combinations of dp_ip × dns_profile_deletions
+# - Deletion is permanent – ensure you have backups or exported configurations if needed
 
 
 ########################## Security Policy Deletions ########################
@@ -145,4 +146,3 @@ delete_security_policies:
 # - deletion_mode: OPTIONAL - Controls deletion behavior:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
 #   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
-# 

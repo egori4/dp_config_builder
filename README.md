@@ -165,10 +165,10 @@ dp_config_builder/
 
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
-| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-9-create-security-policies-with-profile-bindings) |
+| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
 | `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
 | `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
-| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-10-apply-defensepro-policy-updates) |
+| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
 
 **Security Policy Features**:
 - **Unified orchestration**: Single playbook creates profiles and security policies
@@ -218,6 +218,7 @@ dp_config_builder/
 # Network Classes Example
 cd vars/
 cp create_vars.yml.example create_vars.yml
+```
 # Edit create_vars.yml with your networks and devices
 ansible-playbook playbooks/create_network_class.yml
 
@@ -286,14 +287,8 @@ ansible-playbook playbooks/edit_security_policy.yml
 
 # Security Policy Deletion (using vars/delete_vars.yml configuration)
 ansible-playbook playbooks/delete_security_policy.yml
-```
 
 
-
-todo 
-
-add get policy
-documentation
 
 ## Version History
 
@@ -306,6 +301,7 @@ documentation
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
 | v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |

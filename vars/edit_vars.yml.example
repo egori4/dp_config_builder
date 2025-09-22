@@ -158,64 +158,66 @@ bdos_profiles:
 # Define DNS profiles to edit
 # Each profile requires name (mandatory) to identify which profile to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
-```yml
+
 dns_profiles:
   # Example: Edit DNS profile "DNS_Profile_50", changing multiple parameters
   - name: "DNS_Profile_50"                 # Mandatory: exact name of the profile to edit
-    action: "block_and_report"             # Options: report_only, block_and_report
-    expected_qps: 5000                      # 1 to 4000000
-    max_allow_qps: 10000                    # 1 to 4000000
-    manual_trigger: "disable"               # Options: enable, disable
-    manual_trigger_act_thresh: 1000
-    manual_trigger_term_thresh: 0
-    manual_trigger_max_qps_target: 0
-    packet_report: "enable"                # Options: enable, disable
-    packet_trace: "disable"                # Options: enable, disable
-    footprint_strictness: "high"           # Options: low, medium, high
-    learning_suppression_threshold: 20     # 0–50
-    query_name_sensitivity: "medium"       # Options: low, medium, high
-    subdomains_wl_learning: "enable"       # Options: enable, disable
+    params:
+      action: "block_and_report"             # Options: report_only, block_and_report
+      expected_qps: 5000                      # 1 to 4000000
+      max_allow_qps: 10000                    # 1 to 4000000
+      manual_trigger: "disable"               # Options: enable, disable
+      manual_trigger_act_thresh: 1000
+      manual_trigger_term_thresh: 0
+      manual_trigger_max_qps_target: 0
+      packet_report: "enable"                # Options: enable, disable
+      packet_trace: "disable"                # Options: enable, disable
+      footprint_strictness: "high"           # Options: low, medium, high
+      learning_suppression_threshold: 20     # 0–50
+      query_name_sensitivity: "medium"       # Options: low, medium, high
+      subdomains_wl_learning: "enable"       # Options: enable, disable
 
-    # Quotas and status toggles
-    a_quota: 50                             # 0–100 (%)
-    mx_quota: 30
-    ptr_quota: 20
-    aaaa_quota: 25
-    text_quota: 15
-    soa_quota: 10
-    naptr_quota: 5
-    srv_quota: 5
-    other_quota: 5
+      # Quotas and status toggles
+      a_quota: 50                             # 0–100 (%)
+      mx_quota: 30
+      ptr_quota: 20
+      aaaa_quota: 25
+      text_quota: 15
+      soa_quota: 10
+      naptr_quota: 5
+      srv_quota: 5
+      other_quota: 5
 
-    a_status: "enable"                      # Options: enable, disable
-    mx_status: "disable"
-    ptr_status: "enable"
-    aaaa_status: "enable"
-    text_status: "disable"
-    soa_status: "enable"
-    naptr_status: "disable"
-    srv_status: "enable"
-    other_status: "disable"
+      a_status: "enable"                      # Options: enable, disable
+      mx_status: "disable"
+      ptr_status: "enable"
+      aaaa_status: "enable"
+      text_status: "disable"
+      soa_status: "enable"
+      naptr_status: "disable"
+      srv_status: "enable"
+      other_status: "disable"
 
   # Example: Minimal update for another DNS profile
   # - name: "DNS_Profile_75"
-  #   action: "report_only"
-  #   expected_qps: 2000
-```
+    #  params:
+    #   action: "report_only"
+    #   expected_qps: 2000
+
 ### Notes for DNS Profiles:
 # name: Mandatory – exact profile name to edit (get from DefensePro UI)
 # Only specify parameters you want to change – unspecified parameters keep their current values
 # Supported DNS Profile Parameters:
-   action: report_only / block_and_report
-   expected_qps, max_allow_qps: numeric thresholds
-   manual_trigger and related fields: enable/disable and thresholds
-   packet_report: enable/disable
-   footprint_strictness: low, medium, high
-   learning_suppression_threshold: 0–50
-   query_name_sensitivity: low, medium, high
-   subdomains_wl_learning: enable/disable
-   Quotas: a_quota, mx_quota, ptr_quota, aaaa_quota, text_quota, soa_quota, naptr_quota, srv_quota, other_quota (0–100)
-   Status toggles: a_status, mx_status, ptr_status, aaaa_status, text_status, soa_status, naptr_status, srv_status, other_status (enable/disable)
+#   action: report_only / block_and_report
+#   expected_qps, max_allow_qps: numeric thresholds
+#   manual_trigger and related fields: enable/disable and thresholds
+#   packet_report: enable/disable
+#   footprint_strictness: low, medium, high
+#   learning_suppression_threshold: 0–50
+#   query_name_sensitivity: low, medium, high
+#   subdomains_wl_learning: enable/disable
+#   Quotas: a_quota, mx_quota, ptr_quota, aaaa_quota, text_quota, soa_quota, naptr_quota, srv_quota, other_quota (0–100)
+#   Status toggles: a_status, mx_status, ptr_status, aaaa_status, text_status, soa_status, naptr_status, srv_status, other_status (enable/disable)
 
 
 ################################## OOS Profile Edit Variables ###############################
