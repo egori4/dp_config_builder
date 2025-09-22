@@ -11,3 +11,4 @@ ansible.cfg
 playbooks/log
 tmp/
 *__pycache__/
+.vscode/

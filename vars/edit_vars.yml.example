@@ -186,7 +186,249 @@ dns_profiles:
    Status toggles: a_status, mx_status, ptr_status, aaaa_status, text_status, soa_status, naptr_status, srv_status, other_status (enable/disable)
 
 
- ################################## Security Policies Variables ###############################
+ ################################## BDoS Profile Edit Variables ###############################
+# Define BDoS profiles to edit
+# Each profile requires profile_name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+# Note - If you are editing bandwidth and quota same time then you have to run the playbook twice. 
+bdos_profiles:
+  - name: "BDOS_Profile_50"
+    params:
+      action: "report_only"                  # report_only/block_&_report
+      syn_flood: "enable"                    # enable/disable
+      udp_flood: "enable"                    # enable/disable
+      igmp_flood: "enable"                 # enable/disable
+      icmp_flood: "enable"                   # enable/disable
+      tcp_ack_fin_flood: "enable"          # enable/disable
+      tcp_rst_flood: "enable"              # enable/disable
+      tcp_syn_ack_flood: "enable"          # enable/disable
+      tcp_frag_flood: "enable"             # enable/disable
+      udp_frag_flood: "enable"             # enable/disable
+      inbound_traffic: 1000000               # 1 to 1342177280
+      outbound_traffic: 500000               # 1 to 1342177280
+      tcp_in_quota: 80                        # 0-100
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+      transparent_optimization: "enable"        # enable/disable
+      packet_report: "enable"                   # enable/disable
+      burst_attack: "enable"                   # enable/disable
+      maximum_interval_between_bursts: 32       # minutes
+      learning_suppression_threshold: 10        # 0-50
+      footprint_strictness: "medium"            # low/medium/high
+      udp_packet_rate_detection_sensitivity: "medium"    # ignore/low/medium/high
+      bdos_rate_limit: "user_defined"           # disable/normal_edge/suspect_edge/user_defined
+      user_defined_rate_limit: 500              # 0-4000
+      user_defined_rate_limit_unit: "mbps"      # kbps/mbps/gbps
+      adv_udp_detection: "enable"               # enable/disable
+
+
+  # Example: Edit minimal parameters of another BDoS profile
+  # - profile_name: "BDOS_Profile_75"
+  #   action: "report_only"
+  #   inbound_traffic: 1500000
+  #   outbound_traffic: 750000
+
+# Notes for BDoS Profiles:
+# - profile_name: Mandatory - exact profile name to edit (get from DefensePro UI)
+# - Only specify parameters you want to change - unspecified parameters keep their current values
+#
+# ALL SUPPORTED BDoS PROFILE PARAMETERS:
+# - action: "report_only", "block_&_report"
+# - *_flood: "enable", "disable" (Enable or disable detection for specific flood types)
+# - inbound_traffic / outbound_traffic: Max traffic allowed (bps)
+# - *_in_quota / *_out_quota: Traffic quota per protocol (%)
+# - transparent_optimization: "enable", "disable"
+# - packet_report: "enable", "disable"
+# - burst_attack: "enable", "disable"
+# - maximum_interval_between_bursts: Interval in minutes
+# - learning_suppression_threshold: 0-50
+# - footprint_strictness: "low", "medium", "high"
+# - udp_packet_rate_detection_sensitivity: "Ignore_or_Disable", "low", "medium", "high"
+# - bdos_rate_limit: "disable", "normal_edge", "suspect_edge", "user_defined"
+# - user_defined_rate_limit: Numeric value 0-4000 (only if user_defined)
+# - user_defined_rate_limit_unit: "kbps", "mbps", "gbps"
+# - adv_udp_detection: "enable", "disable"
+
+################################## BDoS Profile Edit Variables ###############################
+# Define BDoS profiles to edit
+# Each profile requires profile_name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+# Note - If you are editing bandwidth and quota same time then you have to run the playbook twice. 
+bdos_profiles:
+  - name: "BDOS_Profile_50"
+    params:
+      action: "report_only"                  # report_only/block_&_report
+      syn_flood: "enable"                    # enable/disable
+      udp_flood: "enable"                    # enable/disable
+      igmp_flood: "enable"                 # enable/disable
+      icmp_flood: "enable"                   # enable/disable
+      tcp_ack_fin_flood: "enable"          # enable/disable
+      tcp_rst_flood: "enable"              # enable/disable
+      tcp_syn_ack_flood: "enable"          # enable/disable
+      tcp_frag_flood: "enable"             # enable/disable
+      udp_frag_flood: "enable"             # enable/disable
+      inbound_traffic: 1000000               # 1 to 1342177280
+      outbound_traffic: 500000               # 1 to 1342177280
+      tcp_in_quota: 80                        # 0-100
+      udp_in_quota: 50
+      icmp_in_quota: 10
+      igmp_in_quota: 50
+      tcp_out_quota: 80
+      udp_out_quota: 50
+      icmp_out_quota: 10
+      igmp_out_quota: 50
+      transparent_optimization: "enable"        # enable/disable
+      packet_report: "enable"                   # enable/disable
+      burst_attack: "enable"                   # enable/disable
+      maximum_interval_between_bursts: 32       # minutes
+      learning_suppression_threshold: 10        # 0-50
+      footprint_strictness: "medium"            # low/medium/high
+      udp_packet_rate_detection_sensitivity: "medium"    # ignore/low/medium/high
+      bdos_rate_limit: "user_defined"           # disable/normal_edge/suspect_edge/user_defined
+      user_defined_rate_limit: 500              # 0-4000
+      user_defined_rate_limit_unit: "mbps"      # kbps/mbps/gbps
+      adv_udp_detection: "enable"               # enable/disable
+
+
+  # Example: Edit minimal parameters of another BDoS profile
+  # - profile_name: "BDOS_Profile_75"
+  #   action: "report_only"
+  #   inbound_traffic: 1500000
+  #   outbound_traffic: 750000
+
+# Notes for BDoS Profiles:
+# - profile_name: Mandatory - exact profile name to edit (get from DefensePro UI)
+# - Only specify parameters you want to change - unspecified parameters keep their current values
+#
+# ALL SUPPORTED BDoS PROFILE PARAMETERS:
+# - action: "report_only", "block_&_report"
+# - *_flood: "enable", "disable" (Enable or disable detection for specific flood types)
+# - inbound_traffic / outbound_traffic: Max traffic allowed (bps)
+# - *_in_quota / *_out_quota: Traffic quota per protocol (%)
+# - transparent_optimization: "enable", "disable"
+# - packet_report: "enable", "disable"
+# - burst_attack: "enable", "disable"
+# - maximum_interval_between_bursts: Interval in minutes
+# - learning_suppression_threshold: 0-50
+# - footprint_strictness: "low", "medium", "high"
+# - udp_packet_rate_detection_sensitivity: "Ignore_or_Disable", "low", "medium", "high"
+# - bdos_rate_limit: "disable", "normal_edge", "suspect_edge", "user_defined"
+# - user_defined_rate_limit: Numeric value 0-4000 (only if user_defined)
+# - user_defined_rate_limit_unit: "kbps", "mbps", "gbps"
+# - adv_udp_detection: "enable", "disable"
+
+
+################################## DNS Profile Edit Variables ###############################
+# Define DNS profiles to edit
+# Each profile requires name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+```yml
+dns_profiles:
+  # Example: Edit DNS profile "DNS_Profile_50", changing multiple parameters
+  - name: "DNS_Profile_50"                 # Mandatory: exact name of the profile to edit
+    action: "block_and_report"             # Options: report_only, block_and_report
+    expected_qps: 5000                      # 1 to 4000000
+    max_allow_qps: 10000                    # 1 to 4000000
+    manual_trigger: "disable"               # Options: enable, disable
+    manual_trigger_act_thresh: 1000
+    manual_trigger_term_thresh: 0
+    manual_trigger_max_qps_target: 0
+    packet_report: "enable"                # Options: enable, disable
+    packet_trace: "disable"                # Options: enable, disable
+    footprint_strictness: "high"           # Options: low, medium, high
+    learning_suppression_threshold: 20     # 0–50
+    query_name_sensitivity: "medium"       # Options: low, medium, high
+    subdomains_wl_learning: "enable"       # Options: enable, disable
+
+    # Quotas and status toggles
+    a_quota: 50                             # 0–100 (%)
+    mx_quota: 30
+    ptr_quota: 20
+    aaaa_quota: 25
+    text_quota: 15
+    soa_quota: 10
+    naptr_quota: 5
+    srv_quota: 5
+    other_quota: 5
+
+    a_status: "enable"                      # Options: enable, disable
+    mx_status: "disable"
+    ptr_status: "enable"
+    aaaa_status: "enable"
+    text_status: "disable"
+    soa_status: "enable"
+    naptr_status: "disable"
+    srv_status: "enable"
+    other_status: "disable"
+
+  # Example: Minimal update for another DNS profile
+  # - name: "DNS_Profile_75"
+  #   action: "report_only"
+  #   expected_qps: 2000
+```
+### Notes for DNS Profiles:
+# name: Mandatory – exact profile name to edit (get from DefensePro UI)
+# Only specify parameters you want to change – unspecified parameters keep their current values
+# Supported DNS Profile Parameters:
+   action: report_only / block_and_report
+   expected_qps, max_allow_qps: numeric thresholds
+   manual_trigger and related fields: enable/disable and thresholds
+   packet_report: enable/disable
+   footprint_strictness: low, medium, high
+   learning_suppression_threshold: 0–50
+   query_name_sensitivity: low, medium, high
+   subdomains_wl_learning: enable/disable
+   Quotas: a_quota, mx_quota, ptr_quota, aaaa_quota, text_quota, soa_quota, naptr_quota, srv_quota, other_quota (0–100)
+   Status toggles: a_status, mx_status, ptr_status, aaaa_status, text_status, soa_status, naptr_status, srv_status, other_status (enable/disable)
+
+
+################################## OOS Profile Edit Variables ###############################
+# Define OOS profiles to edit
+# Each profile requires name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+
+oos_profiles:
+  # Example: Edit OOS profile "oos_profile_50", changing multiple parameters
+  - name: "OOS_Profile_1"                  # Mandatory: exact profile name
+    params:
+      action: block_and_report             # Options: report_only, block_and_report
+      act_threshold: 5000                  # Optional numeric threshold      
+      term_threshold: 4000                 # Optional numeric threshold
+      risk: "high"                         # Options: info,low, medium, high
+      idle_state: "enable"                 # Options: enable, disable
+      syn_ack_allow: enable                # Options: enable, disable
+      packet_report: enable                # Options: enable, disable
+      idle_state: disable                  # Options: enable, disable
+      idle_state_bandwidth_threshold: 10000 # Optional numeric threshold
+      idle_state_timer: 10                  # Optional numeric threshold
+
+  # Example: Minimal update for another OOS profile
+  #- name: "OOS_Profile_1"                  # Mandatory: exact profile name
+  #  params:
+  #    action: block_and_report             # Options: report_only, block_and_report
+  #    act_threshold: 5000                  # Optional numeric threshold      
+  #    term_threshold: 4000 
+
+# Notes for OOS Profiles:
+
+# name: Mandatory – exact profile name to edit (use get_oos_profile to verify)
+# Only specify parameters you want to change – unspecified parameters remain unchanged
+# Supported OOS Profile Parameters:
+        # action: report_only / block_and_report
+        # syn_ack_allow: enable / disable
+        # packet_report: enable / disable
+        # idle_state: enable / disable
+        # idle_state_bandwidth_threshold: numeric value
+        # idle_state_timer: numeric value
+        # act_threshold: numeric value
+        # term_threshold: numeric value
+
+################################## Security Policies Variables ###############################
 # Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
@@ -239,4 +481,3 @@ edit_security_policies:
 # - ert_attackers_feed_profile: "profile_name" (ERT attackers feed profile)
 # - geo_feed_profile: "profile_name" (Geo feed profile)
 # - out_of_state_profile: "profile_name" (Out of state profile)
-  
