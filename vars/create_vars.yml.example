@@ -207,7 +207,7 @@ create_dns_profiles:
   - name: "dns_profile_20"
     params:
       # Core settings
-      action: "block_&_report"              # ENUM: report_only, block_and_report
+      action: "block_&_report"              # ENUM: report_only, block_&_report
       expected_qps: 1000                      # Expected QPS (0–400M)
       max_allow_qps: 5000                     # Maximum allowed QPS
       manual_trigger: "disable"               # ENUM: enable, disable

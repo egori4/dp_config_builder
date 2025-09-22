@@ -160,47 +160,42 @@ bdos_profiles:
 # Only specify parameters you want to change - unspecified parameters remain unchanged
 ```yml
 dns_profiles:
-  # Example: Edit DNS profile "DNS_Profile_50", changing multiple parameters
-  - name: "DNS_Profile_50"                 # Mandatory: exact name of the profile to edit
-    action: "block_and_report"             # Options: report_only, block_and_report
-    expected_qps: 5000                      # 1 to 4000000
-    max_allow_qps: 10000                    # 1 to 4000000
-    manual_trigger: "disable"               # Options: enable, disable
-    manual_trigger_act_thresh: 1000
-    manual_trigger_term_thresh: 0
-    manual_trigger_max_qps_target: 0
-    packet_report: "enable"                # Options: enable, disable
-    packet_trace: "disable"                # Options: enable, disable
-    footprint_strictness: "high"           # Options: low, medium, high
-    learning_suppression_threshold: 20     # 0–50
-    query_name_sensitivity: "medium"       # Options: low, medium, high
-    subdomains_wl_learning: "enable"       # Options: enable, disable
+  - name: "dns_profile_10"
+    params:
+      # Core settings
+      action: "block_&_report"              # ENUM: report_only, block_&_report
+      expected_qps: 1000                      # Expected QPS (0–4000000)
+      max_allow_qps: 5000                     # Maximum allowed QPS
+      manual_trigger: "disable"               # ENUM: enable, disable
+      footprint_strictness: "medium"          # ENUM: low, medium, high
+      packet_report: "enable"                 # ENUM: enable, disable
+      learning_suppression_threshold: 25      # Range: 0–50
 
-    # Quotas and status toggles
-    a_quota: 50                             # 0–100 (%)
-    mx_quota: 30
-    ptr_quota: 20
-    aaaa_quota: 25
-    text_quota: 15
-    soa_quota: 10
-    naptr_quota: 5
-    srv_quota: 5
-    other_quota: 5
+      # DNS quotas
+      a_quota: 50                             # A-record quota %
+      mx_quota: 20                            # MX-record quota %
+      ptr_quota: 12                           # PTR-record quota %
+      aaaa_quota: 15                          # AAAA-record quota %
+      text_quota: 2                           # TXT-record quota %
+      soa_quota: 1                            # SOA-record quota %
+      naptr_quota: 1                          # NAPTR-record quota %
+      srv_quota: 1                            # SRV-record quota %
+      other_quota: 1                          # Other-record quota %
 
-    a_status: "enable"                      # Options: enable, disable
-    mx_status: "disable"
-    ptr_status: "enable"
-    aaaa_status: "enable"
-    text_status: "disable"
-    soa_status: "enable"
-    naptr_status: "disable"
-    srv_status: "enable"
-    other_status: "disable"
+      # Status toggles (use enable/disable instead of numeric)
+      a_status: "enable"
+      mx_status: "enable"
+      ptr_status: "enable"
+      aaaa_status: "enable"
+      text_status: "enable"
+      soa_status: "enable"
+      naptr_status: "enable"
+      srv_status: "enable"
+      other_status: "enable"
 
-  # Example: Minimal update for another DNS profile
-  # - name: "DNS_Profile_75"
-  #   action: "report_only"
-  #   expected_qps: 2000
+      # Manual trigger thresholds, termination thre
+      manual_trigger_act_thresh: 6000
+      manual_trigger_term_thresh: 5000
 ```
 ### Notes for DNS Profiles:
 # name: Mandatory – exact profile name to edit (get from DefensePro UI)

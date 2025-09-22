@@ -99,11 +99,11 @@ bdos_profiles:
   - profile_name: "BDOS_Profile_51"
 
 ## BDoS Profile Deletion Notes:
-- profile_name: The exact name of the BDoS profile to delete
-- Only specify the profiles you want to remove; all others remain untouched
-- Use get_bdos_profile module to discover existing profiles
-- The playbook will delete all combinations of dp_ip × bdos_profile_deletions
-- Deletion is permanent – ensure you have backups or exported configurations if needed
+# profile_name: The exact name of the BDoS profile to delete
+# Only specify the profiles you want to remove; all others remain untouched
+# Use get_bdos_profile module to discover existing profiles
+# The playbook will delete all combinations of dp_ip × bdos_profile_deletions
+# Deletion is permanent – ensure you have backups or exported configurations if needed
 
 ##################### DNS Profile Deletions #######################
 # OPTIONAL: Remove DNS profiles from devices
@@ -115,11 +115,11 @@ dns_profiles:
 
 
 ## DNS Profile Deletion Notes:
-- profile_name: The exact name of the DNS profile to delete
-- Only specify the profiles you want to remove; all others remain untouched
-- Use get_dns_profile module to discover existing profiles
-- The playbook will delete all combinations of dp_ip × dns_profile_deletions
-- Deletion is permanent – ensure you have backups or exported configurations if needed
+# profile_name: The exact name of the DNS profile to delete
+# Only specify the profiles you want to remove; all others remain untouched
+# Use get_dns_profile module to discover existing profiles
+# The playbook will delete all combinations of dp_ip × dns_profile_deletions
+# Deletion is permanent – ensure you have backups or exported configurations if needed
 
 
 ########################## Security Policy Deletions ########################
