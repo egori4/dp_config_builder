@@ -82,18 +82,6 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
 
-# Get all DNS profiles from devices
-ansible-playbook playbooks/get_dns_profile.yml
-
-# Create new DNS profiles
-ansible-playbook playbooks/create_dns_profile.yml
-
-# Edit existing DNS profiles
-ansible-playbook playbooks/edit_dns_profile.yml
-
-# Delete DNS profiles
-ansible-playbook playbooks/delete_dns_profile.yml
-
 # Get all OOS profiles from devices
 ansible-playbook playbooks/get_oos_profile.yml
 
@@ -105,6 +93,18 @@ ansible-playbook playbooks/edit_oos_profile.yml
 
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
+
+# Get all DNS profiles from devices
+ansible-playbook playbooks/get_dns_profile.yml
+
+# Create new DNS profiles
+ansible-playbook playbooks/create_dns_profile.yml
+
+# Edit existing DNS profiles
+ansible-playbook playbooks/edit_dns_profile.yml
+
+# Delete DNS profiles
+ansible-playbook playbooks/delete_dns_profile.yml
 
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
 ansible-playbook playbooks/create_security_policy.yml
@@ -655,12 +655,12 @@ cl_profiles:
       - "legacy_protection"          # Already exists on device
 ```
 
+
 ### Create BDOS Profile configuration ###
 ```yaml
-# Define BDoS profiles to create on each device
-# OPTIONAL: BDoS profiles (only define if creating new ones)
+# OPTIONAL: Define BDoS profiles (only define if creating new ones)
 bdos_profiles:
-  - name: "bdos_profile_5"                       # MANDATORY: Profile name
+  - name: "bdos_profile_5"           # MANDATORY: Profile name
     state: "enable"                              # OPTIONAL: enable, disable (default: enable)
     params:
       action: "block_and_report"                 # OPTIONAL: report_only, block_and_report (default: block_and_report)
@@ -693,7 +693,7 @@ bdos_profiles:
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
       user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
-      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
+      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high      
       user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
       adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
 
@@ -720,16 +720,16 @@ bdos_profiles:
     params:
       syn_flood: "disable"                       # OPTIONAL: Disable SYN flood detection
       udp_flood: "enable"                        # OPTIONAL: Enable UDP flood detection
-      footprint_strictness: "high"        # OPTIONAL: Update detection sensitivity
-      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high
+      footprint_strictness: "high"               # OPTIONAL: Update detection sensitivity
     # All other parameters remain unchanged
 ```
+
+
 #### Get BDoS Profiles  ####
 ```yaml
 # Get all BDoS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_bdos_profile.yml
-
 # Filter by specific profile names (configure in get_vars.yml)
 filter_bdos_profile_names: ["BDOS_Profile_5", "BDOS_Profile_6"]  # Show only these profiles
 # filter_bdos_profile_names: []                                # Show all profiles (default)
@@ -763,7 +763,7 @@ dns_profiles:
   - name: "dns_profile_1"               # MANDATORY: Profile name
     state: "enable"                     # OPTIONAL: enable, disable (default: enable)
     params:
-      action: "block_and_report"        # OPTIONAL: report_only, block_and_report (default: block_and_report)
+      action: "block_&_report"        # OPTIONAL: report_only, block_&_report (default: block_and_report)
       expected_qps: 1000                # OPTIONAL: 0–400000000 (default: 0)
       max_allow_qps: 5000               # OPTIONAL: 0–400000000 (default: 0)
 
@@ -775,16 +775,13 @@ dns_profiles:
       manual_trigger_act_period: 30     # OPTIONAL: seconds
       manual_trigger_term_period: 15
       manual_trigger_escalate_period: 60
-
       # Logging / debug
       packet_report: "enable"           # OPTIONAL: enable, disable (default: disable)
 
       # Advanced detection
       query_name_sensitivity: 2         # OPTIONAL: integer level (device-specific)
-      subdomains_wl_learning: "enable"  # OPTIONAL: enable, disable (default: disable)
-      learning_suppression_threshold: 10 # OPTIONAL: 0–50 (default: 0)
+      learning_suppression_threshold: 10 # OPTIONAL: 0–100 (default: 0)
       footprint_strictness: "medium"    # OPTIONAL: low, medium, high (default: low)
-      sig_rate_lim_target: 200          # OPTIONAL: signature rate limit target
 
       # Record quotas
       a_quota: 100                      # OPTIONAL
@@ -808,6 +805,7 @@ dns_profiles:
       srv_status: "disable"
       other_status: "enable"
 
+  # Note - If you enable manual trigger , you must disable all query.Also termination thresholds must be less than activation thresholds.
   # Minimal example (only mandatory parameter)
   - name: "dns_profile_1"         # MANDATORY
     # All other parameters use defaults
@@ -817,9 +815,9 @@ dns_profiles:
 
 # Edit existing DNS profiles - ONLY specify what you want to change
 dns_profiles:
-  - profile_name: "dns_profile"   # MANDATORY: must specify which profile to edit
+  - name: "dns_profile_10"                      # MANDATORY: must specify which profile to edit
     params:
-      action: "report_only"                     # OPTIONAL: report_only, block_and_report
+      action: "report_only"                     # OPTIONAL: report_only, block_&_report
       expected_qps: 2000                        # OPTIONAL: Update expected QPS
       max_allow_qps: 8000                       # OPTIONAL: Update max QPS
       a_status: "disable"                       # OPTIONAL: Disable A record protection
@@ -842,9 +840,7 @@ dns_profiles:
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_dns_profile.yml
 
-dns_profiles:
-  - "dns_profile_1"
-  - "dns_profile_2"          # Show all profiles (default)
+filter_dns_profile_names: ["dns_profile_1"]
 ```
 ### Delete DNS Profiles
 ```yml
@@ -944,6 +940,13 @@ oos_profiles:
     Control flags: Use to enable/disable each stage independently.
 
 ### Security Policy Configuration
+
+**Security Policy Configuration Notes**:
+- **policy_name**: MANDATORY - Unique policy name
+- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
+- **direction**: MANDATORY - Traffic direction to match
+- **Profile bindings**: All optional - leave empty string for no binding
+- **Control flags**: Use to enable/disable each creation stage independently
 
 Configure security policies with profile bindings in `vars/create_vars.yml`:
 
@@ -1093,6 +1096,8 @@ ansible-playbook playbooks/delete_security_policy.yml -v
 3. For shared environments, prefer "policy_only" mode
 4. For standalone policies with unique profiles, consider "policy_and_profiles" mode
 5. Execute deletion: `ansible-playbook playbooks/delete_security_policy.yml`
+
+
 
 ## Troubleshooting
 

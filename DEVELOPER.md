@@ -76,7 +76,8 @@ dp_config_builder/
 │   ├── USER_GUIDE.md            # Step-by-step operational guide
 │   └── DEVELOPER.md             # Technical architecture (this file)
 ├── 
-├── 📁 playbooks/                # ORCHESTRATION LAYER
+├── 📁 playbooks/                # 
+ORCHESTRATION LAYER
 │   ├── 🎯 Network Class Operations
 │   │   ├── create_network_class.yml    # Create network classes
 │   │   ├── edit_network_class.yml      # Modify network classes  
@@ -238,6 +239,7 @@ dp_config_builder/
      - Both `cl_protections` and `cl_profiles` sections are optional for creation
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
+
 5. **BDoS Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
@@ -594,9 +596,8 @@ POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name
         }
 ```
 ##### Edit BDoS Profile 
-
-PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 ```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 {
             "rsNetFloodProfileName": "BDOS_Profile_50",
             "rsNetFloodProfileTcpStatus": "2",
@@ -650,6 +651,7 @@ Call edit_bdos_profile once per device, passing list of profiles to edit.
 Each profile dict must include profile_name (mandatory) and any parameters to change
 
 ####################### Get BDoS Profile ##########################
+#### Get BDoS Profile 
 ```json
 GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 
@@ -715,6 +717,7 @@ Response:
 ### Delete BDoS Profile ###
 ```yml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}
+
 bdos_profiles:
   - "BDOS_Profile_5"
   - "BDOS_Profile_6"
@@ -766,8 +769,9 @@ POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
+# Note - If you enable manual trigger , you must disable all query.Also termination thresholds must be less than activation thresholds.
 ```
-##### Edit DNS Profile 
+##### Edit BDoS Profile 
 ```json
 PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
 {
@@ -863,7 +867,7 @@ Response:
 ```
 #Usage:-
 #Call get_bdos_profile once per device
-#Optional filtering: bdos_profiles: ["DNS_Profile_1"]
+#filter_dns_profile_names: ["dns_profile_1"]
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
 
