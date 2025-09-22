@@ -105,6 +105,24 @@ bdos_profiles:
 # - Order of operations: Remove BDoS profile from all associations before deleting the profile itself
 # - You can mix BDoS profile deletions with other deletions in the same playbook run
 
+
+##################### DNS Profile Deletions #######################
+# OPTIONAL: Remove DNS profiles from devices
+# Note: Only specify profiles to delete by name
+
+delete_dns_profiles:
+  - name: "dns_profile_10"  # MANDATORY: Policy name to delete
+  - name: "dns_profile_2"
+
+
+## DNS Profile Deletion Notes:
+# - name: The exact name of the DNS profile to delete
+# - Only specify the profiles you want to remove; all others remain untouched
+# - Use get_dns_profile module to discover existing profiles
+# - The playbook will delete all combinations of dp_ip × dns_profile_deletions
+# - Deletion is permanent – ensure you have backups or exported configurations if needed
+
+
 ########################## Security Policy Deletions ########################
 # Define security policies to delete
 # Two deletion modes supported:
