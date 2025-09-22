@@ -1,0 +1,91 @@
+---
+- name: Edit BDOS profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Configure BDOS profiles
+          edit_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            bdos_profiles: "{{ bdos_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: BDoS_edit_results
+
+        - name: Display BDOS edit results
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              BDOS Profile Edits ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.profile_name }}
+              {% endfor %}
+              {% else %}
+              
+              No BDOS profiles configured for editing.
+              {% endif %}
+              {% elif ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed:
+              
+              BDOS Configurations ({{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) would be edited
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              
+              Error occurred during editing:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.debug_info.input.profiles_count | default(0) > 0 %}
+              
+              BDOS Profiles edited successfully:
+                - {{ item.debug_info.input.profiles_count }} profile(s) edited
+              {% else %}
+              
+              No BDOS profiles were edited.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ BDoS_edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when: 
+            - not (skip_policy_updates | default(false))
+            - BDoS_edit_results is defined
+            - BDoS_edit_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
