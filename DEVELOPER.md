@@ -8,29 +8,17 @@ Before working with the DefensePro Configuration Builder modules:
 
 ### Environment Setup
 ```bash
-# 1. Ensure basic Ansible configuration exists
+# 1. Copy configuration templates
 cp ansible_example.cfg ansible.cfg
 cp inventory_example.ini inventory.ini
 
-# 2. Set up connection configuration for testing
+# 2. Set up connection configuration
 cd vars/
 cp cc_example.yml cc.yml
-# Edit cc.yml with test environment details
+# Edit cc.yml with your CyberController details
 
-
-### Development Environment
-```bash
-# Install development dependencies
+# 3. Install dependencies and verify setup
 pip3 install ansible requests
-
-# Verify Python module imports
-python3 -c "
-import sys
-sys.path.append('./plugins/module_utils')
-from radware_cc import RadwareCC
-from logger import Logger
-print('Module utils import successful')
-"
 ```
 
 ## Architecture Overview
@@ -73,7 +61,7 @@ The DefensePro Configuration Builder follows a layered architecture with clear s
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Directory Structure Deep Dive
+## Directory Structure
 
 ```
 dp_config_builder/
@@ -85,10 +73,11 @@ dp_config_builder/
 ├── 
 ├── 📁 Documentation  
 │   ├── README.md                # Project overview and quick start
-│   ├── USER_GUIDE.md           # Step-by-step operational guide
-│   └── DEVELOPER.md            # Technical architecture (this file)
+│   ├── USER_GUIDE.md            # Step-by-step operational guide
+│   └── DEVELOPER.md             # Technical architecture (this file)
 ├── 
-├── 📁 playbooks/               # ORCHESTRATION LAYER
+├── 📁 playbooks/                # 
+ORCHESTRATION LAYER
 │   ├── 🎯 Network Class Operations
 │   │   ├── create_network_class.yml    # Create network classes
 │   │   ├── edit_network_class.yml      # Modify network classes  
@@ -99,13 +88,28 @@ dp_config_builder/
 │   │   ├── edit_cl_protections.yml     # Edit CL protections
 │   │   ├── get_cl_profiles.yml         # Query CL profiles
 │   │   └── delete_cl_profiles.yml      # Delete CL profiles/protections
-│   ├── 🎯 Security Policy Operations
-│   │   ├── create_security_policy.yml  # Create security policies with orchestration
-│   │   ├── edit_security_policy.yml    # Edit existing security policies
-│   │   └── delete_security_policy.yml  # Delete security policies with cleanup options
+│   ├── 🎯 BDoS Flood Profile Operations
+│   │   ├── create_bdos_profile.yml     # Create BDoS Flood profiles
+│   │   ├── edit_bdos_profile.yml       # Modify BDoS Flood profiles
+│   │   ├── delete_bdos_profile.yml     # Remove BDoS Flood profiles
+│   │   └── get_bdos_profile.yml        # Query BDoS Flood profiles
+│   ├── 🎯 OOS/Stateful Profile Operations   # Create, edit, delete, and query OOS/Stateful profiles
+│   │   ├── create_oos_profile.yml          # Create OOS/Stateful profiles
+│   │   ├── edit_oos_profile.yml            # Modify OOS/Stateful profiles
+│   │   ├── delete_oos_profile.yml          # Remove OOS/Stateful profiles
+│   │   └── get_oos_profile.yml             # Query OOS/Stateful profiles
+│   ├── 🎯 DNS Protection Profile Operations      # Create, edit, delete, and query DNS protection profiles
+│   │   ├── create_dns_profile.yml               # Create DNS protection profiles
+│   │   ├── edit_dns_profile.yml                 # Modify DNS protection profiles
+│   │   ├── delete_dns_profile.yml               # Remove DNS protection profiles
+│   │   └── get_dns_profile.yml                  # Query DNS protection profiles
+│   ├── 🎯 Security Policy Operations            # Create, edit, and delete security policies with profile bindings
+│   │   ├── create_security_policy.yml           # Create security policies and bind profiles
+│   │   ├── edit_security_policy.yml             # Modify security policies and profile bindings
+│   │   └── delete_security_policy.yml           # Remove security policies (with optional profile cleanup)
 │   ├── 📊 Runtime Data (auto-created)
 │   │   ├── log/                        # Execution logs by date
-│   │   │   └── log_YYYYMMDD.log       # Daily log files
+│   │   │   └── log_YYYYMMDD.log        # Daily log files
 │   │   └── tmp/                        # Temporary files  
 │   │       └── radware_cc_sessions/    # Session cache files
 ├── 
@@ -121,16 +125,30 @@ dp_config_builder/
 │   │   │   ├── edit_cl_configuration.py    # Edit protections (partial updates)
 │   │   │   ├── get_cl_configuration.py     # Get profiles with filtering
 │   │   │   └── delete_cl_configuration.py  # Delete with dependency handling
+│   │   ├── 🔧 BDoS Flood Profile Modules (v0.1.3+)
+│   │   │   ├── create_bdos_profile.py      # Batch creation with validation
+│   │   │   ├── edit_bdos_profile.py        # Modify existing BDoS profiles
+│   │   │   ├── delete_bdos_profile.py      # Batch deletion with error handling
+│   │   ├── 🔧 DNS Protection Profile Modules (v0.1.6+)
+│   │   │   ├── create_dns_profile.py      # Batch creation with validation
+│   │   │   ├── edit_dns_profile.py        # Modify existing DNS profiles
+│   │   │   ├── delete_dns_profile.py      # Batch deletion with error handling
+│   │   │   └── get_dns_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 OOS/Stateful Profile Modules (v0.1.5+)
+│   │   │   ├── create_oos_profile.py      # Batch creation with validation
+│   │   │   ├── edit_oos_profile.py        # Modify existing OOS/Stateful profiles
+│   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
+│   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
 │   │   │   ├── create_security_policy.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
 │   │   │   └── delete_security_policy.py   # Delete policies (dual deletion modes)
 │   │   └── 🔧 Device Management
-│   │       ├── dp_lock.py              # Device configuration lock
-│   │       └── dp_unlock.py            # Device configuration unlock
+│   │       ├── dp_lock.py                  # Device configuration lock
+│   │       └── dp_unlock.py                # Device configuration unlock
 │   └── 📁 module_utils/        # INFRASTRUCTURE LAYER
-│       ├── radware_cc.py              # HTTP client with session management
-│       └── logger.py                  # Structured logging with rotation
+│       ├── radware_cc.py                # HTTP client with session management
+│       └── logger.py                    # Structured logging with rotation
 ├── 
 ├── 📁 vars/                    # CONFIGURATION & DATA LAYER
 │   ├── 🔗 Connection Configuration
@@ -222,7 +240,40 @@ dp_config_builder/
      - For editing: only specify parameters to change (partial update)
      - Centralized mapping and error handling in Python vs. complex YAML loops
 
-5. **Security Policy Modules** (`plugins/modules/`)
+5. **BDoS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_bdos_profile.py`, `edit_bdos_profile.py`, `delete_bdos_profile.py`, `get_bdos_profile.py`
+
+6. **DNS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_dns_profile.py`, `edit_dns_profile.py`, `delete_dns_profile.py`, `get_dns_profile.py`
+
+7. **OOS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
+
+8. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -274,6 +325,31 @@ dp_config_builder/
 - Valid values: 0 or next available starting from 450001+
 - Used in URL path for both creation and editing operations
 
+### BDoS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}` |
+
+
+### DNS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}` |
+
+### OOS Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+| **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+
 ### Security Policy Management
 
 | Operation | HTTP Method | API Endpoint |
@@ -293,169 +369,49 @@ dp_config_builder/
 - **User-Friendly Value Mapping**: Automatic conversion of human-readable values to API codes
 - **Flexible Configuration**: Full parameter support when needed
 
-### Policy Update Management
-
-| Operation | HTTP Method | API Endpoint |
-|-----------|-------------|--------------|
-| Apply Policy Updates | POST | `/mgmt/device/byip/{dp_ip}/config/updatepolicies` |
-
-**Purpose**: Apply pending DefensePro configuration changes (commit configurations)
-
-**Module**: `plugins/modules/update_policies.py`
-
-**Payload**: None (DefensePro IP specified in URL path)
-
-**Configuration**: `vars/update_vars.yml` and `vars/update_vars_example.yml`
-
-**API Pattern**:
-```
-POST /mgmt/device/byip/10.105.192.32/config/updatepolicies
-# No request body needed
-```
-
-**Key Features**:
-- Must be called while device is locked
-- Commits ALL pending configuration changes
-- Supports both standalone and orchestrated execution modes
-
-**Conditional Execution Modes**:
-- **Automatic**: Integrated into orchestration playbooks with `apply_policies_after_creation: true`
-- **Manual**: Standalone `update_policies.yml` playbook for selective updates
-- **Conditional**: Controlled by `skip_policy_updates` variable in orchestrated flows
-- **Safety**: Optional interactive confirmation prompts in standalone mode
-
-**Device Lock/Unlock Integration**:
-- **Centralized Locking**: Orchestration playbook "create_security_policy.yml" handle device locking centrally
-- **Always Unlock**: Devices are unlocked even if operations fail
-
-
-**Usage Pattern**:
-```python
-# In orchestration workflow - centralized locking with conditional skipping
-- name: "Centralized Device Locking for Orchestration"
-  dp_lock:
-    provider: "{{ cc }}"
-    dp_ip: "{{ item }}"
-  loop: "{{ dp_ip }}"
-
-# Import sub-playbooks with conditional variables
-- import_playbook: create_network_class.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator handles policy updates
-    skip_device_lock: true     # Orchestrator handles locking centrally
-
-# Individual playbook conditional logic  
-- name: "Lock device(s)"
-  dp_lock:
-    provider: "{{ cc }}"
-    dp_ip: "{{ item }}"
-  when: not (skip_device_lock | default(false))
-
-- name: "Apply policy updates per device"
-  update_policies:
-    provider: "{{ cc }}"
-    dp_ip: "{{ item }}"
-  when: 
-    - not (skip_policy_updates | default(false))
-    - apply_policies_after_creation | default(true)
-```
-
-## Module Development Pattern
-
-### Unified Module Structure (v0.1.2.1+)
-```python
-from ansible.module_utils.basic import AnsibleModule
-
-def run_module():
-    module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        # Operation-specific parameters
-    )
-    
-    result = dict(changed=False, response={})
-    debug_info = {}
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    
-    # Setup logging and RadwareCC
-    log_level = provider.get('log_level', 'disabled')
-    logger = Logger(verbosity=log_level)
-    cc = RadwareCC(provider['cc_ip'], provider['username'], 
-                  provider['password'], log_level=log_level, logger=logger)
-    
-    # Structured debug info
-    debug_info['input'] = {
-        'dp_ip': dp_ip,
-        'operation_count': len(items_to_process)
-    }
-    
-    try:
-        # Batch processing logic
-        changes_made = False
-        errors = []
-        
-        if module.check_mode:
-            # Preview mode logic
-            pass
-        else:
-            # Actual operations using cc._request methods
-            pass
-            
-        # Structured response
-        result.update({
-            'changed': changes_made,
-            'response': structured_response,
-            'debug_info': debug_info
-        })
-        
-    except Exception as e:
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
-```
-
-### Legacy Module Structure
-```python
-from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.radware_cc import RadwareCC
-
-def run_module():
-    module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        # For multi-edit: edit_cl_configuration (list of dicts)
-    )
-    # ...existing code...
-    # For multi-edit modules, loop over protections inside Python, not YAML
-    # All mappings (protocol, action, tracking_type, etc.) handled in Python
-    # Partial update: only send parameters to change
-    # Error handling and logging centralized
-    # ...existing code...
-```
-
-## Request/Response Patterns
+# Request/Response Patterns
 
 ### Create Network Class
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
-
+# CREATE/EDIT
+POST/PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
 {
     "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkSubIndex": 0,
     "rsBWMNetworkAddress": "192.168.1.0", 
-    "rsBWMNetworkMask": "255.255.255.0",
-    "rsBWMNetworkMode": "1"
+    "rsBWMNetworkMask": "255.255.255.0"
 }
-```
 
-### Edit Network Class
-```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsBWMNetworkTable/web_servers/0
-
+# GET Response (Enhanced)
 {
-    "rsBWMNetworkName": "web_servers",
-    "rsBWMNetworkAddress": "10.1.1.0",
-    "rsBWMNetworkMask": "24"
+    "classes_breakdown": {
+        "web_servers": [
+            {
+                "rsBWMNetworkName": "web_servers",
+                "rsBWMNetworkSubIndex": "0",
+                "rsBWMNetworkAddress": "192.168.1.0",
+                "rsBWMNetworkMask": "24",
+                "rsBWMNetworkFromIP": "192.168.1.0",
+                "rsBWMNetworkToIP": "192.168.1.255"
+            }
+        ]
+    },
+    "summary": {
+        "class_names": ["web_servers", "db_servers"],
+        "total_entries": 5,
+        "unique_classes": 2,
+        "filtered": true,
+        "filter_applied": ["web_servers"]
+    }
 }
 ```
+
+**Features**:
+- **List filtering**: `filter_class_names: ["class1", "class2"]`
+- **Structured breakdown**: Groups entries by class name
+- **Enhanced summary**: Statistics and filter information
+- **Formatted output**: Human-readable display in playbooks
+
+
 
 ### Create Connection Limit Protection
 ```json
@@ -471,6 +427,17 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{ind
     "rsIDSConnectionLimitAttackType": "1"
 }
 ```
+
+### Create Connection Limit Profile
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitProfileTable/web_limits/cl_prot_tcp_limit
+
+{
+    "rsIDSConnectionLimitProfileName": "web_limits",
+    "rsIDSConnectionLimitProfileAttackName": "cl_prot_tcp_limit"
+}
+```
+
 ### Edit Connection Limit Protections
 ```json
 PUT /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{index}
@@ -495,19 +462,9 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable/{inde
 - **Optional**: Defaults to 0 if not specified in variables
 - **Valid Values**: 0 (default) or next available starting from 450001+
 - **API Behavior**: Index becomes part of the URL path for creation and editing
-```
 
-### Create Connection Limit Profile
-```json
-POST /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitProfileTable/web_limits/cl_prot_tcp_limit
 
-{
-    "rsIDSConnectionLimitProfileName": "web_limits",
-    "rsIDSConnectionLimitProfileAttackName": "cl_prot_tcp_limit"
-}
-```
-
-### Get Connection Limit Profiles Response (New Architecture)
+### Get Connection Limit Profiles Response
 ```json
 GET /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitProfileTable
 GET /mgmt/device/byip/10.105.192.32/config/rsIDSConnectionLimitAttackTable
@@ -584,93 +541,455 @@ cl_protection_deletions:
 - **Smart processing**: Module fetches current protections only when string names are used
 - **Enhanced validation**: Check mode validates both names and indexes against device state
 
-**API Endpoints**:
-- Get current protections (conditional): `GET /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable`
-- Remove protection from profile: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitProfileTable/{profile_name}/{protection_name}`
-- Delete protection entirely: `DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSConnectionLimitAttackTable/{protection_id}`
 
-**Usage:**
-- Call `delete_cl_configuration` once per device
-- Both `cl_profile_deletions` and `cl_protection_deletions` are optional
-- Module handles error reporting for failed operations
-- **No need to know indexes**: Just specify protection names, module handles name-to-index mapping
-- Configure deletions in `delete_vars.yml` (consolidated with network class deletions)
 
-### Get Network Classes Response
+## Profile operations
+###  Create BDoS Profile 
 ```json
+POST /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 {
-    "rsBWMNetworkTable": [...],  // Raw API response
-    "classes_breakdown": {
-        "web_servers": [
-            {
-                "rsBWMNetworkName": "web_servers",
-                "rsBWMNetworkSubIndex": "0",
-                "rsBWMNetworkAddress": "192.168.1.0",
-                "rsBWMNetworkMask": "24",
-                "rsBWMNetworkFromIP": "192.168.1.0",
-                "rsBWMNetworkToIP": "192.168.1.255"
-            }
-        ]
-    },
-    "summary": {
-        "class_names": ["web_servers", "db_servers"],
-        "total_entries": 5,
-        "unique_classes": 2,
-        "filtered": true,
-        "filter_applied": ["web_servers"]
-    }
+            "rsNetFloodProfileName": "BDOS_Profile_50",
+            "rsNetFloodProfileTcpStatus": "2",
+            "rsNetFloodProfileTcpSynStatus": "1",
+            "rsNetFloodProfileUdpStatus": "1",
+            "rsNetFloodProfileIgmpStatus": "1",
+            "rsNetFloodProfileIcmpStatus": "1",
+            "rsNetFloodProfileTcpFinAckStatus": "1",
+            "rsNetFloodProfileTcpRstStatus": "1",
+            "rsNetFloodProfileTcpPshAckStatus": "2",
+            "rsNetFloodProfileTcpSynAckStatus": "1",
+            "rsNetFloodProfileTcpFragStatus": "1",
+            "rsNetFloodProfileBandwidthIn": "1000000",
+            "rsNetFloodProfileBandwidthOut": "500000",
+            "rsNetFloodProfileTcpInQuota": "80",
+            "rsNetFloodProfileUdpInQuota": "50",
+            "rsNetFloodProfileIcmpInQuota": "10",
+            "rsNetFloodProfileIgmpInQuota": "50",
+            "rsNetFloodProfileTcpOutQuota": "80",
+            "rsNetFloodProfileUdpOutQuota": "50",
+            "rsNetFloodProfileIcmpOutQuota": "10",
+            "rsNetFloodProfileIgmpOutQuota": "50",
+            "rsNetFloodProfileTransparentOptimization": "1",
+            "rsNetFloodProfileAction": "0",
+            "rsNetFloodProfileLevelOfReuglarzation": "2",
+            "rsNetFloodProfileBurstEnabled": "1",
+            "rsNetFloodProfileNoBurstTimeout": "60",
+            "rsNetFloodProfileBurstAttackThreshold": "5",
+            "rsNetFloodProfileBurstAttackPeriod": "32",
+            "rsNetFloodProfileOverMitigationStatus": "2",
+            "rsNetFloodProfileOverMitigationThreshold": "25",
+            "rsNetFloodProfileLearningSuppressionThreshold": "10",
+            "rsNetFloodProfileFootprintStrictness": "1",
+            "rsNetFloodProfileRateLimit": "3",
+            "rsNetFloodProfileUserDefinedRateLimit": "500",
+            "rsNetFloodProfileUserDefinedRateLimitUnit": "1",
+            "rsNetFloodProfileAdvUdpDetection": "1",
+            "rsNetFloodProfileUdpExcludedPorts": "None",
+            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
+            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
+            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
+            "rsNetFloodProfilePacketReportStatus": "1",
+            "rsNetFloodProfilePacketTraceStatus": "2",
+            "rsNetFloodProfileUdpFragStatus": "1",
+            "rsNetFloodProfileUdpFragInQuota": "25",
+            "rsNetFloodProfileUdpFragOutQuota": "25"
+        }
+```
+##### Edit BDoS Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+{
+            "rsNetFloodProfileName": "BDOS_Profile_50",
+            "rsNetFloodProfileTcpStatus": "2",
+            "rsNetFloodProfileTcpSynStatus": "1",
+            "rsNetFloodProfileUdpStatus": "1",
+            "rsNetFloodProfileIgmpStatus": "1",
+            "rsNetFloodProfileIcmpStatus": "1",
+            "rsNetFloodProfileTcpFinAckStatus": "1",
+            "rsNetFloodProfileTcpRstStatus": "1",
+            "rsNetFloodProfileTcpPshAckStatus": "2",
+            "rsNetFloodProfileTcpSynAckStatus": "1",
+            "rsNetFloodProfileTcpFragStatus": "1",
+            "rsNetFloodProfileBandwidthIn": "1000000",
+            "rsNetFloodProfileBandwidthOut": "500000",
+            "rsNetFloodProfileTcpInQuota": "80",
+            "rsNetFloodProfileUdpInQuota": "50",
+            "rsNetFloodProfileIcmpInQuota": "10",
+            "rsNetFloodProfileIgmpInQuota": "50",
+            "rsNetFloodProfileTcpOutQuota": "80",
+            "rsNetFloodProfileUdpOutQuota": "50",
+            "rsNetFloodProfileIcmpOutQuota": "10",
+            "rsNetFloodProfileIgmpOutQuota": "50",
+            "rsNetFloodProfileTransparentOptimization": "1",
+            "rsNetFloodProfileAction": "0",
+            "rsNetFloodProfileLevelOfReuglarzation": "2",
+            "rsNetFloodProfileBurstEnabled": "1",
+            "rsNetFloodProfileNoBurstTimeout": "60",
+            "rsNetFloodProfileBurstAttackThreshold": "5",
+            "rsNetFloodProfileBurstAttackPeriod": "32",
+            "rsNetFloodProfileOverMitigationStatus": "2",
+            "rsNetFloodProfileOverMitigationThreshold": "25",
+            "rsNetFloodProfileLearningSuppressionThreshold": "10",
+            "rsNetFloodProfileFootprintStrictness": "1",
+            "rsNetFloodProfileRateLimit": "3",
+            "rsNetFloodProfileUserDefinedRateLimit": "500",
+            "rsNetFloodProfileUserDefinedRateLimitUnit": "1",
+            "rsNetFloodProfileAdvUdpDetection": "1",
+            "rsNetFloodProfileUdpExcludedPorts": "None",
+            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
+            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
+            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
+            "rsNetFloodProfilePacketReportStatus": "1",
+            "rsNetFloodProfilePacketTraceStatus": "2",
+            "rsNetFloodProfileUdpFragStatus": "1",
+            "rsNetFloodProfileUdpFragInQuota": "25",
+            "rsNetFloodProfileUdpFragOutQuota": "25"
+        }
+```
+Usage:
+Call edit_bdos_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+####################### Get BDoS Profile ##########################
+#### Get BDoS Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
+
+Response:
+{
+    "rsNetFloodProfileTable": [
+        {
+            "rsNetFloodProfileName": "BDoS_Test1",
+            "rsNetFloodProfileTcpStatus": "2",
+            "rsNetFloodProfileTcpSynStatus": "2",
+            "rsNetFloodProfileUdpStatus": "2",
+            "rsNetFloodProfileIgmpStatus": "2",
+            "rsNetFloodProfileIcmpStatus": "2",
+            "rsNetFloodProfileTcpFinAckStatus": "2",
+            "rsNetFloodProfileTcpRstStatus": "2",
+            "rsNetFloodProfileTcpPshAckStatus": "2",
+            "rsNetFloodProfileTcpSynAckStatus": "2",
+            "rsNetFloodProfileTcpFragStatus": "2",
+            "rsNetFloodProfileBandwidthIn": "40000",
+            "rsNetFloodProfileBandwidthOut": "40000",
+            "rsNetFloodProfileTcpInQuota": "75",
+            "rsNetFloodProfileUdpInQuota": "50",
+            "rsNetFloodProfileIcmpInQuota": "3",
+            "rsNetFloodProfileIgmpInQuota": "3",
+            "rsNetFloodProfileTcpOutQuota": "75",
+            "rsNetFloodProfileUdpOutQuota": "50",
+            "rsNetFloodProfileIcmpOutQuota": "3",
+            "rsNetFloodProfileIgmpOutQuota": "3",
+            "rsNetFloodProfileTransparentOptimization": "2",
+            "rsNetFloodProfileAction": "1",
+            "rsNetFloodProfileLevelOfReuglarzation": "2",
+            "rsNetFloodProfileBurstEnabled": "1",
+            "rsNetFloodProfileNoBurstTimeout": "30",
+            "rsNetFloodProfileBurstAttackThreshold": "5",
+            "rsNetFloodProfileBurstAttackPeriod": "12",
+            "rsNetFloodProfileOverMitigationStatus": "2",
+            "rsNetFloodProfileOverMitigationThreshold": "25",
+            "rsNetFloodProfileLearningSuppressionThreshold": "0",
+            "rsNetFloodProfileFootprintStrictness": "0",
+            "rsNetFloodProfileRateLimit": "0",
+            "rsNetFloodProfileUserDefinedRateLimit": "0",
+            "rsNetFloodProfileUserDefinedRateLimitUnit": "0",
+            "rsNetFloodProfileAdvUdpDetection": "2",
+            "rsNetFloodProfileUdpExcludedPorts": "None",
+            "rsNetFloodProfileAdvUdpLearningPeriod": "2",
+            "rsNetFloodProfileAdvUdpAttackHighEdgeOverride": "0.0",
+            "rsNetFloodProfileAdvUdpAttackLowEdgeOverride": "0.0",
+            "rsNetFloodProfilePacketReportStatus": "1",
+            "rsNetFloodProfilePacketTraceStatus": "2",
+            "rsNetFloodProfileUdpFragStatus": "2",
+            "rsNetFloodProfileUdpFragInQuota": "25",
+            "rsNetFloodProfileUdpFragOutQuota": "25"
+        }
+    ]
 }
 ```
+#Usage:-
+#Call get_bdos_profile once per device
+#Optional filtering: filter_bdos_profile_names: ["BDOS_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
 
-**Features**:
-- **List filtering**: `filter_class_names: ["class1", "class2"]`
-- **Structured breakdown**: Groups entries by class name
-- **Enhanced summary**: Statistics and filter information
-- **Formatted output**: Human-readable display in playbooks
+### Delete BDoS Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsNetFloodProfileTable/{profile_name}
 
-## Error Handling
-
-### Unified Error Handling Pattern (v0.1.2.1+)
-All modules now use consistent `cc._request` methods for HTTP operations:
-
-```python
-try:
-    # Use cc._request methods for consistent error handling
-    resp = cc._post(url, json=body)
-    if resp.status_code == 200:
-        # Success logic
-        pass
-    else:
-        # Error handled by cc._request
-        errors.append(f"Failed operation: {resp.text}")
-except Exception as e:
-    errors.append(f"Request failed: {str(e)}")
+bdos_profiles:
+  - "BDOS_Profile_5"
+  - "BDOS_Profile_6"
 ```
+***Key Features:
+- Profiles cannot be deleted if still associated with any dependent settings
+- Module validates existence before deletion
+- Order of deletion handled automatically
+- Both names and indexes supported internally (no need to provide index)
 
-### Create Security Policy
-```python
-# Request
-url = f"/mgmt/device/byip/{dp_ip}/config/rsIDSNewRulesTable/{policy_name}"
-body = {
-    "rsIDSNewRulesDirection": "1",           # Mapped from "inbound"
-    "rsIDSNewRulesAction": "1",              # Mapped from "block_and_report"
-    "rsIDSNewRulesPriority": "100", 
-    "rsIDSNewRulesProfileConlmt": "web_cl_profile",  # Profile binding
-    # ... additional profile bindings
-}
-resp = cc._post(url, json=body)
-
-# Response (Success)
+###  Create DNS Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
 {
-    "status": "success",
-    "message": "Policy created successfully"
-}
-
-# Response (Error) 
+            "rsDnsProtProfileName": "dns_profile_1",
+            "rsDnsProtProfileDnsAStatus": "2",
+            "rsDnsProtProfileDnsMxStatus": "2",
+            "rsDnsProtProfileDnsPtrStatus": "2",
+            "rsDnsProtProfileDnsAaaaStatus": "2",
+            "rsDnsProtProfileDnsTextStatus": "2",
+            "rsDnsProtProfileDnsSoaStatus": "2",
+            "rsDnsProtProfileDnsNaptrStatus": "2",
+            "rsDnsProtProfileDnsSrvStatus": "2",
+            "rsDnsProtProfileDnsOtherStatus": "2",
+            "rsDnsProtProfileExpectedQps": "1000",
+            "rsDnsProtProfileDnsAQuota": "50",
+            "rsDnsProtProfileDnsMxQuota": "20",
+            "rsDnsProtProfileDnsPtrQuota": "12",
+            "rsDnsProtProfileDnsAaaaQuota": "15",
+            "rsDnsProtProfileDnsTextQuota": "2",
+            "rsDnsProtProfileDnsSoaQuota": "1",
+            "rsDnsProtProfileDnsNaptrQuota": "1",
+            "rsDnsProtProfileDnsSrvQuota": "1",
+            "rsDnsProtProfileDnsOtherQuota": "1",
+            "rsDnsProtProfileAction": "1",
+            "rsDnsProtProfileMaxAllowQps": "5000",
+            "rsDnsProtProfileSigRateLimTarget": "0",
+            "rsDnsProtProfileManualTriggerStatus": "2",
+            "rsDnsProtProfileManualTriggerActThresh": "0",
+            "rsDnsProtProfileManualTriggerTermThresh": "0",
+            "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
+            "rsDnsProtProfileManualTriggerActPeriod": "3",
+            "rsDnsProtProfileManualTriggerTermPeriod": "3",
+            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
+            "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfilePacketTraceStatus": "2",
+            "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
+            "rsDnsProtProfileSubdomainsWLLearningState": "1",
+            "rsDnsProtProfileLearningSuppressionThreshold": "25",
+            "rsDnsProtProfileFootprintStrictness": "1"
+        }
+# Note - If you enable manual trigger , you must disable all query.Also termination thresholds must be less than activation thresholds.
+```
+##### Edit BDoS Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
 {
-    "status": "error", 
-    "message": "M_00386: An entry with same key already exists."
+            "rsDnsProtProfileName": "dns_profile_1",
+            "rsDnsProtProfileDnsAStatus": "2",
+            "rsDnsProtProfileDnsMxStatus": "2",
+            "rsDnsProtProfileDnsPtrStatus": "2",
+            "rsDnsProtProfileDnsAaaaStatus": "2",
+            "rsDnsProtProfileDnsTextStatus": "2",
+            "rsDnsProtProfileDnsSoaStatus": "2",
+            "rsDnsProtProfileDnsNaptrStatus": "2",
+            "rsDnsProtProfileDnsSrvStatus": "2",
+            "rsDnsProtProfileDnsOtherStatus": "2",
+            "rsDnsProtProfileExpectedQps": "1000",
+            "rsDnsProtProfileDnsAQuota": "50",
+            "rsDnsProtProfileDnsMxQuota": "20",
+            "rsDnsProtProfileDnsPtrQuota": "12",
+            "rsDnsProtProfileDnsAaaaQuota": "15",
+            "rsDnsProtProfileDnsTextQuota": "2",
+            "rsDnsProtProfileDnsSoaQuota": "1",
+            "rsDnsProtProfileDnsNaptrQuota": "1",
+            "rsDnsProtProfileDnsSrvQuota": "1",
+            "rsDnsProtProfileDnsOtherQuota": "1",
+            "rsDnsProtProfileAction": "1",
+            "rsDnsProtProfileMaxAllowQps": "5000",
+            "rsDnsProtProfileSigRateLimTarget": "0",
+            "rsDnsProtProfileManualTriggerStatus": "2",
+            "rsDnsProtProfileManualTriggerActThresh": "0",
+            "rsDnsProtProfileManualTriggerTermThresh": "0",
+            "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
+            "rsDnsProtProfileManualTriggerActPeriod": "3",
+            "rsDnsProtProfileManualTriggerTermPeriod": "3",
+            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
+            "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfilePacketTraceStatus": "2",
+            "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
+            "rsDnsProtProfileSubdomainsWLLearningState": "1",
+            "rsDnsProtProfileLearningSuppressionThreshold": "25",
+            "rsDnsProtProfileFootprintStrictness": "1"
+        }
+```
+Usage:
+Call edit_dns_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get DNS Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
+
+Response:
+{
+    "rsDnsProtProfileTable": [
+        {
+            "rsDnsProtProfileName": "dns_profile_1",
+            "rsDnsProtProfileDnsAStatus": "2",
+            "rsDnsProtProfileDnsMxStatus": "2",
+            "rsDnsProtProfileDnsPtrStatus": "2",
+            "rsDnsProtProfileDnsAaaaStatus": "2",
+            "rsDnsProtProfileDnsTextStatus": "2",
+            "rsDnsProtProfileDnsSoaStatus": "2",
+            "rsDnsProtProfileDnsNaptrStatus": "2",
+            "rsDnsProtProfileDnsSrvStatus": "2",
+            "rsDnsProtProfileDnsOtherStatus": "2",
+            "rsDnsProtProfileExpectedQps": "1000",
+            "rsDnsProtProfileDnsAQuota": "50",
+            "rsDnsProtProfileDnsMxQuota": "20",
+            "rsDnsProtProfileDnsPtrQuota": "12",
+            "rsDnsProtProfileDnsAaaaQuota": "15",
+            "rsDnsProtProfileDnsTextQuota": "2",
+            "rsDnsProtProfileDnsSoaQuota": "1",
+            "rsDnsProtProfileDnsNaptrQuota": "1",
+            "rsDnsProtProfileDnsSrvQuota": "1",
+            "rsDnsProtProfileDnsOtherQuota": "1",
+            "rsDnsProtProfileAction": "1",
+            "rsDnsProtProfileMaxAllowQps": "5000",
+            "rsDnsProtProfileSigRateLimTarget": "0",
+            "rsDnsProtProfileManualTriggerStatus": "2",
+            "rsDnsProtProfileManualTriggerActThresh": "0",
+            "rsDnsProtProfileManualTriggerTermThresh": "0",
+            "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
+            "rsDnsProtProfileManualTriggerActPeriod": "3",
+            "rsDnsProtProfileManualTriggerTermPeriod": "3",
+            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
+            "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfilePacketTraceStatus": "2",
+            "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
+            "rsDnsProtProfileSubdomainsWLLearningState": "1",
+            "rsDnsProtProfileLearningSuppressionThreshold": "25",
+            "rsDnsProtProfileFootprintStrictness": "1"
+        }
+    ]
 }
+```
+#Usage:-
+#Call get_bdos_profile once per device
+#filter_dns_profile_names: ["dns_profile_1"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete DNS Profile
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}
+
+dns_profiles:
+  - "DNS_Profile_5"
+  - "DNS_Profile_6"
+```
+***Key Features:
+- Profiles cannot be deleted if still associated with any dependent settings
+- Module validates existence before deletion
+- Order of deletion handled automatically
+
+###  Create OOS Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsStatefulProfileTable/{profile_name}
+"rsStatefulProfileTable": [
+        {
+            "rsSTATFULProfileName": "CDN_DNS",
+            "rsSTATFULProfileTcpStatus": "1",
+            "rsSTATFULProfileDnsStatus": "null",
+            "rsSTATFULProfileactThreshold": "5000",
+            "rsSTATFULProfileIcmpStatus": "null",
+            "rsSTATFULProfiletermThreshold": "4000",
+            "rsSTATFULProfileHttpStatus": "null",
+            "rsSTATFULProfilesynAckAllow": "1",
+            "rsSTATFULProfileHttpsStatus": "null",
+            "rsSTATFULProfilePacketTraceStatus": "2",
+            "rsSTATFULProfileSmtpStatus": "null",
+            "rsSTATFULProfilePacketReportStatus": "1",
+            "rsSTATFULProfilePop3Status": "null",
+            "rsSTATFULProfileRisk": "2",
+            "rsSTATFULProfileImapStatus": "null",
+            "rsSTATFULProfileAction": "1",
+            "rsSTATFULProfilenoEntryForOOSpacketsInSTduringGP": "2",
+            "rsSTATFULProfileGPAfterUpdatePolicyorIdleState": "30",
+            "rsSTATFULProfileEnableIdleState": "2",
+            "rsSTATFULProfileIdleStateBandwidthThreshold": "10000",
+            "rsSTATFULProfileIdleStateTimer": "10"
+        }
+```
+##### Edit OOS Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsStatefulProfileTable/{profile_name}
+
+"rsStatefulProfileTable": [
+        {
+            "rsSTATFULProfileName": "CDN_DNS",
+            "rsSTATFULProfileTcpStatus": "1",
+            "rsSTATFULProfileDnsStatus": "null",
+            "rsSTATFULProfileactThreshold": "5000",
+            "rsSTATFULProfileIcmpStatus": "null",
+            "rsSTATFULProfiletermThreshold": "4000",
+            "rsSTATFULProfileHttpStatus": "null",
+            "rsSTATFULProfilesynAckAllow": "1",
+            "rsSTATFULProfileHttpsStatus": "null",
+            "rsSTATFULProfilePacketTraceStatus": "2",
+            "rsSTATFULProfileSmtpStatus": "null",
+            "rsSTATFULProfilePacketReportStatus": "1",
+            "rsSTATFULProfilePop3Status": "null",
+            "rsSTATFULProfileRisk": "2",
+            "rsSTATFULProfileImapStatus": "null",
+            "rsSTATFULProfileAction": "1",
+            "rsSTATFULProfilenoEntryForOOSpacketsInSTduringGP": "2",
+            "rsSTATFULProfileGPAfterUpdatePolicyorIdleState": "30",
+            "rsSTATFULProfileEnableIdleState": "2",
+            "rsSTATFULProfileIdleStateBandwidthThreshold": "10000",
+            "rsSTATFULProfileIdleStateTimer": "10"
+        }
+```
+Usage:
+Call edit_oos_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get OOS Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsStatefulProfileTable/{profile_name}
+
+Response:
+"rsStatefulProfileTable": [
+        {
+            "rsSTATFULProfileName": "CDN_DNS",
+            "rsSTATFULProfileTcpStatus": "1",
+            "rsSTATFULProfileDnsStatus": "null",
+            "rsSTATFULProfileactThreshold": "5000",
+            "rsSTATFULProfileIcmpStatus": "null",
+            "rsSTATFULProfiletermThreshold": "4000",
+            "rsSTATFULProfileHttpStatus": "null",
+            "rsSTATFULProfilesynAckAllow": "1",
+            "rsSTATFULProfileHttpsStatus": "null",
+            "rsSTATFULProfilePacketTraceStatus": "2",
+            "rsSTATFULProfileSmtpStatus": "null",
+            "rsSTATFULProfilePacketReportStatus": "1",
+            "rsSTATFULProfilePop3Status": "null",
+            "rsSTATFULProfileRisk": "2",
+            "rsSTATFULProfileImapStatus": "null",
+            "rsSTATFULProfileAction": "1",
+            "rsSTATFULProfilenoEntryForOOSpacketsInSTduringGP": "2",
+            "rsSTATFULProfileGPAfterUpdatePolicyorIdleState": "30",
+            "rsSTATFULProfileEnableIdleState": "2",
+            "rsSTATFULProfileIdleStateBandwidthThreshold": "10000",
+            "rsSTATFULProfileIdleStateTimer": "10"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_oos_profile once per device
+#Optional filtering: filter_bdos_profile_names: ["OOS_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete OOS Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}
+
+oos_profiles:
+  - "OOS_Profile_5"
+  - "OOS_Profile_6"
 ```
 
 ### Edit Security Policy
@@ -745,43 +1064,7 @@ edit_security_policies:
   loop: "{{ dp_ip }}"
 ```
 
-**API Mapping**:
-- `policy_name` → URL path parameter 
-- `action: "block_and_report"` → `"rsIDSNewRulesAction": "1"`
-- `action: "report_only"` → `"rsIDSNewRulesAction": "0"`
-- `connection_limit_profile: ""` → `"rsIDSNewRulesProfileConlmt": ""` (detachment)
-- `direction: "twoway"` → `"rsIDSNewRulesDirection": "2"`
 
-### HTTP Error Patterns
-```python
-try:
-    resp = cc._post(url, json=body)
-    data = resp.json()
-except requests.exceptions.HTTPError as err:
-    if err.response.status_code == 403:
-        # Re-authentication handled automatically by RadwareCC
-        pass
-    elif err.response.status_code == 404:
-        # Resource not found
-        pass
-except ValueError:
-    # Invalid JSON response
-    raise Exception(f"Invalid JSON response: {resp.text}")
-```
-
-### Module Error Reporting
-```python
-try:
-    # Operation logic
-    pass
-except Exception as e:
-    logger.error(f"Operation failed: {str(e)}")
-    module.fail_json(
-        msg=str(e), 
-        debug_info=debug_info,
-        **result
-    )
-```
 
 ### Delete Security Policy
 
