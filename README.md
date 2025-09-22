@@ -147,6 +147,16 @@ dp_config_builder/
 | `delete_oos_profile.yml` | Remove OOS profile            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-oos-profile) |
 | `get_oos_profile.yml`    | Query current OOS Profile     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-oos-profile)    |
 
+### HTTP Profile Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_http_profile.yml` | Create new HTTP profile        | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-http-profile)  |
+| `edit_http_profile.yml`   | Modify existing HTTP profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-http-profile)    |
+| `delete_http_profile.yml` | Remove HTTP profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-http-profile)  |
+| `get_http_profile.yml`    | Query current HTTP profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-http-profile)     |
+
+
 ### Security Policy Management
 
 | Playbook | Purpose | Documentation |
@@ -265,6 +275,18 @@ ansible-playbook playbooks/edit_oos_profile.yml
 
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
+
+# Get all HTTP profiles from devices
+ansible-playbook playbooks/get_http_profile.yml
+
+# Create new HTTP profiles
+ansible-playbook playbooks/create_http_profile.yml
+
+# Edit existing HTTP profiles
+ansible-playbook playbooks/edit_http_profile.yml
+
+# Delete HTTP profiles
+ansible-playbook playbooks/delete_http_profile.yml
 
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_security_policy.yml

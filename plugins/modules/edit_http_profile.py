@@ -68,7 +68,7 @@ ENUM_MAPS = {
     "action": {"report_only": "0", "block_&_report": "1"},
     "selective_challenge": {"enable": "1", "disable": "2"},
     "collective_challenge": {"enable": "1", "disable": "2"},
-    "challenge_method": {"Redirect_302": "1", "javaScript": "2"},
+    "challenge_method": {"redirect_302": "1", "javascript": "2"},
     "rate_limit_status": {"enable": "1", "disable": "2"},
     "full_session_decryption": {"enable": "1", "disable": "2"}
 }

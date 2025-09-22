@@ -326,6 +326,42 @@ oos_profiles:
         # act_threshold: numeric value
         # term_threshold: numeric value
 
+################################## HTTP Profile Edit Variables ###############################
+# Define HTTP profiles to edit
+# Each profile requires name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+
+https_profiles:
+  # Example: Edit HTTP profile "http_profile_20", changing multiple parameters
+  - name: "http_profile_20"                 # Mandatory: exact profile name
+    params:
+      action: block_&_report               # Options: report_only, block_&_report
+      rate_limit: 60000                     # Optional numeric threshold (requests per second)
+      selective_challenge: enable           # Options: enable, disable
+      collective_challenge: disable         # Options: enable, disable
+      challenge_method: redirect_302        # Options: redirect_302, Javascript
+      rate_limit: enable                    # Options: enable, disable
+      full_session_decryption: enable       # Options: enable, disable
+
+  # Example: Minimal update for another HTTP profile
+  # - name: "http_profile_25"
+  #   params:
+  #     action: report_only
+  #     rate_limit: 20000
+
+# Notes for HTTP Profiles:
+# name: Mandatory – exact profile name to edit (use get_http_profile to verify)
+# Only specify parameters you want to change – unspecified parameters remain unchanged
+#
+# Supported HTTP Profile Parameters:
+#   action: report_only / block_&_report
+#   rate_limit: numeric value (requests per second)
+#   selective_challenge: enable / disable
+#   collective_challenge: enable / disable
+#   challenge_method: redirect_302 / Javascript 
+#   rate_limit_status: enable / disable
+#   full_session_decryption: enable / disable
+
 ################################## Security Policies Variables ###############################
 # Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit

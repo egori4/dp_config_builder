@@ -25,10 +25,10 @@ REVERSE_FIELD_MAP = {
 
 # Map numeric values → user-friendly
 REVERSE_ENUM_MAPS = {
-    "rsHttpsFloodProfileAction": {"0": "report", "1": "block & report"},
+    "rsHttpsFloodProfileAction": {"0": "report_only", "1": "block_&_report"},
     "rsHttpsFloodProfileSelectiveChallenge": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileCollectiveChallenge": {"1": "enable", "2": "disable"},
-    "rsHttpsFloodProfileChallengeMethod": {"1": "Redirect_302", "2": "javaScript"},
+    "rsHttpsFloodProfileChallengeMethod": {"1": "redirect_302", "2": "javascript"},
     "rsHttpsFloodProfileRateLimitStatus": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileFullSessionDecryption": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfilePacketReporting": {"1": "enable", "2": "disable"},

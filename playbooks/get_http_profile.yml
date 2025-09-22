@@ -13,7 +13,7 @@
           get_http_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            filter_profile_names: "{{ filter_profile_names }}"
+            filter_profile_names: "{{ filter_http_profile_names }}"
           loop: "{{ dp_ip }}"
           register: http_fetch_results
           loop_control:

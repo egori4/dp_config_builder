@@ -138,6 +138,11 @@ dp_config_builder/
 │   │   │   ├── edit_oos_profile.py        # Modify existing OOS/Stateful profiles
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 HTTP Profile Modules (v0.1.6+)
+│   │   │   ├── create_http_profile.py      # Batch creation with validation
+│   │   │   ├── edit_http_profile.py        # Modify existing DNS profiles
+│   │   │   ├── delete_http_profile.py      # Batch deletion with error handling
+│   │   │   └── get_http_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
 │   │   │   ├── create_security_policy.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
@@ -271,7 +276,18 @@ dp_config_builder/
      - List-based filtering support for get operations
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
-8. **Security Policy Modules** (`plugins/modules/`)
+8. **HTTP Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_http_profile.py`, `edit_http_profile.py`, `delete_http_profile.py`, `get_http_profile.py`
+
+9. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -347,6 +363,14 @@ dp_config_builder/
 | **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+
+### HTTP Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
+| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsIDSNewHTTPSFloodProfileTable[/{profile_name}` |
 
 ### Security Policy Management
 
@@ -986,6 +1010,84 @@ DELETE /mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}
 oos_profiles:
   - "OOS_Profile_5"
   - "OOS_Profile_6"
+```
+###  Create HTTP Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileSelectiveChallenge": "2",
+            "rsHttpsFloodProfileCollectiveChallenge": "2",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfilePacketReporting": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+```
+##### Edit HTTP Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileSelectiveChallenge": "2",
+            "rsHttpsFloodProfileCollectiveChallenge": "2",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfilePacketReporting": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+```
+Usage:
+Call edit_oos_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get HTTP Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+
+Response:
+ {
+    "msg": [
+        "Device: 10.105.192.32",
+        "HTTPS Flood Profiles Found (1 entries):",
+        "  Profile Name: http_profile_3",
+        "  --------------------------------------------------",
+        "      action                              block & report",
+        "      rate_limit                          80000",
+        "      selective_challenge                 disable",
+        "      collective_challenge                enable",
+        "      challenge_method                    redirect_302",
+        "      rate_limit_status                   disable",
+        "      full_session_decryption             disable",
+        "      packet_reporting                    enable",
+        "    --------------------------------------------------",
+        "",
+        "Summary:",
+        "  - Total entries: 1",
+        "  - Unique profiles: 1",
+        "  - Profile names: http_profile_3",
+        "  - Filter applied: True",
+        ""
+    ]
+}
+```
+#Usage:-
+#Call get_oos_profile once per device
+#Optional filtering: filter_bdos_profile_names: ["OOS_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete HTTP Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+
+https_profiles:
+  - name: "http_profile_1"            
+  - name: "http_profile_2"
 ```
 
 ### Edit Security Policy

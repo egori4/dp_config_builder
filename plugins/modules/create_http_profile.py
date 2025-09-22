@@ -24,7 +24,7 @@ REVERSE_ENUM_MAPS = {
     "rsHttpsFloodProfileAction": {"0": "report_only", "1": "block_&_report"},
     "rsHttpsFloodProfileSelectiveChallenge": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileCollectiveChallenge": {"1": "enable", "2": "disable"},
-    "rsHttpsFloodProfileChallengeMethod": {"1": "Redirect_302", "2": "javaScript"},
+    "rsHttpsFloodProfileChallengeMethod": {"1": "redirect_302", "2": "javascript"},
     "rsHttpsFloodProfileRateLimitStatus": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileFullSessionDecryption": {"1": "enable", "2": "disable"},
 }
@@ -170,7 +170,7 @@ def map_https_flood_profile_parameters(params):
         "action": {"report_only": "0", "block_&_report": "1"},
         "selective_challenge": {"enable": "1", "disable": "2"},
         "collective_challenge": {"enable": "1", "disable": "2"},
-        "challenge_method": {"Redirect_302": "1", "javaScript": "2"},
+        "challenge_method": {"redirect_302": "1", "javascript": "2"},
         "rate_limit_status": {"enable": "1", "disable": "2"},
         "full_session_decryption": {"enable": "1", "disable": "2"}
     }

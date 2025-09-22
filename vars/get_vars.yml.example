@@ -51,3 +51,13 @@ oos_profiles:
 # - If all entries in oos_profiles are commented out or the list is empty, all OOS profiles on the device(s) will be included.
 # - To filter for specific profiles, list them as: - name: "oos_profile1"
 # - Each entry must include a 'name' key.
+
+###################### Get HTTP Profile ##########################
+# Filter by specific HTTP profile names, or leave empty list for all profiles
+filter_http_profile_names: ["http_profile_1", "http_profile_2"]  # Set to list of profile names to filter, or leave empty for all
+
+# Examples:
+# filter_http_profile_names: ["http_profile_1"]                # Show only one profile
+# filter_http_profile_names: ["http_profile_1", "http_profile_2"]  # Show multiple profiles
+# filter_http_profile_names: []                                 # Show all profiles (default)
+
