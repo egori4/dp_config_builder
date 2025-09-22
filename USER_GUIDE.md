@@ -70,12 +70,6 @@ ansible-playbook playbooks/get_cl_profiles.yml
 # Delete connection limit profiles and protections (uses delete_cl_configuration module)
 ansible-playbook playbooks/delete_cl_profiles.yml
 
-# Create security policies with orchestration (includes network classes, CL profiles, and policies)
-ansible-playbook playbooks/create_security_policy.yml
-
-# Edit existing security policies (partial updates and profile management)
-ansible-playbook playbooks/edit_security_policy.yml
-
 # Get all BDoS profiles from devices
 ansible-playbook playbooks/get_bdos_profile.yml
 
@@ -88,6 +82,18 @@ ansible-playbook playbooks/edit_bdos_profile.yml
 # Delete BDoS profiles
 ansible-playbook playbooks/delete_bdos_profile.yml
 
+# Get all OOS profiles from devices
+ansible-playbook playbooks/get_oos_profile.yml
+
+# Create new OOS profiles
+ansible-playbook playbooks/create_oos_profile.yml
+
+# Edit existing OOS profiles
+ansible-playbook playbooks/edit_oos_profile.yml
+
+# Delete OOS profiles
+ansible-playbook playbooks/delete_oos_profile.yml
+
 # Get all DNS profiles from devices
 ansible-playbook playbooks/get_dns_profile.yml
 
@@ -99,6 +105,12 @@ ansible-playbook playbooks/edit_dns_profile.yml
 
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
+
+# Create security policies with orchestration (includes network classes, CL profiles, and policies)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Edit existing security policies (partial updates and profile management)
+ansible-playbook playbooks/edit_security_policy.yml
 ```
 
 ## Common Workflows
@@ -330,8 +342,31 @@ nano vars/delete_vars.yml
 ansible-playbook --check playbooks/delete_dns_profile.yml
 ansible-playbook playbooks/delete_dns_profile.yml
 ```
+### Workflow 11 : Create New OOS Profiles
 
-### Workflow 11: Create Security Policies with Profile Bindings
+# 1.Define your OOS profiles
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansible-playbook --check playbooks/create_oos_profile.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_oos_profile.yml
+```
+### Workflow 11b : Get OOS Profile
+```bash
+ansible-playbook playbooks/get_oos_profile.yml
+```
+### Workflow 11c : Delete OOS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_oos_profile.yml
+ansible-playbook playbooks/delete_oos_profile.yml
+
+### Workflow 12: Create Security Policies with Profile Bindings
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -364,7 +399,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 12: Apply DefensePro Policy Updates
+### Workflow 13: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -652,6 +687,7 @@ bdos_profiles:
       footprint_strictness: "medium"             # OPTIONAL: low, medium, high (default: low)
       bdos_rate_limit: "user_defined"            # OPTIONAL: disable, normal_edge, suspect_edge, user_defined (default: disable)
       user_defined_rate_limit: 500               # OPTIONAL: 0–4000 (default: 0)
+      udp_ packet_rate_detection_sensitivit: low # OPTIONAL: Ignore or Disable,low, medium, high      
       user_defined_rate_limit_unit: "mbps"       # OPTIONAL: kbps, mbps, gbps (default: mbps)
       adv_udp_detection: "enable"                # OPTIONAL: enable, disable (default: disable)
 
@@ -730,7 +766,9 @@ dns_profiles:
       manual_trigger_act_thresh: 2000   # OPTIONAL: ≥ termination threshold
       manual_trigger_term_thresh: 1000  # OPTIONAL
       manual_trigger_max_qps_target: 3000
-
+      manual_trigger_act_period: 30     # OPTIONAL: seconds
+      manual_trigger_term_period: 15
+      manual_trigger_escalate_period: 60
       # Logging / debug
       packet_report: "enable"           # OPTIONAL: enable, disable (default: disable)
 
@@ -771,7 +809,7 @@ dns_profiles:
 
 # Edit existing DNS profiles - ONLY specify what you want to change
 dns_profiles:
-  - name: "dns_profile_10"
+  - name: "dns_profile_10"                      # MANDATORY: must specify which profile to edit
     params:
       action: "report_only"                     # OPTIONAL: report_only, block_&_report
       expected_qps: 2000                        # OPTIONAL: Update expected QPS
@@ -817,8 +855,92 @@ dns_profiles:
 *** Advanced controls ***: Optional – includes NXDOMAIN handling, malformed query detection, response rate limiting, protocol anomaly checks, footprint strictness, learning suppression thresholds
 *** Control flags ***: Use to enable/disable each creation stage independently
 
+### Create OOS Profiles ###
+# Define OOS profiles to create on each device
+# Configure OOS profiles in `vars/create_vars.yml`:
+# OPTIONAL: OOS profiles (only define if creating new ones)
+
+```yaml
+oos_profiles:
+  - name: "oos_profile_1"            # MANDATORY: Profile name
+    state: "enable"                  # OPTIONAL: enable, disable (default: enable)
+    params:
+      action: "block_and_report"     # OPTIONAL: report_only, block_and_report (default: block_and-report)
+      syn_ack_allow: "enable"        # OPTIONAL: enable, disable (default: enable)
+      packet_report: "enable"        # OPTIONAL: enable, disable (default: disable)
+      risk: "medium"                 # OPTIONAL: low, medium, high (default: medium)
+      act_threshold: 1000            # OPTIONAL: action threshold
+      term_threshold: 500            # OPTIONAL: termination threshold
+      idle_state: "enable"           # OPTIONAL: enable, disable (default: disable)
+      idle_state_bandwidth_threshold: 1000  # OPTIONAL: threshold for idle state
+      idle_state_timer: 30           # OPTIONAL: seconds for idle timeout
+```
+  # Minimal example (only mandatory parameter)
+  - name: "oos_profile_2"             # MANDATORY
+    # All other parameters use defaults
+
+### Editing OOS Profiles (Partial Updates)
+```yaml
+# Edit existing OOS profiles - ONLY specify what you want to change
+oos_profiles:
+  - name: "oos_profile_1"     # MANDATORY: must specify which profile to edit
+    params:
+      action: "report_only"           # OPTIONAL: report_only, block_and_report
+      syn_ack_allow: "disable"        # OPTIONAL: enable, disable
+      packet_report: "disable"        # OPTIONAL: enable, disable
+      risk: "high"                    # OPTIONAL: low, medium, high
+      act_threshold: 1500             # OPTIONAL: activation threshold
+      term_threshold: 800             # OPTIONAL: termination threshold
+      idle_state: "disable"           # OPTIONAL: enable, disable
+      idle_state_bandwidth_threshold: 1000  # OPTIONAL: threshold for idle state
+      idle_state_timer: 30           # OPTIONAL: seconds for idle timeout
+```
+
+### Get OOS Profiles
+
+# Get all OOS profiles from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_oos_profile.yml
+```yaml
+oos_profiles:
+  - "oos_profile_1"
+  - "oos_profile_2"                  # Show all profiles (default)
+```
+
+### Delete OOS Profiles
+
+# Delete OOS profiles by name
+```yaml
+oos_profiles:
+  - name: "oos_profile_1"
+  - name: "oos_profile_2"
+```
+
+### Notes for OOS Profiles
+
+*** name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: REQUIRED – choose between report_only or block_and_report.
+*** syn_ack_allow ***: Optional – enable/disable SYN-ACK handling.
+*** packet_report ***: Optional – enable/disable packet logging.
+*** risk ***: Optional – low, medium, or high risk profile.
+*** Thresholds ***
+    act_threshold: activation threshold.
+    term_threshold: termination threshold.
+    Idle state controls:
+    idle_state: enable/disable.
+    idle_state_bandwidth_threshold: threshold for idle state.
+    idle_state_timer: seconds for idle timeout.
+    Control flags: Use to enable/disable each stage independently.
 
 ### Security Policy Configuration
+
+**Security Policy Configuration Notes**:
+- **policy_name**: MANDATORY - Unique policy name
+- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
+- **direction**: MANDATORY - Traffic direction to match
+- **Profile bindings**: All optional - leave empty string for no binding
+- **Control flags**: Use to enable/disable each creation stage independently
 
 Configure security policies with profile bindings in `vars/create_vars.yml`:
 
@@ -852,13 +974,125 @@ security_policies:
     geo_feed_profile: ""
     out_of_state_profile: ""
 ```
+### Editing Security Policies
 
-**Security Policy Configuration Notes**:
-- **policy_name**: MANDATORY - Unique policy name
-- **src_network, dst_network**: MANDATORY - Network class names (use "any" for any network)
-- **direction**: MANDATORY - Traffic direction to match
-- **Profile bindings**: All optional - leave empty string for no binding
-- **Control flags**: Use to enable/disable each creation stage independently
+Modify existing security policies using partial updates in `vars/edit_vars.yml`:
+
+```yaml
+# Target DefensePro devices
+dp_ip:
+  - "10.105.192.32"
+
+# Security policies to edit
+edit_security_policies:
+  - policy_name: "web_server_protection"    # MANDATORY: Policy name to edit
+    # Basic configuration parameters (all optional)
+    src_network: "internal_networks"        # Source network class name or "any"
+    dst_network: "web_servers"              # Destination network class name or "any"
+    direction: "twoway"                     # oneway, twoway, bidirectional
+    state: "enable"                         # enable, disable, active, inactive
+    action: "block_and_report"              # block_and_report, report_only
+    priority: "750"                         # Priority value (1-1000)
+    packet_reporting_status: "enable"       # enable, disable
+    
+    # Profile bindings (all optional - use empty string to remove binding)
+    connection_limit_profile: "web_limits"  # Connection limit profile name
+    bdos_profile: ""                        # BDOS profile name (empty = detach)
+    syn_protection_profile: "syn_limits"    # SYN protection profile name
+    dns_flood_profile: ""                   # DNS flood profile name
+    https_flood_profile: ""                 # HTTPS flood profile name
+    traffic_filters_profile: ""             # Traffic filters profile name
+    signature_protection_profile: "app_sec" # Application security profile name
+    ert_attackers_feed_profile: ""          # ERT attackers feed profile name
+    geo_feed_profile: ""                    # Geo feed profile name
+    out_of_state_profile: ""                # Out of state profile name
+
+  # Edit another policy - minimal changes
+  - policy_name: "database_protection"
+    action: "report_only"                   # Change to monitoring mode
+    connection_limit_profile: ""            # Remove connection limit protection
+```
+
+**Run the playbook**:
+```bash
+# Preview changes (check mode)
+ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml --check
+
+# Execute changes
+ansible-playbook -i inventory.ini playbooks/edit_security_policy.yml
+```
+
+**Security Policy Editing Notes**:
+- **policy_name**: MANDATORY - Must be an existing security policy name
+- **Partial Updates**: Only specify parameters you want to change - unspecified parameters remain unchanged
+- **Profile Detachment**: Use empty string ("") to remove profile bindings
+- **Profile Attachment**: Specify profile name to attach/change binding  
+- **Preview Mode**: Use `--check` flag to see planned changes before execution
+- **Control Flags**: Device locking can be skipped with `skip_device_lock: true` in vars
+
+### Deleting Security Policies
+
+Remove security policies with optional profile cleanup using `vars/delete_vars.yml`:
+
+```yaml
+# Target DefensePro devices
+dp_ip:
+  - "10.105.192.32"
+
+# Security policies to delete
+delete_security_policies:
+  - policy_name: "test_security_policy"     # MANDATORY: Policy name to delete
+    deletion_mode: "policy_only"            # OPTIONAL: policy_only | policy_and_profiles
+  
+  - policy_name: "old_security_policy"     # MANDATORY: Policy name to delete  
+    deletion_mode: "policy_and_profiles"    # OPTIONAL: Advanced cleanup mode
+    
+  # deletion_mode defaults to "policy_only" if not specified
+  - policy_name: "another_policy"           # Uses default safe deletion mode
+```
+
+**Deletion Modes**:
+
+1. **`policy_only` (default)**:
+   - Safe deletion - only removes the security policy
+   - Associated profiles remain available for other policies
+   - Use for most deletion scenarios
+
+2. **`policy_and_profiles` (advanced)**:
+   - May remove associated profiles if no longer used by other policies
+   - Use with caution - may affect other policies
+   - Only use when certain about profile cleanup requirements
+
+**Usage Examples**:
+```bash
+# Delete policies with preview mode (recommended first step)
+ansible-playbook playbooks/delete_security_policy.yml --check
+
+# Delete policies (actual execution)
+ansible-playbook playbooks/delete_security_policy.yml
+
+# Delete with verbose output
+ansible-playbook playbooks/delete_security_policy.yml -v
+```
+
+**Security Policy Deletion Notes**:
+- **policy_name**: MANDATORY - Must be an existing security policy name
+- **deletion_mode**: OPTIONAL - Defaults to "policy_only" for safety
+- **Safe Default**: Always use "policy_only" unless certain about profile cleanup needs
+- **Preview Mode**: Use `--check` flag to see planned deletions before execution
+- **Batch Processing**: Multiple policies can be deleted in a single operation
+- **Profile Safety**: "policy_only" mode preserves profiles for other policies to use
+- **Advanced Cleanup**: "policy_and_profiles" mode should only be used when profiles are policy-specific
+
+**Recommended Workflow**:
+1. Use preview mode first: `ansible-playbook playbooks/delete_security_policy.yml --check`
+2. Review planned deletions carefully
+3. For shared environments, prefer "policy_only" mode
+4. For standalone policies with unique profiles, consider "policy_and_profiles" mode
+5. Execute deletion: `ansible-playbook playbooks/delete_security_policy.yml`
+
+
+
 ## Troubleshooting
 
 ### "No inventory" or "module not found" errors

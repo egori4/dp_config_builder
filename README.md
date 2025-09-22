@@ -113,23 +113,6 @@ dp_config_builder/
 | `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
 | `get_network_class.yml` | Query current state with filtering | [USER_GUIDE.md](USER_GUIDE.md#workflow-6-get-network-classes-with-filtering) |
 
-### BDoS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
-| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
-| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
-| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
-
-### DNS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
-| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
-| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
-| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
-
-
 ### Connection Limit Profiles
 
 | Playbook | Purpose | Documentation |
@@ -149,6 +132,34 @@ dp_config_builder/
 -  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
 -  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
 -  **Profile management**: Reference existing or newly created protections
+
+### OOS Profile Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_oos_profile.yml` | Create new OOS profile        | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-oos-profile)  |
+| `edit_oos_profile.yml`   | Modify existing OOS Profile   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-oos-profile)   |
+| `delete_oos_profile.yml` | Remove OOS profile            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-oos-profile) |
+| `get_oos_profile.yml`    | Query current OOS Profile     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-oos-profile)    |
+
+
+### BDoS Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
+| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
+| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
+| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
+
+### DNS Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
+| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
+| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
+| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
+
+
 
 ### Security Policy Management
 
@@ -254,6 +265,27 @@ ansible-playbook playbooks/edit_dns_profile.yml
 
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
+
+# Get all OOS profiles from devices
+ansible-playbook playbooks/get_oos_profile.yml
+
+# Create new OOS profiles
+ansible-playbook playbooks/create_oos_profile.yml
+
+# Edit existing OOS profiles
+ansible-playbook playbooks/edit_oos_profile.yml
+
+# Delete OOS profiles
+ansible-playbook playbooks/delete_oos_profile.yml
+
+# Security Policy Creation (using vars/create_vars.yml configuration)
+ansible-playbook playbooks/create_security_policy.yml
+
+# Security Policy Editing (using vars/edit_vars.yml configuration)  
+ansible-playbook playbooks/edit_security_policy.yml
+
+# Security Policy Deletion (using vars/delete_vars.yml configuration)
+ansible-playbook playbooks/delete_security_policy.yml
 ```
 
 
