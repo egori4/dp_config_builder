@@ -12,10 +12,11 @@ from ansible.module_utils.basic import AnsibleModule
 REVERSE_FIELD_MAP = {
     "rsHttpsFloodProfileAction": "action",
     "rsHttpsFloodProfileRateLimit": "rate_limit",
-    "rsHttpsFloodProfileSelectiveChallenge": "selective_challenge",
-    "rsHttpsFloodProfileCollectiveChallenge": "collective_challenge",
+    "rsHttpsFloodProfileSelectiveChallenge": "http_authentication_on_suspect_sources",
+    "rsHttpsFloodProfileCollectiveChallenge": "http_authentication_on_all_sources",
     "rsHttpsFloodProfileChallengeMethod": "challenge_method",
     "rsHttpsFloodProfileRateLimitStatus": "rate_limit_status",
+    "rsHttpsFloodProfilePacketReporting": "packet_report",
     "rsHttpsFloodProfileFullSessionDecryption": "full_session_decryption"
 }
 
@@ -26,6 +27,7 @@ REVERSE_ENUM_MAPS = {
     "rsHttpsFloodProfileCollectiveChallenge": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileChallengeMethod": {"1": "redirect_302", "2": "javascript"},
     "rsHttpsFloodProfileRateLimitStatus": {"1": "enable", "2": "disable"},
+    "rsHttpsFloodProfilePacketReporting": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileFullSessionDecryption": {"1": "enable", "2": "disable"},
 }
 
@@ -168,20 +170,22 @@ def map_https_flood_profile_parameters(params):
     """Map user-friendly HTTPS Flood parameters to DefensePro API values."""
     ENUM_MAPS = {
         "action": {"report_only": "0", "block_&_report": "1"},
-        "selective_challenge": {"enable": "1", "disable": "2"},
-        "collective_challenge": {"enable": "1", "disable": "2"},
+        "http_authentication_on_suspect_sources": {"enable": "1", "disable": "2"},
+        "http_authentication_on_all_sources": {"enable": "1", "disable": "2"},
         "challenge_method": {"redirect_302": "1", "javascript": "2"},
         "rate_limit_status": {"enable": "1", "disable": "2"},
+        "packet_report": {"enable": "1", "disable": "2"},
         "full_session_decryption": {"enable": "1", "disable": "2"}
     }
 
     FIELD_MAP = {
         "action": "rsHttpsFloodProfileAction",
         "rate_limit": "rsHttpsFloodProfileRateLimit",
-        "selective_challenge": "rsHttpsFloodProfileSelectiveChallenge",
-        "collective_challenge": "rsHttpsFloodProfileCollectiveChallenge",
+        "http_authentication_on_suspect_sources": "rsHttpsFloodProfileSelectiveChallenge",
+        "http_authentication_on_all_sources": "rsHttpsFloodProfileCollectiveChallenge",
         "challenge_method": "rsHttpsFloodProfileChallengeMethod",
         "rate_limit_status": "rsHttpsFloodProfileRateLimitStatus",
+        "packet_report": "rsHttpsFloodProfilePacketReporting",
         "full_session_decryption": "rsHttpsFloodProfileFullSessionDecryption"
     }
 

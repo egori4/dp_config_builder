@@ -66,10 +66,11 @@ changed:
 # Friendly → API enumerations
 ENUM_MAPS = {
     "action": {"report_only": "0", "block_&_report": "1"},
-    "selective_challenge": {"enable": "1", "disable": "2"},
-    "collective_challenge": {"enable": "1", "disable": "2"},
+    "http_authentication_on_suspect_sources": {"enable": "1", "disable": "2"},
+    "http_authentication_on_all_sources": {"enable": "1", "disable": "2"},
     "challenge_method": {"redirect_302": "1", "javascript": "2"},
     "rate_limit_status": {"enable": "1", "disable": "2"},
+    "packet_report": {"enable": "1", "disable": "2"},
     "full_session_decryption": {"enable": "1", "disable": "2"}
 }
 
@@ -77,10 +78,11 @@ ENUM_MAPS = {
 FIELD_MAP = {
     "action": "rsHttpsFloodProfileAction",
     "rate_limit": "rsHttpsFloodProfileRateLimit",
-    "selective_challenge": "rsHttpsFloodProfileSelectiveChallenge",
-    "collective_challenge": "rsHttpsFloodProfileCollectiveChallenge",
+    "http_authentication_on_suspect_sources": "rsHttpsFloodProfileSelectiveChallenge",
+    "http_authentication_on_all_sources": "rsHttpsFloodProfileCollectiveChallenge",
     "challenge_method": "rsHttpsFloodProfileChallengeMethod",
     "rate_limit_status": "rsHttpsFloodProfileRateLimitStatus",
+    "packet_report": "rsHttpsFloodProfilePacketReporting",
     "full_session_decryption": "rsHttpsFloodProfileFullSessionDecryption"
 }
 

@@ -1018,11 +1018,8 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{prof
             "rsHttpsFloodProfileName": "HTTPS_Demo20",
             "rsHttpsFloodProfileAction": "0",
             "rsHttpsFloodProfileRateLimit": "50000",
-            "rsHttpsFloodProfileSelectiveChallenge": "2",
-            "rsHttpsFloodProfileCollectiveChallenge": "2",
             "rsHttpsFloodProfileChallengeMethod": "2",
             "rsHttpsFloodProfileRateLimitStatus": "1",
-            "rsHttpsFloodProfilePacketReporting": "1",
             "rsHttpsFloodProfileFullSessionDecryption": "1"
         }
 ```
@@ -1033,11 +1030,8 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profi
             "rsHttpsFloodProfileName": "HTTPS_Demo20",
             "rsHttpsFloodProfileAction": "0",
             "rsHttpsFloodProfileRateLimit": "50000",
-            "rsHttpsFloodProfileSelectiveChallenge": "2",
-            "rsHttpsFloodProfileCollectiveChallenge": "2",
             "rsHttpsFloodProfileChallengeMethod": "2",
             "rsHttpsFloodProfileRateLimitStatus": "1",
-            "rsHttpsFloodProfilePacketReporting": "1",
             "rsHttpsFloodProfileFullSessionDecryption": "1"
         }
 ```
@@ -1050,28 +1044,19 @@ Each profile dict must include profile_name (mandatory) and any parameters to ch
 GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
 
 Response:
- {
-    "msg": [
-        "Device: 10.105.192.32",
-        "HTTPS Flood Profiles Found (1 entries):",
-        "  Profile Name: http_profile_3",
-        "  --------------------------------------------------",
-        "      action                              block & report",
-        "      rate_limit                          80000",
-        "      selective_challenge                 disable",
-        "      collective_challenge                enable",
-        "      challenge_method                    redirect_302",
-        "      rate_limit_status                   disable",
-        "      full_session_decryption             disable",
-        "      packet_reporting                    enable",
-        "    --------------------------------------------------",
-        "",
-        "Summary:",
-        "  - Total entries: 1",
-        "  - Unique profiles: 1",
-        "  - Profile names: http_profile_3",
-        "  - Filter applied: True",
-        ""
+{
+    "rsHttpsFloodProfileTable": [
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileSelectiveChallenge": "2",
+            "rsHttpsFloodProfileCollectiveChallenge": "2",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfilePacketReporting": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
     ]
 }
 ```

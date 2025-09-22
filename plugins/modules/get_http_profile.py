@@ -15,12 +15,12 @@ from ansible.module_utils.radware_cc import RadwareCC
 REVERSE_FIELD_MAP = {
     "rsHttpsFloodProfileAction": "action",
     "rsHttpsFloodProfileRateLimit": "rate_limit",
-    "rsHttpsFloodProfileSelectiveChallenge": "selective_challenge",
-    "rsHttpsFloodProfileCollectiveChallenge": "collective_challenge",
+    "rsHttpsFloodProfileSelectiveChallenge": "http_authentication_on_suspect_sources",
+    "rsHttpsFloodProfileCollectiveChallenge": "http_authentication_on_all_sources",
     "rsHttpsFloodProfileChallengeMethod": "challenge_method",
     "rsHttpsFloodProfileRateLimitStatus": "rate_limit_status",
     "rsHttpsFloodProfileFullSessionDecryption": "full_session_decryption",
-    "rsHttpsFloodProfilePacketReporting": "packet_reporting"
+    "rsHttpsFloodProfilePacketReporting": "packet_report"
 }
 
 # Map numeric values → user-friendly

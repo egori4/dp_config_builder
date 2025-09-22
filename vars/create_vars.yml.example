@@ -164,15 +164,17 @@ bdos_profiles:
 # Each profile requires name (mandatory) to identify which profile to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
 http_flood_profiles:
-  # Example: Edit HTTP profile "HTTP_Profile_20", changing multiple parameters
-  - name: "HTTP_Profile_20"                 # Mandatory: exact name of the profile to edit
-    action: "block_&_report"              # Options: report_only, block_&_report
-    rate_limit: 60000                       # Maximum allowed HTTP requests per second
-    selective_challenge: "enable"           # Options: enable, disable
-    collective_challenge: "disable"         # Options: enable, disable
-    challenge_method: "redirect_302"        # Options: redirect_302, Javascript
-    rate_limit_status: "enable"             # Options: enable, disable
-    full_session_decryption: "enable"       # Options: enable, disable
+  - name: "http_profile_1"
+    params:
+      action: "report_only"   # report_only,block_&_report
+      rate_limit: "2000"      # Packets per Second per Source
+      http_authentication_on_suspect_sources: "enable"  # enable, disable
+      http_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript" 
+      
   # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work
   # Example: Minimal update for another HTTP profile
   # - name: "HTTP_Profile_25"

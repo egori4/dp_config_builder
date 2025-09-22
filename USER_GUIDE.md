@@ -981,21 +981,24 @@ oos_profiles:
     Control flags: Use to enable/disable each stage independently.
 
 ### Create HTTP Profiles ###
+
 # Define HTTP profiles to create on each device
 # Configure HTTP profiles in `vars/create_vars.yml`:
 # OPTIONAL: HTTP profiles (only define if creating new ones)
 
 ```yaml
 http_flood_profiles:
-  - name: "http_profile_2"
+  - name: "http_profile_1"
     params:
-      action: "report_only"              # OPTIONAL:report_only,block_&_report
-      rate_limit: "2"                    # OPTIONAL: enable, disable
-      selective_challenge: "enable"      # OPTIONAL: enable, disable       
-      collective_challenge: "disable"    # OPTIONAL: enable, disable
-      rate_limit_status: "enable"        # OPTIONAL: enable, disable
-      full_session_decryption: "disable" # OPTIONAL: enable, disable
-      #challenge_method: "javascript"    # javascript/redirect_302, SSL Decryption and Encryption should be enabled on the DP for this to work
+      action: "report_only"   # report_only,block_&_report
+      rate_limit: "2000"      # Packets per Second per Source
+      http_authentication_on_suspect_sources: "enable"  # enable, disable
+      http_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript"                   # javascript, redirect_302
+
 
 ```
   # Minimal example (only mandatory parameter)
@@ -1009,15 +1012,16 @@ http_flood_profiles:
 ```yaml
 # Edit existing HTTP profiles - ONLY specify what you want to change
 https_profiles:
-  - name: "http_profile_2"
+  - name: "http_profile_1"
     params:
-      action: "report_only"                   # OPTIONAL:report_only,block_&_report
-      rate_limit: "2"
-      selective_challenge: "enable"           # OPTIONAL: enable, disable
-      collective_challenge: "disable"         # OPTIONAL: enable, disable
-      rate_limit_status: "enable"             # OPTIONAL: enable, disable
-      full_session_decryption: "disable"      # OPTIONAL: enable, disable
-      #challenge_method: "javascript"    # javascript/redirect_302, SSL Decryption and Encryption should be enabled on the DP for this to work
+      action: "report_only"                             # report_only,block_&_report
+      rate_limit: "2000"                                # Packets per Second per Source
+      http_authentication_on_suspect_sources: "enable"  # enable, disable
+      http_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript"                   # javascript, redirect_302, SSL Decryption and Encryption should be enabled on the DP for this to work
 ```
 
 ### Get HTTP Profiles
