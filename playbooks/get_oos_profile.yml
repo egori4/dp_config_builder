@@ -1,0 +1,59 @@
+---
+- name: Get Specific OOS Profiles from DefensePro
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml   # contains dp_ip (list of device IPs)
+
+  tasks:
+    - block:
+
+        # Fetch specific OOS profiles
+        - name: Get OOS profiles
+          get_oos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            filter_oos_profile_names: "{{ oos_profiles | map(attribute='name') | list }}"
+          loop: "{{ dp_ip }}"
+          register: oos_fetch_results
+          loop_control:
+            label: "Device: {{ item }}"
+
+        # Build readable output
+        - name: Build readable output
+          set_fact:
+            oos_formatted_output: |
+              {% for result in oos_fetch_results.results %}
+              Device: {{ result.item }}
+              {% if result.response.formatted_profiles %}
+              OOS Profiles fetched ({{ result.response.summary.total_entries }} entries):
+              {% for profile_name, profile_entries in result.response.formatted_profiles.items() %}
+
+                Profile: {{ profile_name }}
+                --------------------------------------------------
+                {% for entry in profile_entries %}
+                  Basic Configuration:
+                  {% for k, v in entry.items() %}
+                    {{ "%-35s %s" | format(k, v) }}
+                  {% endfor %}
+                {% endfor %}
+                --------------------------------------------------
+
+              {% endfor %}
+
+              Summary:
+                - Total entries: {{ result.response.summary.total_entries }}
+                - Unique profiles: {{ result.response.summary.unique_profiles }}
+                - Profile names: {{ result.response.summary.profile_names | join(', ') }}
+                - Filter applied: {{ result.response.summary.filtered }}
+              {% else %}
+              No OOS profiles found.
+              {% endif %}
+
+              {% endfor %}
+
+        # Display results
+        - name: Display OOS profiles
+          debug:
+            msg: "{{ oos_formatted_output.split('\n') }}"

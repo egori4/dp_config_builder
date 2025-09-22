@@ -144,7 +144,7 @@ class RadwareCC:
     def _put(self, url, data=None, json=None):
         return self._request("put", url, data=data, json=json)
 
-    def _delete(self, url):
-        return self._request("delete", url)
+    def _delete(self, url, data=None, json=None):
+        return self._request("delete", url, data=data, json=json)
 
 

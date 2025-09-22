@@ -1,0 +1,79 @@
+---
+- name: Delete BDOS Flood profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete BDOS Flood profiles
+          delete_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            bdos_profiles: "{{ bdos_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+
+              {% if item.response is defined %}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+
+              {% for op in item.response.operations | default([]) %}
+                - Profile: {{ op.profile }}
+                  Action: Delete
+              {% endfor %}
+
+              {% if not item.response.operations %}
+              No BDOS profiles configured for deletion.
+              {% endif %}
+
+              {% else %}
+              EXECUTION RESULTS:
+
+              {% for res in item.response %}
+                - Profile: {{ res.profile }}
+                  {% if res.status is defined and res.status == "skipped" %}
+                  Status: SKIPPED
+                  Reason: {{ res.reason }}
+                  {% elif res.failed | default(false) %}
+                  Status: FAILED
+                  Error: {{ res.response.error | default('Unknown') }}
+                  {% else %}
+                  Status: DELETED
+                  {% endif %}
+              {% endfor %}
+
+              {% if not item.response %}
+              No operations performed (no deletions configured).
+              {% endif %}
+              {% endif %}
+              {% else %}
+              No deletion results returned.
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"

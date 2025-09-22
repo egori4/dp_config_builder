@@ -46,6 +46,13 @@ class Logger:
     def info(self, message, indent=0):
         self._print(message, "info", indent)
 
+    def warning(self, message, indent=0):
+        formatted = self._format_message(message, "warning", indent)
+        print(formatted)
+        sys.stdout.flush()
+        if self.log_to_file:
+            self._write_to_file(formatted)
+
     def debug(self, message, indent=0):
         self._print(message, "debug", indent)
 

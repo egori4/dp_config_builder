@@ -1,5 +1,5 @@
 ---
-- name: Delete network classes (Unified)
+- name: Delete security policies
   hosts: cc
   gather_facts: no
   vars_files:
@@ -13,12 +13,15 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+          loop_control:
+            label: "Locking device: {{ item }}"
 
-        - name: Delete network class groups
-          delete_network_class:
+        - name: Delete security policies
+          delete_security_policy:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            delete_networks: "{{ delete_networks | default([]) }}"
+            delete_security_policies: "{{ delete_security_policies | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
@@ -33,28 +36,24 @@
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
               
-              Network Group Deletions ({{ planned_ops | length }} planned):
+              Security Policy Deletions ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
                 - {{ op.description }}
               {% endfor %}
               {% else %}
               
-              No network groups configured for deletion.
+              No security policies configured for deletion.
               {% endif %}
               {% else %}
               EXECUTION RESULTS:
-              {% set deleted_groups = item.response.deleted_groups | default([]) %}
+              {% set deleted_pols = item.response.deleted_policies | default([]) %}
               {% set errors = item.response.errors | default([]) %}
-              {% set summary = item.response.summary | default({}) %}
-              {% if deleted_groups %}
+              {% if deleted_pols %}
               
-              Network Groups ({{ summary.successful_deletions | default(0) }}/{{ summary.total_groups_attempted | default(0) }} successful):
-              {% for group in deleted_groups %}
-              {% if group.status == 'success' %}
-                - Deleted {{ group.class_name }}[{{ group.index }}]
-              {% else %}
-                - Failed {{ group.class_name }}[{{ group.index }}] ({{ group.error | default('Unknown error') }})
-              {% endif %}
+              Security Policies ({{ deleted_pols | length }}/{{ item.response.summary.total_policies_attempted }} successful):
+              {% for del in deleted_pols %}
+                - {{ del.policy_name }}: {{ del.status }}
+                  Mode: {{ del.deletion_mode }}
               {% endfor %}
               {% endif %}
               {% if errors %}
@@ -64,9 +63,9 @@
                 - {{ error }}
               {% endfor %}
               {% endif %}
-              {% if not deleted_groups and not errors %}
+              {% if not deleted_pols and not errors %}
               
-              No network groups configured for deletion.
+              No security policies configured for deletion.
               {% endif %}
               {% endif %}
           debug:
@@ -75,9 +74,21 @@
           loop_control:
             label: "Device: {{ item.item }}"
 
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_policy_updates | default(false))
+          loop_control:
+            label: "Applying policies: {{ item }}"
+
       always:
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+          loop_control:
+            label: "Unlocking device: {{ item }}"

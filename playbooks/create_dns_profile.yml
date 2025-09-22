@@ -1,5 +1,5 @@
 ---
-- name: Create connection limit protections and profiles
+- name: Create DNS profiles
   hosts: cc
   gather_facts: no
   vars_files:
@@ -15,18 +15,17 @@
           loop: "{{ dp_ip }}"
           when: not (skip_device_lock | default(false))
 
-        - name: Configure connection limit protections and profiles
-          create_cl_configuration:
+        - name: Configure DNS profiles
+          create_dns_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            cl_protections: "{{ cl_protections | default([]) }}"
-            cl_profiles: "{{ cl_profiles | default([]) }}"
+            dns_profiles: "{{ create_dns_profiles | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
-          register: cl_create_results
+          register: DNS_create_results
 
-        - name: Display CL creation results (formatted)
+        - name: Display DNS creation results
           vars:
             formatted_output: |
               Device: {{ item.item }}
@@ -34,52 +33,48 @@
               PREVIEW MODE - Operations that would be performed:
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
-              
-              Connection Limit Creations ({{ planned_ops | length }} planned):
+              DNS Profile Creations ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
-                - {{ op.description }}
+                - {{ op.profile_name }}
+                  Parameters:
+                  {% for k, v in op.params.items() %}
+                    - {{ k }}: {{ v }}
+                  {% endfor %}
               {% endfor %}
               {% else %}
-              
-              No connection limit protections/profiles configured for creation.
+              No DNS profiles configured for creation.
               {% endif %}
               {% elif ansible_check_mode %}
               PREVIEW MODE - Operations that would be performed:
-              
-              Connection Limit Configurations ({{ item.debug_info.input.protections_count | default(0) }} protections + {{ item.debug_info.input.profiles_count | default(0) }} profiles):
-              {% if item.debug_info.input.protections_count | default(0) > 0 %}
-                - {{ item.debug_info.input.protections_count }} protection(s) would be created
-              {% endif %}
+              DNS Configurations ({{ item.debug_info.input.profiles_count | default(0) }} profiles):
               {% if item.debug_info.input.profiles_count | default(0) > 0 %}
                 - {{ item.debug_info.input.profiles_count }} profile(s) would be created
               {% endif %}
               {% else %}
               EXECUTION RESULTS:
               {% if item.failed | default(false) %}
-              
               Error occurred during creation:
                 - {{ item.msg | default('Unknown error') }}
-              {% elif item.debug_info.input.protections_count | default(0) > 0 or item.debug_info.input.profiles_count | default(0) > 0 %}
-              
-              Connection Limit Configurations created successfully:
-              {% if item.debug_info.input.protections_count | default(0) > 0 %}
-                - {{ item.debug_info.input.protections_count }} protection(s) created
-              {% endif %}
-              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
-                - {{ item.debug_info.input.profiles_count }} profile(s) created
-              {% endif %}
+              {% elif item.response.created_profiles | default([]) %}
+              DNS Profiles created successfully:
+              {% for prof in item.response.created_profiles %}
+                - {{ prof.profile_name }}
+                  Parameters:
+                  {% for k, v in prof.user_friendly.items() %}
+                  - {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
               {% else %}
-              
-              No connection limit protections/profiles were created.
+              No DNS profiles were created.
               {% endif %}
               {% endif %}
           debug:
             msg: "{{ formatted_output.split('\n') }}"
-          loop: "{{ cl_create_results.results }}"
+          loop: "{{ DNS_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
 
-        - name: "Apply policy updates per device"
+        - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
@@ -88,8 +83,8 @@
             label: "Applying policies: {{ item }}"
           when: 
             - not (skip_policy_updates | default(false))
-            - cl_create_results is defined
-            - cl_create_results.changed | default(false)
+            - DNS_create_results is defined
+            - DNS_create_results.changed | default(false)
 
       always:
         - name: Unlock device(s)

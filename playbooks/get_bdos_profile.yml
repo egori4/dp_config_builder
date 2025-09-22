@@ -1,0 +1,47 @@
+---
+- name: Fetch BDOS profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml  # Contains dp_ip list and filter_bdos_profile_names
+
+  tasks:
+    - name: Fetch BDOS profiles from devices
+      get_bdos_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_bdos_profile_names: "{{ filter_bdos_profile_names }}"
+      loop: "{{ dp_ip }}"
+      register: bdos_fetch_results
+      loop_control:
+        label: "Device: {{ item }}"
+
+    - name: Display fetched BDOS profiles (formatted)
+      vars:
+        formatted_output: |
+          {% for result in bdos_fetch_results.results %}
+          Device: {{ result.item }}
+          {% if result.response.formatted_profiles %}
+          BDOS Profiles Found ({{ result.response.summary.total_entries }} entries):
+          {% for entry in result.response.formatted_profiles %}
+            Profile: {{ entry.profile_name }}
+            --------------------------------------------------
+            Basic Configuration:
+            {% for k, v in entry.items() %}
+              {{ "%-35s %s" | format(k, v) }}
+            {% endfor %}
+            --------------------------------------------------
+          {% endfor %}
+
+          Summary:
+            - Total entries: {{ result.response.summary.total_entries }}
+            - Unique profiles: {{ result.response.summary.unique_profiles }}
+            - Profile names: {{ result.response.summary.profile_names | join(', ') }}
+            - Filter applied: {{ result.response.summary.filtered }}
+          {% else %}
+          No BDOS profiles found or error occurred.
+          {% endif %}
+          {% endfor %}
+      debug:
+        msg: "{{ formatted_output.split('\n') }}"

@@ -1,10 +1,10 @@
 ---
-- name: Create network classes (Unified)
+- name: Edit security policies
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/create_vars.yml
+    - ../vars/edit_vars.yml
 
   tasks:
     - block:
@@ -13,19 +13,22 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Locking device: {{ item }}"
           when: not (skip_device_lock | default(false))
 
-        - name: Create network classes and groups
-          create_network_class:
+        - name: Edit security policies
+          edit_security_policy:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            netclasses: "{{ netclasses | default([]) }}"
+            edit_security_policies: "{{ edit_security_policies | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
-          register: create_results
+          register: edit_results
+          when: edit_security_policies is defined and edit_security_policies|length > 0
 
-        - name: Display creation results (formatted)
+        - name: Display edit results (formatted)
           vars:
             formatted_output: |
               Device: {{ item.item }}
@@ -34,28 +37,26 @@
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
               
-              Network Group Creations ({{ planned_ops | length }} planned):
+              Security Policy Edits ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
-                - {{ op.description }}
+                - Policy: {{ op.policy_name }}
+                  Changes: {{ op.changes | join(', ') }}
               {% endfor %}
               {% else %}
               
-              No network classes configured for creation.
+              No security policies configured for editing.
               {% endif %}
               {% else %}
               EXECUTION RESULTS:
-              {% set created_groups = item.response.created_groups | default([]) %}
+              {% set edited_policies = item.response.edited_policies | default([]) %}
               {% set errors = item.response.errors | default([]) %}
               {% set summary = item.response.summary | default({}) %}
-              {% if created_groups %}
+              {% if edited_policies %}
               
-              Network Groups ({{ summary.successful_groups | default(0) }}/{{ summary.total_groups_attempted | default(0) }} successful):
-              {% for group in created_groups %}
-              {% if group.status == 'success' %}
-                -  {{ group.class_name }}[{{ group.index }}]: {{ group.address }}/{{ group.mask }}
-              {% else %}
-                -  {{ group.class_name }}[{{ group.index }}]: {{ group.address }}/{{ group.mask }} ({{ group.error | default('Unknown error') }})
-              {% endif %}
+              Security Policies ({{ summary.successful_edits | default(0) }}/{{ summary.total_policies_attempted | default(0) }} successful):
+              {% for policy in edited_policies %}
+                - {{ policy.policy_name }}: {{ policy.status }}
+                  {% if policy.changes_applied %}Changes: {{ policy.changes_applied | join(', ') }}{% endif %}
               {% endfor %}
               {% endif %}
               {% if errors %}
@@ -65,18 +66,23 @@
                 - {{ error }}
               {% endfor %}
               {% endif %}
-              {% if not created_groups and not errors %}
+              {% if not edited_policies and not errors %}
               
-              No network classes configured for creation.
+              No security policies configured for editing.
               {% endif %}
               {% endif %}
           debug:
             msg: "{{ formatted_output.split('\n') }}"
-          loop: "{{ create_results.results }}"
+          loop: "{{ edit_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+          when: 
+            - edit_results is defined
+            - edit_results.results is defined
+            - edit_security_policies is defined 
+            - edit_security_policies|length > 0
 
-        - name: "Apply policy updates per device"
+        - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
@@ -85,8 +91,8 @@
             label: "Applying policies: {{ item }}"
           when: 
             - not (skip_policy_updates | default(false))
-            - create_results is defined
-            - create_results.changed | default(false)
+            - edit_security_policies is defined 
+            - edit_security_policies|length > 0
 
       always:
         - name: Unlock device(s)
@@ -94,4 +100,8 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Unlocking device: {{ item }}"
+          # Continue unlocking even if previous unlock failed
+          ignore_errors: yes
           when: not (skip_device_lock | default(false))

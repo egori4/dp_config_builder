@@ -1,0 +1,105 @@
+---
+# DefensePro Policy Update Playbook
+# This playbook applies pending configuration changes to DefensePro devices
+# Run this after creating/modifying configuration
+
+- name: "Apply DefensePro Policy Updates"
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/update_vars.yml
+    
+  tasks:
+    - name: "Validate input parameters"
+      fail:
+        msg: "target_devices list must be provided and not empty"
+      when: target_devices is not defined or (target_devices | length) == 0
+
+    - name: "Display policy update plan"
+      pause:
+        seconds: 1
+        prompt: |
+
+          DefensePro Policy Update Plan:
+          ============================
+          Target devices: {{ target_devices | join(', ') }}
+          Continue on error: {{ update_settings.continue_on_error | default(true) }}
+          
+          WARNING: This operation will apply pending configuration changes.
+
+    - name: "Confirm policy update operation"
+      pause:
+        prompt: |
+          
+          You are about to apply policy updates to {{ target_devices | length }} device(s).
+          This operation will:
+          - Apply all pending configuration changes
+          - Cannot be easily reverted
+          
+          Do you want to continue? (yes/no)
+      register: confirmation
+      when: 
+        - not ansible_check_mode
+        - update_settings.require_confirmation | default(false)
+
+    - name: "Abort if not confirmed"
+      fail:
+        msg: "Policy update operation cancelled by user"
+      when: 
+        - not ansible_check_mode
+        - update_settings.require_confirmation | default(false)
+        - confirmation.user_input | lower not in ['yes', 'y']
+
+    - name: "Apply policy updates to each device"
+      block:
+        - name: "Lock device for policy update"
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ target_devices }}"
+          loop_control:
+            label: "Locking device: {{ item }}"
+          ignore_errors: "{{ update_settings.continue_on_error | default(true) }}"
+
+        - name: "Apply policy updates"
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ target_devices }}"
+          loop_control:
+            label: "Updating policies: {{ item }}"
+          register: update_results
+          ignore_errors: "{{ update_settings.continue_on_error | default(true) }}"
+
+      always:
+        - name: "Unlock all devices"
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ target_devices }}"
+          loop_control:
+            label: "Unlocking device: {{ item }}"
+          # Continue unlocking even if previous unlock failed
+          ignore_errors: yes
+
+    - name: "Policy update completion summary"
+      pause:
+        seconds: 1
+        prompt: |
+
+          Policy Update Summary:
+          =====================
+          Total devices processed: {{ target_devices | length }}
+          {% if update_results is defined %}
+          Successful updates: {{ update_results.results | selectattr('response.status', 'defined') | selectattr('response.status', 'equalto', 'success') | list | length }}
+          Failed updates: {{ update_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length }}
+          
+          Device Results:
+          {% for result in update_results.results %}
+          
+          - {{ result.item }}: {{ result.response.status | default('failed' if result.failed | default(false) else 'unknown') }}
+            {% if result.response.message is defined %}Message: {{ result.response.message }}{% endif %}
+            {% if result.msg is defined and result.failed | default(false) %}Error: {{ result.msg }}{% endif %}
+          {% endfor %}
+          {% endif %}
