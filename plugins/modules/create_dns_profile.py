@@ -95,6 +95,7 @@ def run_module():
     logger = Logger(verbosity=log_level)
 
     debug_info['input'] = {'dp_ip': dp_ip, 'profiles_count': len(dns_profiles)}
+    logger.debug(f"Module input parameters: {module.params}")
 
     try:
         from ansible.module_utils.radware_cc import RadwareCC

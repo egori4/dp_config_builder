@@ -166,7 +166,7 @@ ORCHESTRATION LAYER
 │       ├── delete_vars.yml.example    # Template for delete_vars.yml
 │       ├── get_vars.yml.example       # Template for get_vars.yml
 │       └── update_vars_example.yml    # Template for update_vars.yml 
-└──
+└── 
 
 ```
 
@@ -655,8 +655,6 @@ Each profile dict must include profile_name (mandatory) and any parameters to ch
 ```json
 GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
 
-GET /mgmt/device/byip/10.105.192.32/config/rsNetFloodProfileTable/{profile_name}
-
 Response:
 {
     "rsNetFloodProfileTable": [
@@ -761,8 +759,13 @@ POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileManualTriggerActThresh": "0",
             "rsDnsProtProfileManualTriggerTermThresh": "0",
             "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
+            "rsDnsProtProfileManualTriggerActPeriod": "3",
+            "rsDnsProtProfileManualTriggerTermPeriod": "3",
+            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
+            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
@@ -799,8 +802,13 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileManualTriggerActThresh": "0",
             "rsDnsProtProfileManualTriggerTermThresh": "0",
             "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
+            "rsDnsProtProfileManualTriggerActPeriod": "3",
+            "rsDnsProtProfileManualTriggerTermPeriod": "3",
+            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
+            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
@@ -814,42 +822,46 @@ Each profile dict must include profile_name (mandatory) and any parameters to ch
 GET /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
 
 Response:
- {
-    "msg": [
-        "Device: 10.105.192.32",
-        "DNS Profiles Found (2 entries):",
-        "  Profile Name: dns_profile_1",
-        "  --------------------------------------------------",
-        "  Basic Configuration:",
-        "      expected_qps                        4000",
-        "      max_allow_qps                       5000",
-        "      a_quota                             90",
-        "      mx_quota                            45",
-        "      ptr_quota                           45",
-        "      aaaa_quota                          15",
-        "      text_quota                          8",
-        "      soa_quota                           2",
-        "      naptr_quota                         2",
-        "      srv_quota                           2",
-        "      other_quota                         2",
-        "      a_status                            enable",
-        "      mx_status                           enable",
-        "      ptr_status                          enable",
-        "      aaaa_status                         enable",
-        "      text_status                         enable",
-        "      soa_status                          enable",
-        "      naptr_status                        enable",
-        "      srv_status                          enable",
-        "      other_status                        enable",
-        "      action                              block_and_report",
-        "      manual_trigger                      disable",
-        "      packet_report                       enable",
-        "      packet_trace                        disable",
-        "      subdomains_wl_learning              enable",
-        "      footprint_strictness                medium",
-        "      learning_suppression_threshold      25",
-        "    --------------------------------------------------",
-        ""
+{
+    "rsDnsProtProfileTable": [
+        {
+            "rsDnsProtProfileName": "dns_profile_1",
+            "rsDnsProtProfileDnsAStatus": "2",
+            "rsDnsProtProfileDnsMxStatus": "2",
+            "rsDnsProtProfileDnsPtrStatus": "2",
+            "rsDnsProtProfileDnsAaaaStatus": "2",
+            "rsDnsProtProfileDnsTextStatus": "2",
+            "rsDnsProtProfileDnsSoaStatus": "2",
+            "rsDnsProtProfileDnsNaptrStatus": "2",
+            "rsDnsProtProfileDnsSrvStatus": "2",
+            "rsDnsProtProfileDnsOtherStatus": "2",
+            "rsDnsProtProfileExpectedQps": "1000",
+            "rsDnsProtProfileDnsAQuota": "50",
+            "rsDnsProtProfileDnsMxQuota": "20",
+            "rsDnsProtProfileDnsPtrQuota": "12",
+            "rsDnsProtProfileDnsAaaaQuota": "15",
+            "rsDnsProtProfileDnsTextQuota": "2",
+            "rsDnsProtProfileDnsSoaQuota": "1",
+            "rsDnsProtProfileDnsNaptrQuota": "1",
+            "rsDnsProtProfileDnsSrvQuota": "1",
+            "rsDnsProtProfileDnsOtherQuota": "1",
+            "rsDnsProtProfileAction": "1",
+            "rsDnsProtProfileMaxAllowQps": "5000",
+            "rsDnsProtProfileSigRateLimTarget": "0",
+            "rsDnsProtProfileManualTriggerStatus": "2",
+            "rsDnsProtProfileManualTriggerActThresh": "0",
+            "rsDnsProtProfileManualTriggerTermThresh": "0",
+            "rsDnsProtProfileManualTriggerMaxQpsTarget": "0",
+            "rsDnsProtProfileManualTriggerActPeriod": "3",
+            "rsDnsProtProfileManualTriggerTermPeriod": "3",
+            "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
+            "rsDnsProtProfilePacketReportStatus": "1",
+            "rsDnsProtProfilePacketTraceStatus": "2",
+            "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
+            "rsDnsProtProfileSubdomainsWLLearningState": "1",
+            "rsDnsProtProfileLearningSuppressionThreshold": "25",
+            "rsDnsProtProfileFootprintStrictness": "1"
+        }
     ]
 }
 ```

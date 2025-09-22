@@ -111,6 +111,12 @@ ansible-playbook playbooks/create_security_policy.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
+
+# Get Security policies and all profiles from devices
+ansible-playbook playbooks/get_security_policy.yml
+
+# Delete Security Policies(and optional corresponding profiles)
+ansible-playbook playbooks/delete_security_policy.yml
 ```
 
 ## Common Workflows
@@ -342,6 +348,7 @@ nano vars/delete_vars.yml
 ansible-playbook --check playbooks/delete_dns_profile.yml
 ansible-playbook playbooks/delete_dns_profile.yml
 ```
+
 ### Workflow 11 : Create New OOS Profiles
 
 # 1.Define your OOS profiles
@@ -650,9 +657,7 @@ cl_profiles:
 
 ### Create BDOS Profile configuration ###
 ```yaml
-# Define BDoS profiles to create on each device
-# Configure bdos policies  `vars/create_vars.yml`:
-# OPTIONAL: BDoS profiles (only define if creating new ones)
+# OPTIONAL: Define BDoS profiles (only define if creating new ones)
 bdos_profiles:
   - name: "bdos_profile_5"           # MANDATORY: Profile name
     state: "enable"                              # OPTIONAL: enable, disable (default: enable)

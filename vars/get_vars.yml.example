@@ -63,4 +63,3 @@ filter_dns_profile_names: ["dns_profile_10"]
   # Notes:
 # - If all entries in dns_profiles are commented out or the list is empty, all dns profiles on the device(s) will be included.
 # - To filter for specific profiles, list them as: - name: "dns_profile_1"
-# - Each entry must include a 'name' key.
