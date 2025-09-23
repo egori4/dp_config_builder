@@ -815,6 +815,7 @@ create_dns_profiles:
 ```yml
 
 # Edit existing DNS profiles - ONLY specify what you want to change
+# Note - If you are editing QPS and quota same time then you have to run the playbook twice. 
 edit_dns_profiles:
   - name: "dns_profile_10"                      # MANDATORY: must specify which profile to edit
     params:
