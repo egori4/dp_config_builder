@@ -1035,17 +1035,13 @@ POST /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_n
             "rsProtectedObjTLS11Enable": "1",
             "rsProtectedObjTLS12Enable": "1",
             "rsProtectedObjTLS13Enable": "1",
-            "rsProtectedObjCipherSuiteSystemEnable": "1",
-            "rsProtectedObjUserCipher": "",
             "rsBEDecryptionEnable": "1",
             "rsBEProtectedObjSSLV3Enable": "2",
             "rsBEProtectedObjTLS10Enable": "2",
             "rsBEProtectedObjTLS11Enable": "1",
             "rsBEProtectedObjTLS12Enable": "1",
             "rsBEProtectedObjTLS13Enable": "1",
-            "rsBEProtectedObjCipherSuiteSystemEnable": "1",
-            "rsBEProtectedObjUserCipher": "",
-            "rsBEL4PortNumber": "443"
+            "rsBEL4PortNumber": "80"
         }
 ```
 ##### Edit SSL Object 
@@ -1063,17 +1059,13 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_na
             "rsProtectedObjTLS11Enable": "1",
             "rsProtectedObjTLS12Enable": "1",
             "rsProtectedObjTLS13Enable": "1",
-            "rsProtectedObjCipherSuiteSystemEnable": "1",
-            "rsProtectedObjUserCipher": "",
             "rsBEDecryptionEnable": "1",
             "rsBEProtectedObjSSLV3Enable": "2",
             "rsBEProtectedObjTLS10Enable": "2",
             "rsBEProtectedObjTLS11Enable": "1",
             "rsBEProtectedObjTLS12Enable": "1",
             "rsBEProtectedObjTLS13Enable": "1",
-            "rsBEProtectedObjCipherSuiteSystemEnable": "1",
-            "rsBEProtectedObjUserCipher": "",
-            "rsBEL4PortNumber": "443"
+            "rsBEL4PortNumber": "80"
         }
 ```
 Usage:
@@ -1094,23 +1086,18 @@ Response:
             "rsProtectedObjApplPort": "443",
             "rsProtectedObjAddCertificate": "",
             "rsProtectedObjRemoveCertificate": "",
-            "rsProtectedObjDefaultSNICertificate": "",
             "rsProtectedObjSSLV3Enable": "2",
             "rsProtectedObjTLS10Enable": "2",
             "rsProtectedObjTLS11Enable": "1",
             "rsProtectedObjTLS12Enable": "1",
             "rsProtectedObjTLS13Enable": "1",
-            "rsProtectedObjCipherSuiteSystemEnable": "1",
-            "rsProtectedObjUserCipher": "",
             "rsBEDecryptionEnable": "1",
             "rsBEProtectedObjSSLV3Enable": "2",
             "rsBEProtectedObjTLS10Enable": "2",
             "rsBEProtectedObjTLS11Enable": "1",
             "rsBEProtectedObjTLS12Enable": "1",
             "rsBEProtectedObjTLS13Enable": "1",
-            "rsBEProtectedObjCipherSuiteSystemEnable": "1",
-            "rsBEProtectedObjUserCipher": "",
-            "rsBEL4PortNumber": "443"
+            "rsBEL4PortNumber": "80"
         }
     ]
 }
