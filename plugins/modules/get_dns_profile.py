@@ -46,7 +46,6 @@ REVERSE_ENUM_MAPS = {
     "rsDnsProtProfileManualTriggerStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfilePacketReportStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfilePacketTraceStatus": {"1": "enable", "2": "disable"},
-    "rsDnsProtProfileSubdomainsWLLearningState": {"0": "enable", "1": "disable"},
     "rsDnsProtProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsDnsProtProfileDnsAStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfileDnsMxStatus": {"1": "enable", "2": "disable"},
