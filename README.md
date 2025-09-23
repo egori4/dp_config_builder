@@ -122,61 +122,6 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
-### DNS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
-| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
-| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
-| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
-
-### OOS Profile Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_oos_profile.yml` | Create new OOS profile        | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-oos-profile)  |
-| `edit_oos_profile.yml`   | Modify existing OOS Profile   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-oos-profile)   |
-| `delete_oos_profile.yml` | Remove OOS profile            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-oos-profile) |
-| `get_oos_profile.yml`    | Query current OOS Profile     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-oos-profile)    |
-
-
-### BDoS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
-| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
-| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
-| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
-
-### DNS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
-| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
-| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
-| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
-
-
-
-### HTTPS Profile Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_https_profile.yml` | Create new HTTPS profile        | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-https-profile)  |
-| `edit_https_profile.yml`   | Modify existing HTTPS profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-https-profile)    |
-| `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
-| `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
-
-
-### Security Policy Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
-| `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
-| `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
-| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
-
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
 -  **Flexible creation**: All parameters optional except name (sensible defaults provided)
@@ -213,7 +158,14 @@ dp_config_builder/
 | `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
 | `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 
+### HTTPS Profile Management
 
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_https_profile.yml` | Create new HTTPS profile        | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-https-profile)  |
+| `edit_https_profile.yml`   | Modify existing HTTPS profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-https-profile)    |
+| `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
+| `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
 
 ### Security Policy Management
 

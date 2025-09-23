@@ -1025,7 +1025,7 @@ edit_https_profiles:
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_https_profile.yml
 ```yaml
-filter_profile_names: ["http_profile_3"]
+filter_https_profile_names: ["http_profile_3"]
 
 ```
 

@@ -158,6 +158,102 @@ bdos_profiles:
 # 1. Create new BDoS profiles: Define bdos_profiles
 # 2. Use existing BDoS profiles only: Skip this section and reference them elsewhere
 
+################################## DNS Profile create Variables ###############################
+# Define DNS profiles to create on each device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip this section if you only want to use existing DNS profiles
+# List of DefensePro device IPs where profiles will be created
+# DNS profiles to configure
+create_dns_profiles:
+  - name: "dns_profile_10"
+    params:
+      # Core settings
+      action: "block_&_report"              # ENUM: report_only, block_and_report
+      expected_qps: 1000                      # Expected QPS (0–400M)
+      max_allow_qps: 5000                     # Maximum allowed QPS
+      footprint_strictness: "medium"          # ENUM: low, medium, high
+      packet_report: "enable"                 # ENUM: enable, disable
+      learning_suppression_threshold: 25      # Range: 0–50
+
+      # DNS quotas
+      a_quota: 50                             # A-record quota %
+      mx_quota: 20                            # MX-record quota %
+      ptr_quota: 12                           # PTR-record quota %
+      aaaa_quota: 15                          # AAAA-record quota %
+      text_quota: 2                           # TXT-record quota %
+      soa_quota: 1                            # SOA-record quota %
+      naptr_quota: 1                          # NAPTR-record quota %
+      srv_quota: 1                            # SRV-record quota %
+      other_quota: 1                          # Other-record quota %
+
+      # Status toggles (use enable/disable instead of numeric)
+      a_status: "enable"
+      mx_status: "enable"
+      ptr_status: "enable"
+      aaaa_status: "enable"
+      text_status: "enable"
+      soa_status: "enable"
+      naptr_status: "enable"
+      srv_status: "enable"
+      other_status: "enable"
+
+      # Manual trigger thresholds
+      manual_trigger: "disable"               # ENUM: enable, disable
+      manual_trigger_act_thresh: 0
+      manual_trigger_term_thresh: 0
+
+  - name: "dns_profile_20"
+    params:
+      # Core settings
+      action: "block_&_report"              # ENUM: report_only, block_&_report
+      expected_qps: 1000                      # Expected QPS (0–400M)
+      max_allow_qps: 5000                     # Maximum allowed QPS
+      manual_trigger: "disable"               # ENUM: enable, disable
+      footprint_strictness: "medium"          # ENUM: low, medium, high
+      packet_report: "enable"                 # ENUM: enable, disable
+      learning_suppression_threshold: 25      # Range: 0–50
+
+      # DNS quotas
+      a_quota: 50                             # A-record quota %
+      mx_quota: 20                            # MX-record quota %
+      ptr_quota: 12                           # PTR-record quota %
+      aaaa_quota: 15                          # AAAA-record quota %
+      text_quota: 2                           # TXT-record quota %
+      soa_quota: 1                            # SOA-record quota %
+      naptr_quota: 1                          # NAPTR-record quota %
+      srv_quota: 1                            # SRV-record quota %
+      other_quota: 1                          # Other-record quota %
+
+      # Status toggles (use enable/disable instead of numeric)
+      a_status: "enable"
+      mx_status: "enable"
+      ptr_status: "enable"
+      aaaa_status: "enable"
+      text_status: "enable"
+      soa_status: "enable"
+      naptr_status: "enable"
+      srv_status: "enable"
+      other_status: "enable"
+
+      # Manual trigger thresholds
+      manual_trigger_act_thresh: 0
+      manual_trigger_term_thresh: 0
+
+### Parameter Descriptions:
+# - action: What to do when DNS traffic anomaly is detected
+# - expected_qps / max_allow_qps: Thresholds for query rates
+# - manual_trigger and related fields: Enable manual override and thresholds
+# - packet_report / packet_trace: Enable detailed reporting and tracing
+# - footprint_strictness: Sensitivity of footprint analysis
+# - learning_suppression_threshold: Suppress alerts during learning (0-100)
+# - query_name_sensitivity: Sensitivity of query name monitoring
+# - *_quota: Percentage allocation per DNS record type
+# - *_status: Enable/disable monitoring per DNS record type
+
+# Usage Scenarios:
+# 1. Create new DNS profiles: Define dns_profiles
+# 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
+
 ################################## HTTP Profile Create Variables ###############################
 # Define HTTP profiles to create
 # All parameters use user-friendly values that are automatically mapped to API values
