@@ -64,6 +64,14 @@ filter_dns_profile_names: ["dns_profile_10"]
 # - If all entries in dns_profiles are commented out or the list is empty, all dns profiles on the device(s) will be included.
 # - To filter for specific profiles, list them as: - name: "dns_profile_1"
 
+###################### Get SSL Object ##########################
+# vars/get_vars.yml
+# Optional: List of SSL objects to fetch (filtered)
+# If empty or omitted, all SSL objects will be retrieved
+filter_ssl_object_names: ["server1", "server2"]
+
+# filter_ssl_object_names: []  # Fetch all profiles
+# - name: server3   # uncomment/add more as needed
 
 ########################## Security Policy Filter variables ##########################
 # Filter by specific security policy names, or leave empty list for all policies
