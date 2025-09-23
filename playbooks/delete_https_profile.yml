@@ -17,10 +17,10 @@
 
         # Delete HTTPS Flood profiles
         - name: Delete HTTPS Flood profiles
-          delete_http_profile:
+          delete_https_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            https_profiles: "{{ https_profiles | default([]) }}"
+            https_profiles: "{{ delete_https_profiles | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"

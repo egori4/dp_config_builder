@@ -1,5 +1,5 @@
 ---
-- name: Create HTTP profiles
+- name: Create HTTPS profiles
   hosts: cc
   gather_facts: no
   vars_files:
@@ -15,17 +15,17 @@
           loop: "{{ dp_ip }}"
           when: not (skip_device_lock | default(false))
 
-        - name: Configure HTTP profiles
-          create_http_profile:
+        - name: Configure HTTPS profiles
+          create_https_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            https_flood_profiles: "{{ http_flood_profiles | default([]) }}"
+            https_flood_profiles: "{{ create_https_profiles | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
-          register: HTTP_create_results
+          register: HTTPS_create_results
 
-        - name: Display HTTP profile creation results
+        - name: Display HTTPS profile creation results
           vars:
             formatted_output: |
               Device: {{ item.item }}
@@ -33,7 +33,7 @@
               PREVIEW MODE - Planned operations:
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
-              HTTP Profile Creations ({{ planned_ops | length }} planned):
+              HTTPS Profile Creations ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
                 - {{ op.profile_name }}
                   Parameters:
@@ -42,7 +42,7 @@
                   {% endfor %}
               {% endfor %}
               {% else %}
-              No HTTP profiles configured for creation.
+              No HTTPS profiles configured for creation.
               {% endif %}
               {% else %}
               EXECUTION RESULTS:
@@ -50,7 +50,7 @@
               Error occurred during creation:
                 - {{ item.msg | default('Unknown error') }}
               {% elif item.response.created_profiles | default([]) %}
-              HTTP Profiles created successfully:
+              HTTPS Profiles created successfully:
               {% for prof in item.response.created_profiles %}
                 - {{ prof.profile_name }}
                   Parameters:
@@ -64,7 +64,7 @@
               {% endif %}
           debug:
             msg: "{{ formatted_output.split('\n') }}"
-          loop: "{{ HTTP_create_results.results }}"
+          loop: "{{ HTTPS_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
 
@@ -77,8 +77,8 @@
             label: "Applying policies: {{ item }}"
           when: 
             - not (skip_policy_updates | default(false))
-            - HTTP_create_results is defined
-            - HTTP_create_results.changed | default(false)
+            - HTTPS_create_results is defined
+            - HTTPS_create_results.changed | default(false)
 
       always:
         - name: Unlock device(s)

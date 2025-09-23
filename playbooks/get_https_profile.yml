@@ -10,10 +10,10 @@
     - block:
         # Fetch HTTPS Flood profiles from devices
         - name: Fetch HTTPS Flood profiles
-          get_http_profile:
+          get_https_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            filter_profile_names: "{{ filter_http_profile_names }}"
+            filter_profile_names: "{{ filter_https_profile_names }}"
           loop: "{{ dp_ip }}"
           register: http_fetch_results
           loop_control:

@@ -16,12 +16,12 @@
           when: not (skip_device_lock | default(false))
 
         - name: Edit HTTPS Flood profiles
-          edit_http_profile:
+          edit_https_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item[0] }}"
             name: "{{ item[1].name }}"
             params: "{{ item[1].params }}"
-          loop: "{{ dp_ip | product(https_profiles) | list }}"
+          loop: "{{ dp_ip | product(edit_https_profiles) | list }}"
           loop_control:
             label: "Device: {{ item[0] }} | Profile: {{ item[1].name }}"
           register: https_edit_results
