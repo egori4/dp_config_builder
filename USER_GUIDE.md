@@ -759,13 +759,14 @@ bdos_profiles:
 # Define DNS profiles to create on each device
 # Configure DNS profiles in `vars/create_vars.yml`:
 # OPTIONAL: DNS profiles (only define if creating new ones)
-dns_profiles:
+create_dns_profiles:
   - name: "dns_profile_1"               # MANDATORY: Profile name
     state: "enable"                     # OPTIONAL: enable, disable (default: enable)
     params:
       action: "block_&_report"        # OPTIONAL: report_only, block_&_report (default: block_and_report)
       expected_qps: 1000                # OPTIONAL: 0–400000000 (default: 0)
       max_allow_qps: 5000               # OPTIONAL: 0–400000000 (default: 0)
+      sig_rate_lim_target: 10                 # Range: 0-100 in %
 
       # Manual trigger configuration
       manual_trigger: "disable"         # OPTIONAL: enable, disable (default: disable)
@@ -775,11 +776,11 @@ dns_profiles:
       manual_trigger_act_period: 30     # OPTIONAL: seconds
       manual_trigger_term_period: 15
       manual_trigger_escalate_period: 60
+    
       # Logging / debug
       packet_report: "enable"           # OPTIONAL: enable, disable (default: disable)
 
       # Advanced detection
-      query_name_sensitivity: 2         # OPTIONAL: integer level (device-specific)
       learning_suppression_threshold: 10 # OPTIONAL: 0–100 (default: 0)
       footprint_strictness: "medium"    # OPTIONAL: low, medium, high (default: low)
 
@@ -814,17 +815,17 @@ dns_profiles:
 ```yml
 
 # Edit existing DNS profiles - ONLY specify what you want to change
-dns_profiles:
+edit_dns_profiles:
   - name: "dns_profile_10"                      # MANDATORY: must specify which profile to edit
     params:
       action: "report_only"                     # OPTIONAL: report_only, block_&_report
       expected_qps: 2000                        # OPTIONAL: Update expected QPS
       max_allow_qps: 8000                       # OPTIONAL: Update max QPS
+      sig_rate_lim_target: 10                   # Range: 0-100 in %
       a_status: "disable"                       # OPTIONAL: Disable A record protection
       mx_status: "enable"                       # OPTIONAL: Enable MX record protection
       footprint_strictness: "high"              # OPTIONAL: Update detection sensitivity
       packet_report: "disable"                  # OPTIONAL: Change logging/reporting
-      packet_trace: "enable"                    # OPTIONAL: Enable packet trace
       a_in_quota: 40                            # OPTIONAL: % share for A record (0–100)
       mx_in_quota: 30                           # OPTIONAL: % share for MX record (0–100)
       cname_in_quota: 20                        # OPTIONAL: % share for CNAME record (0–100)
@@ -845,7 +846,7 @@ filter_dns_profile_names: ["dns_profile_1"]
 ### Delete DNS Profiles
 ```yml
 # Delete DNS profiles by name
-dns_profiles:
+delete_dns_profiles:
   - "dns_profile_1"
   - "dns_profile_2"
 ```

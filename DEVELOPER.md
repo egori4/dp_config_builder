@@ -763,9 +763,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileManualTriggerTermPeriod": "3",
             "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
-            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
-            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
@@ -806,9 +804,7 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
             "rsDnsProtProfileManualTriggerTermPeriod": "3",
             "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
-            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
-            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
@@ -856,9 +852,7 @@ Response:
             "rsDnsProtProfileManualTriggerTermPeriod": "3",
             "rsDnsProtProfileManualTriggerEscalatePeriod": "3",
             "rsDnsProtProfilePacketReportStatus": "1",
-            "rsDnsProtProfilePacketTraceStatus": "2",
             "rsDnsProtProfileQueryNameMonitoringSensitivity": "1",
-            "rsDnsProtProfileSubdomainsWLLearningState": "1",
             "rsDnsProtProfileLearningSuppressionThreshold": "25",
             "rsDnsProtProfileFootprintStrictness": "1"
         }
@@ -875,7 +869,7 @@ Response:
 ```yml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}
 
-dns_profiles:
+delete_dns_profiles:
   - "DNS_Profile_5"
   - "DNS_Profile_6"
 ```
