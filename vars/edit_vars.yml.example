@@ -266,8 +266,8 @@ oos_profiles:
 # Each profile requires name (mandatory) to identify which profile to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
 
-http_flood_profiles:
-  - name: "http_profile_1"
+edit_https_profiles:
+  - name: "https_profile_1"
     params:
       action: "report_only"   # report_only,block_&_report
       rate_limit: "2000"      # Packets per Second per Source
