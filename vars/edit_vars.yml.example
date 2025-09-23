@@ -158,7 +158,7 @@ bdos_profiles:
 # Define DNS profiles to edit
 # Each profile requires name (mandatory) to identify which profile to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
-
+# Note - If you are editing QPS and quota same time then you have to run the playbook twice. 
 # DNS profiles to configure
 edit_dns_profiles:
   - name: "dns_profile_10"
@@ -172,6 +172,7 @@ edit_dns_profiles:
       packet_report: "enable"                 # ENUM: enable, disable
       learning_suppression_threshold: 25      # Range: 0–50
       sig_rate_lim_target: 10                 # Range: 0-100 in %
+
       # DNS quotas
       a_quota: 50                             # A-record quota %
       mx_quota: 20                            # MX-record quota %
