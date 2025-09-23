@@ -105,21 +105,6 @@ bdos_profiles:
 # - Order of operations: Remove BDoS profile from all associations before deleting the profile itself
 # - You can mix BDoS profile deletions with other deletions in the same playbook run
 
-# Define HTTP profiles to delete on each device
-https_profiles:
-  - name: "http_profile_1"   # MANDATORY: Profile name to delete
-  - name: "http_profile_2"
-
-# HTTP Profile Deletion Notes:
-# - name: The name of the HTTP profile to delete (as configured on the device)
-# - The playbook will delete all combinations of dp_ip × http_profiles
-# - Deletion is permanent - ensure you have backups if needed
-# - If an HTTP profile is attached to protections or policies, ensure it is detached before deletion
-# - Use the get_http_profiles module (if available) to discover existing HTTP profiles
-# - Order of operations: Remove HTTP profile from all associations before deleting the profile itself
-# - You can mix HTTP profile deletions with other deletions in the same playbook run
-
-
 ########################## Security Policy Deletions ########################
 # Define security policies to delete
 # Two deletion modes supported:
