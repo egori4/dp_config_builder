@@ -1,5 +1,5 @@
 ---
-# get_vars.yml.example - Template for getting variables
+# get_vars.yml.example - Template for getting network class variables
 # Copy this file to get_vars.yml and customize with your environment details
 
 # Target DefensePro devices - add or remove IP addresses as needed
@@ -51,6 +51,18 @@ oos_profiles:
 # - If all entries in oos_profiles are commented out or the list is empty, all OOS profiles on the device(s) will be included.
 # - To filter for specific profiles, list them as: - name: "oos_profile1"
 # - Each entry must include a 'name' key.
+
+###################### Get DNS Profile ##########################
+# Filter by specific DNS profile names, or leave empty list for all profiles
+filter_dns_profile_names: ["dns_profile_10"]
+# Examples:
+# filter_dns_profile_names: ["dns_profile_1"]  # Show only one profile
+# filter_dns_profile_names: ["dns_profile_2", "DNS_Profile_2"]  # Show multiple profiles
+# filter_dns_profile_names: []  # Fetch all profiles
+
+  # Notes:
+# - If all entries in dns_profiles are commented out or the list is empty, all dns profiles on the device(s) will be included.
+# - To filter for specific profiles, list them as: - name: "dns_profile_1"
 
 ###################### Get HTTPS Flood Profile ##########################
 # Filter by specific HTTP profile names, or leave empty list for all profiles

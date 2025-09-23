@@ -1070,8 +1070,8 @@ Response:
 }
 ```
 #Usage:-
-#Call get_oos_profile once per device
-#Optional filtering: filter_bdos_profile_names: ["OOS_Profile_5"]
+#Call get_https_profile once per device
+#Optional filtering: filter_https_profile_names: ["https_Profile_5"]
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
 
