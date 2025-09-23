@@ -1,0 +1,116 @@
+---
+- name: Fetch Security Policies
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml  # Contains dp_ip list and security policy filters
+
+  tasks:
+    - name: Fetch security policies from devices
+      get_security_policy:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_security_policy_names: "{{ filter_security_policy_names }}"
+      loop: "{{ dp_ip }}"
+      register: security_policy_fetch_results
+
+    - name: Display fetched security policies (formatted)
+      vars:
+        formatted_output: |
+          {% for result in security_policy_fetch_results.results %}
+          Device: {{ result.item }}
+          {% if result.response.formatted_policies %}
+          Security Policies Found ({{ result.response.summary.total_entries }} entries):
+          {% for policy_name, policy_entries in result.response.formatted_policies.items() %}
+            
+            Policy Name: {{ policy_name }}
+            {% for entry in policy_entries %}
+              Basic Configuration:
+                - Status: {{ entry.get('status', 'not set') }}
+                - Action: {{ entry.get('action', 'not set') }}
+                - Priority: {{ entry.get('priority', 'not set') }}
+                - Source: {{ entry.get('source', 'not set') }}
+                - Destination: {{ entry.get('destination', 'not set') }}
+                - Direction: {{ entry.get('direction', 'not set') }}
+                - Packet Reporting: {{ entry.get('packet_reporting_status', 'not set') }}
+                - Packet Reporting Enforcement: {{ entry.get('packet_reporting_enforcement', 'not set') }}
+                {% if entry.get('portmask') -%}
+                - Port Mask: {{ entry.get('portmask') }}
+                {% endif -%}
+                {% if entry.get('vlan_tag_group') -%}
+                - VLAN Tag Group: {{ entry.get('vlan_tag_group') }}
+                {% endif -%}
+              
+              Protection Profiles:
+                {% if entry.get('netflood_profile') -%}
+                - BDOS Profile: {{ entry.get('netflood_profile') }}
+                {% endif -%}
+                {% if entry.get('appsec_profile') -%}
+                - Signature Profile: {{ entry.get('appsec_profile') }}
+                {% endif -%}
+                {% if entry.get('connection_limit_profile') -%}
+                - Connection Limit Profile: {{ entry.get('connection_limit_profile') }}
+                {% endif -%}
+                {% if entry.get('stateful_profile') -%}
+                - Out-of-State Profile: {{ entry.get('stateful_profile') }}
+                {% endif -%}
+                {% if entry.get('scanning_profile') -%}
+                - Anti-Scanning Profile: {{ entry.get('scanning_profile') }}
+                {% endif -%}
+                {% if entry.get('syn_protection_profile') -%}
+                - SYN Protection Profile: {{ entry.get('syn_protection_profile') }}
+                {% endif -%}
+                {% if entry.get('dns_profile') -%}
+                - DNS Profile: {{ entry.get('dns_profile') }}
+                {% endif -%}
+                {% if entry.get('https_flood_profile') -%}
+                - HTTPS Flood Profile: {{ entry.get('https_flood_profile') }}
+                {% endif -%}
+                {% if entry.get('ert_attackers_feed_profile') -%}
+                - ERT Attackers Feed Profile: {{ entry.get('ert_attackers_feed_profile') }}
+                {% endif -%}
+                {% if entry.get('geo_feed_profile') -%}
+                - Geo Feed Profile: {{ entry.get('geo_feed_profile') }}
+                {% endif -%}
+                {% if entry.get('traffic_filters_profile') -%}
+                - Traffic Filters Profile: {{ entry.get('traffic_filters_profile') }}
+                {% endif -%}
+                {% if entry.get('qdos_profile') -%}
+                - QDoS Profile: {{ entry.get('qdos_profile') }}
+                {% endif -%}
+              
+              {% if entry.get('cdn_action') == 'enabled' or entry.get('cdn_handling') == 'enabled' -%}
+              CDN Settings:
+                {% if entry.get('cdn_action') -%}
+                - CDN Action: {{ entry.get('cdn_action') }}
+                {% endif -%}
+                {% if entry.get('cdn_handling') -%}
+                - CDN Handling: {{ entry.get('cdn_handling') }}
+                {% endif -%}
+                {% if entry.get('cdn_handling_https') -%}
+                - CDN HTTPS Handling: {{ entry.get('cdn_handling_https') }}
+                {% endif -%}
+                {% if entry.get('cdn_true_client_ip_header') -%}
+                - CDN True Client IP Header: {{ entry.get('cdn_true_client_ip_header') }}
+                {% endif -%}
+                {% if entry.get('cdn_x_forwarded_for_header') -%}
+                - CDN X-Forwarded-For Header: {{ entry.get('cdn_x_forwarded_for_header') }}
+                {% endif -%}
+              {% endif -%}
+            {% endfor %}
+          {% endfor %}
+          
+          Summary:
+            - Total entries: {{ result.response.summary.total_entries }}
+            - Unique policies: {{ result.response.summary.unique_policies }}
+            - Policy names: {{ result.response.summary.policy_names | join(', ') }}
+            - Filter applied: {{ result.response.summary.filtered }}
+          {% else %}
+          No security policies found or error occurred.
+          {% endif %}
+          
+          {% endfor %}
+      debug:
+        msg: "{{ formatted_output.split('\n') }}"
+
