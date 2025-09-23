@@ -107,16 +107,16 @@ ansible-playbook playbooks/edit_oos_profile.yml
 ansible-playbook playbooks/delete_oos_profile.yml
 
 # See what HTTPS profiles exist
-ansible-playbook playbooks/get_http_profile.yml
+ansible-playbook playbooks/get_https_profile.yml
 
 # Create new HTTPS profiles
-ansible-playbook playbooks/create_http_profile.yml
+ansible-playbook playbooks/create_https_profile.yml
 
 # Edit existing HTTPS profiles
-ansible-playbook playbooks/edit_http_profile.yml
+ansible-playbook playbooks/edit_https_profile.yml
 
 # Delete HTTPS profiles
-ansible-playbook playbooks/delete_http_profile.yml
+ansible-playbook playbooks/delete_https_profile.yml
 
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
 ansible-playbook playbooks/create_security_policy.yml
@@ -386,29 +386,29 @@ ansible-playbook --check playbooks/delete_oos_profile.yml
 ansible-playbook playbooks/delete_oos_profile.yml
 ```
 
-### Workflow 12 : Create New HTTP Profiles
+### Workflow 12 : Create New HTTPS Profiles
 
-# 1.Define your HTTP profiles
+# 1.Define your HTTPS profiles
 ```bash
 nano vars/create_vars.yml
 ```
 # 2. Test first (dry run)
 ```bash
-ansible-playbook --check playbooks/create_http_profile.yml
+ansible-playbook --check playbooks/create_https_profile.yml
 ```
 # 3.Apply configuration
 ```bash
-ansible-playbook playbooks/create_http_profile.yml
+ansible-playbook playbooks/create_https_profile.yml
 ```
-### Workflow 12b : Get HTTP Profile
+### Workflow 12b : Get HTTPS Profile
 ```bash
-ansible-playbook playbooks/get_http_profile.yml
+ansible-playbook playbooks/get_https_profile.yml
 ```
-### Workflow 12c : Delete HTTP Profile
+### Workflow 12c : Delete HTTPS Profile
 ```bash
 nano vars/delete_vars.yml
-ansible-playbook --check playbooks/delete_http_profile.yml
-ansible-playbook playbooks/delete_http_profile.yml
+ansible-playbook --check playbooks/delete_https_profile.yml
+ansible-playbook playbooks/delete_https_profile.yml
 ```
 
 ### Workflow 13: Create Security Policies with Profile Bindings
@@ -980,15 +980,15 @@ oos_profiles:
     idle_state_timer: seconds for idle timeout.
     Control flags: Use to enable/disable each stage independently.
 
-### Create HTTP Profiles ###
+### Create HTTPS Profiles ###
 
-# Define HTTP profiles to create on each device
-# Configure HTTP profiles in `vars/create_vars.yml`:
-# OPTIONAL: HTTP profiles (only define if creating new ones)
+# Define HTTPS profiles to create on each device
+# Configure HTTPS profiles in `vars/create_vars.yml`:
+# OPTIONAL: HTTPS profiles (only define if creating new ones)
 
 ```yaml
-http_flood_profiles:
-  - name: "http_profile_1"
+create_https_profiles:
+  - name: "https_profile_1"
     params:
       action: "report_only"   # report_only,block_&_report
       rate_limit: "2000"      # Packets per Second per Source
@@ -1002,16 +1002,16 @@ http_flood_profiles:
 
 ```
   # Minimal example (only mandatory parameter)
- http_flood_profiles:
+ create_https_profiles:
   - name: "http_profile_2"
     params:
       action: "report_only"
     # All other parameters use defaults
 
-### Editing HTTP Profiles (Partial Updates)
+### Editing HTTPS Profiles (Partial Updates)
 ```yaml
-# Edit existing HTTP profiles - ONLY specify what you want to change
-https_profiles:
+# Edit existing HTTPS profiles - ONLY specify what you want to change
+edit_https_profiles:
   - name: "http_profile_1"
     params:
       action: "report_only"                             # report_only,block_&_report
@@ -1024,11 +1024,11 @@ https_profiles:
       #challenge_method: "javascript"                   # javascript, redirect_302, SSL Decryption and Encryption should be enabled on the DP for this to work
 ```
 
-### Get HTTP Profiles
+### Get HTTPS Profiles
 
-# Get all HTTP profiles from devices
+# Get all HTTPS profiles from devices
 # No configuration needed - just run the playbook
-ansible-playbook playbooks/get_http_profile.yml
+ansible-playbook playbooks/get_https_profile.yml
 ```yaml
 filter_profile_names: ["http_profile_3"]
 
@@ -1037,9 +1037,9 @@ filter_profile_names: ["http_profile_3"]
 ### Delete HTTP Profiles
 
 ```yaml
-https_profiles:
-  - "http_profile_1"
-  - "http_profile_2"                  # Show all profiles (default)
+delete_https_profiles:
+  - "https_profile_1"
+  - "https_profile_2"                  # Show all profiles (default)
 ```
 
 ### Security Policy Configuration
