@@ -19,7 +19,7 @@
           create_ssl_object:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            ssl_objects: "{{ ssl_objects | default([]) }}"
+            ssl_objects: "{{ create_ssl_objects | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"

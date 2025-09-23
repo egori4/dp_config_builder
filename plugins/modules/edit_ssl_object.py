@@ -50,11 +50,11 @@ def run_module():
         if not module.check_mode:
             for ssl in edit_ssl_objects:
                 name = ssl.get('ssl_object_name', '')
-                ip = ssl.get('IP_Address', '')
+                ip = ssl.get('ip_address', '')
                 port = ssl.get('Port', 443)
 
                 if not name or not ip:
-                    error_msg = f"SSL edit missing required 'ssl_object_name' or 'IP_Address'"
+                    error_msg = f"SSL edit missing required 'ssl_object_name' or 'ip_address'"
                     errors.append(error_msg)
                     logger.error(error_msg)
                     continue
@@ -71,16 +71,12 @@ def run_module():
                     "rsProtectedObjTLS11Enable": ENABLE_MAP.get(ssl.get('front_tls1.1', 'enable'), '1'),
                     "rsProtectedObjTLS12Enable": ENABLE_MAP.get(ssl.get('front_tls1.2', 'enable'), '1'),
                     "rsProtectedObjTLS13Enable": ENABLE_MAP.get(ssl.get('front_tls1.3', 'enable'), '1'),
-                    "rsProtectedObjCipherSuiteSystemEnable": ENABLE_MAP.get(ssl.get('cipher_suite', 'enable'), '1'),
-                    "rsProtectedObjUserCipher": ssl.get('UserCipher', ''),
                     "rsBEDecryptionEnable": ENABLE_MAP.get(ssl.get('bk_end_dcrypt', 'enable'), '1'),
                     "rsBEProtectedObjSSLV3Enable": ENABLE_MAP.get(ssl.get('bk_end_sslv3', 'disable'), '2'),
                     "rsBEProtectedObjTLS10Enable": ENABLE_MAP.get(ssl.get('bk_end_tls1.0', 'disable'), '2'),
                     "rsBEProtectedObjTLS11Enable": ENABLE_MAP.get(ssl.get('bk_end_tls1.1', 'enable'), '1'),
                     "rsBEProtectedObjTLS12Enable": ENABLE_MAP.get(ssl.get('bk_end_tls1.2', 'enable'), '1'),
                     "rsBEProtectedObjTLS13Enable": ENABLE_MAP.get(ssl.get('bk_end_tls1.3', 'enable'), '1'),
-                    "rsBEProtectedObjCipherSuiteSystemEnable": ENABLE_MAP.get(ssl.get('bk_cipher', 'enable'), '1'),
-                    "rsBEProtectedObjUserCipher": ssl.get('bk_user_cipher', ''),
                     "rsBEL4PortNumber": ssl.get('bk_end_port', '')
                 }
 
@@ -131,14 +127,14 @@ def run_module():
             planned_operations = []
             for ssl in edit_ssl_objects:
                 name = ssl.get('ssl_object_name', '')
-                ip = ssl.get('IP_Address', '')
+                ip = ssl.get('ip_address', '')
                 port = ssl.get('Port', 443)
                 if not name or not ip:
-                    errors.append(f"SSL edit missing 'ssl_object_name' or 'IP_Address'")
+                    errors.append(f"SSL edit missing 'ssl_object_name' or 'ip_address'")
                     continue
                 planned_operations.append({
                     'ssl_object_name': name,
-                    'IP_Address': ip,
+                    'ip_address': ip,
                     'Port': port,
                     'description': f"Edit SSL object '{name}' ({ip}:{port})"
                 })

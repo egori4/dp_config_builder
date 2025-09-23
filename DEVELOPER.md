@@ -103,6 +103,11 @@ ORCHESTRATION LAYER
 │   │   ├── edit_dns_profile.yml                 # Modify DNS protection profiles
 │   │   ├── delete_dns_profile.yml               # Remove DNS protection profiles
 │   │   └── get_dns_profile.yml                  # Query DNS protection profiles
+│   ├── 🎯 SSL Object Operations                # Create, edit, delete, and query SSL Object
+│   │   ├── create_ssl_object.yml               # Create SSL Object
+│   │   ├── edit_ssl_object.yml                 # Modify SSL Object
+│   │   ├── delete_ssl_object.yml               # Remove SSL Object
+│   │   └── get_ssl_object.yml                  # Query SSL Object
 │   ├── 🎯 Security Policy Operations            # Create, edit, and delete security policies with profile bindings
 │   │   ├── create_security_policy.yml           # Create security policies and bind profiles
 │   │   ├── edit_security_policy.yml             # Modify security policies and profile bindings
@@ -139,6 +144,11 @@ ORCHESTRATION LAYER
 │   │   │   ├── edit_oos_profile.py        # Modify existing OOS/Stateful profiles
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 SSL Object Modules (v0.1.5+)
+│   │   ├── create_ssl_object.py               Batch creation with validation
+│   │   ├── edit_ssl_object.py                 # Modify SSL Object
+│   │   ├── delete_ssl_object.py               # Batch deletion with error handling
+│   │   └── get_ssl_object.py                  # Enhanced querying with filtering
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
 │   │   │   ├── create_security_policy.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
@@ -273,7 +283,18 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
-8. **Security Policy Modules** (`plugins/modules/`)
+8. **SSL Object Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_ssl_object.py`, `edit_ssl_object.py`, `delete_ssl_object.py`, `get_ssl_object.py`
+
+9. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -349,6 +370,14 @@ ORCHESTRATION LAYER
 | **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+
+### SSL Object Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create SSL Object** | POST   | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Edit SSL Object**   | PUT    | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Delete SSL Object** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Get SSL Object**    | GET    | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
 
 ### Security Policy Management
 
@@ -991,7 +1020,115 @@ oos_profiles:
   - "OOS_Profile_5"
   - "OOS_Profile_6"
 ```
+###  Create SSL Object 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsProtectedObjCipherSuiteSystemEnable": "1",
+            "rsProtectedObjUserCipher": "",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEProtectedObjCipherSuiteSystemEnable": "1",
+            "rsBEProtectedObjUserCipher": "",
+            "rsBEL4PortNumber": "443"
+        }
+```
+##### Edit SSL Object 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsProtectedObjCipherSuiteSystemEnable": "1",
+            "rsProtectedObjUserCipher": "",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEProtectedObjCipherSuiteSystemEnable": "1",
+            "rsBEProtectedObjUserCipher": "",
+            "rsBEL4PortNumber": "443"
+        }
+```
+Usage:
+Call edit_ssl_object once per device, passing list of profiles to edit.
+Each ssl object dict must include ssl_object_name (mandatory) and any parameters to change
 
+#### Get SSL Object 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+
+Response:
+{
+    "rsProtectedSslObjTable": [
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjDefaultSNICertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsProtectedObjCipherSuiteSystemEnable": "1",
+            "rsProtectedObjUserCipher": "",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEProtectedObjCipherSuiteSystemEnable": "1",
+            "rsBEProtectedObjUserCipher": "",
+            "rsBEL4PortNumber": "443"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_ssl_object once per device
+#Optional filtering: filter_ssl_object_names: ["server1", "server2"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete SSL Object ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}
+
+delete_ssl_objects:
+  - name: server1
+  - name: server2
+```
 ### Edit Security Policy
 ```python
 # Request - Partial update (only specified parameters are changed)

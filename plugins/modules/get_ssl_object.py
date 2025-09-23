@@ -19,7 +19,7 @@ def format_ssl_object_for_display(raw_obj):
     """
     formatted = {
         "ssl_object_profile": ENABLE_DISABLE_MAP.get(raw_obj.get("rsProtectedObjEnable"), raw_obj.get("rsProtectedObjEnable")),
-        "IP_Address": raw_obj.get("rsProtectedObjIpAddr"),
+        "ip_address": raw_obj.get("rsProtectedObjIpAddr"),
         "Port": raw_obj.get("rsProtectedObjApplPort"),
         "add_certificate": raw_obj.get("rsProtectedObjAddCertificate"),
         "remove_certificate": raw_obj.get("rsProtectedObjRemoveCertificate"),
@@ -36,7 +36,6 @@ def format_ssl_object_for_display(raw_obj):
         "bk_end_tls1.1": ENABLE_DISABLE_MAP.get(raw_obj.get("rsBEProtectedObjTLS11Enable")),
         "bk_end_tls1.2": ENABLE_DISABLE_MAP.get(raw_obj.get("rsBEProtectedObjTLS12Enable")),
         "bk_end_tls1.3": ENABLE_DISABLE_MAP.get(raw_obj.get("rsBEProtectedObjTLS13Enable")),
-        "bk_cipher": ENABLE_DISABLE_MAP.get(raw_obj.get("rsBEProtectedObjCipherSuiteSystemEnable")),
         "bk_user_cipher": raw_obj.get("rsBEProtectedObjUserCipher"),
         "bk_end_port": raw_obj.get("rsBEL4PortNumber")
     }

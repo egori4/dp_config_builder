@@ -106,6 +106,18 @@ ansible-playbook playbooks/edit_dns_profile.yml
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
 
+# Get all SSL objects from devices
+ansible-playbook playbooks/get_ssl_object.yml
+
+# Create new SSL objects
+ansible-playbook playbooks/create_ssl_object.yml
+
+# Edit existing SSL objects
+ansible-playbook playbooks/edit_ssl_object.yml
+
+# Delete SSL objects
+ansible-playbook playbooks/delete_ssl_object.yml
+
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
 ansible-playbook playbooks/create_security_policy.yml
 
@@ -374,7 +386,38 @@ ansible-playbook --check playbooks/delete_oos_profile.yml
 ansible-playbook playbooks/delete_oos_profile.yml
 ```
 
-### Workflow 12: Create Security Policies with Profile Bindings
+### Workflow 12 : Create New  SSL Object
+
+# 1.Define your SSL Object
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansible-playbook --check playbooks/create_ssl_object.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_ssl_object.yml
+```
+### Workflow 12a : Get SSL Object
+```bash
+ansible-playbook playbooks/get_ssl_object.yml
+```
+### Workflow 12b : Delete SSL Object
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_ssl_object.yml
+ansible-playbook playbooks/delete_ssl_object.yml
+```
+### Workflow 12c :Edit Existing SSL Object
+```bash
+nano vars/edit_vars.yml
+ansible-playbook --check playbooks/edit_ssl_object.yml
+ansible-playbook playbooks/edit_ssl_object.yml
+```
+
+### Workflow 13: Create Security Policies with Profile Bindings
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -407,7 +450,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 13: Apply DefensePro Policy Updates
+### Workflow 14: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -903,7 +946,6 @@ oos_profiles:
 ```
 
 ### Get OOS Profiles
-
 # Get all OOS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_oos_profile.yml
@@ -938,6 +980,117 @@ oos_profiles:
     idle_state_bandwidth_threshold: threshold for idle state.
     idle_state_timer: seconds for idle timeout.
     Control flags: Use to enable/disable each stage independently.
+
+### Create SSL Object ###
+# Define ssl object to create on each device
+# Configure ssl object in `vars/create_vars.yml`:
+```yml
+create_ssl_objects:
+  - ssl_object_name: "server1"         # MANDATORY: SSL object name
+    ssl_object_profile: "enable"       # OPTIONAL: enable, disable (default: enable)
+    ip_address: "155.1.102.7"          # MANDATORY: Device IP
+    Port: 443                           # OPTIONAL: Port (default: 443)
+    add_certificate: "radware"         # OPTIONAL: Certificate to add
+    remove_certificate: ""             # OPTIONAL: Certificate to remove
+    front_sslv3: "disable"             # OPTIONAL: enable, disable (default: disable)
+    front_tls1.0: "disable"            # OPTIONAL: enable, disable (default: disable)
+    front_tls1.1: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.2: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.3: "enable"             # OPTIONAL: enable, disable (default: enable)
+    cipher_suite: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_user_cipher: ""              # OPTIONAL: User-defined cipher
+    bk_end_decrypt: "enable"           # OPTIONAL: enable, disable (default: enable)
+    bk_end_sslv3: "disable"            # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.0: "disable"           # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.1: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.2: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.3: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_cipher: "enable"                # OPTIONAL: enable, disable (default: enable)
+    bk_user_cipher: ""                 # OPTIONAL: User-defined cipher
+    bk_end_port: 443                   # OPTIONAL: Backend port (default: 443)
+```
+### Edit SSL Object ###
+# Edit existing DNS profiles - ONLY specify what you want to change
+# Edit ssl object in `vars/edit_vars.yml`:
+```yml
+edit_ssl_objects:
+  - ssl_object_name: "server1"         # MANDATORY: SSL object name
+    ssl_object_profile: "enable"       # OPTIONAL: enable, disable (default: enable)
+    ip_address: "155.1.102.7"          # MANDATORY: Device IP
+    Port: 443                           # OPTIONAL: Port (default: 443)
+    add_certificate: "radware"         # OPTIONAL: Certificate to add
+    remove_certificate: ""             # OPTIONAL: Certificate to remove
+    front_sslv3: "disable"             # OPTIONAL: enable, disable (default: disable)
+    front_tls1.0: "disable"            # OPTIONAL: enable, disable (default: disable)
+    front_tls1.1: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.2: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.3: "enable"             # OPTIONAL: enable, disable (default: enable)
+    cipher_suite: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_user_cipher: ""              # OPTIONAL: User-defined cipher
+    bk_end_decrypt: "enable"           # OPTIONAL: enable, disable (default: enable)
+    bk_end_sslv3: "disable"            # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.0: "disable"           # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.1: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.2: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.3: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_cipher: "enable"                # OPTIONAL: enable, disable (default: enable)
+    bk_user_cipher: ""                 # OPTIONAL: User-defined cipher
+    bk_end_port: 443                   # OPTIONAL: Backend port (default: 443)
+  ```
+
+### Get SSL Object
+# Get all SSL Object from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_ssl_object.yml
+```yaml
+filter_ssl_object_names: ["server1", "server2"]
+
+```
+
+### Delete OOS Profiles
+
+# Delete ssl object by name
+```yaml
+delete_ssl_objects:
+  - name: server1
+  - name: server2
+```
+Notes for SSL Objects
+
+*** ssl_object_name ***: MANDATORY – Unique name for the SSL object.
+*** ssl_object_profile ***: Optional – enable or disable the SSL object (default: enable).
+*** IP_Address ***: MANDATORY – The IP address for the SSL object.
+*** Port ***: Optional – Port number (default: 443).
+*** add_certificate ***: Optional – Name of certificate to add.
+*** remove_certificate ***: Optional – Name of certificate to remove.
+*** Frontend Protocols ***: Optional – Enable/disable SSL/TLS versions on the frontend.
+# front_sslv3
+# front_tls1.0
+# front_tls1.1
+# front_tls1.2
+# front_tls1.3
+*** Cipher Controls (Frontend) ***: Optional – Enable/disable cipher support.
+# cipher_suite
+# front_user_cipher
+*** Backend Decryption ***: Optional – Enable/disable backend SSL decryption.
+# bk_end_decrypt
+*** Backend Protocols ***: Optional – Enable/disable SSL/TLS versions on the backend.
+# bk_end_sslv3
+# bk_end_tls1.0
+# bk_end_tls1.1
+# bk_end_tls1.2
+# bk_end_tls1.3
+*** Cipher Controls (Backend) ***: Optional – Enable/disable cipher support.
+# bk_cipher
+# bk_user_cipher
+*** bk_end_port ***: Optional – Backend port number (default: same as frontend port).
+
+# Notes:
+# Frontend and backend protocol/cipher flags can be used independently to enable/disable stages.
+# Certificates must exist on the device before adding to SSL objects.
+# Ensure IP address and port are correct; invalid values will result in API errors.
+
+
 
 ### Security Policy Configuration
 

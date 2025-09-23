@@ -159,6 +159,13 @@ dp_config_builder/
 | `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
 | `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 
+### SSL Object Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_ssl_object.yml` | Create new SSL object(s)      | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-create) |
+| `edit_ssl_object.yml`   | Modify existing SSL object(s) | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-edit)   |
+| `delete_ssl_object.yml` | Remove SSL object(s)          | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-delete) |
+| `get_ssl_object.yml`    | Query current SSL object(s)   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-get)    |
 
 
 ### Security Policy Management
@@ -269,6 +276,18 @@ ansible-playbook playbooks/edit_oos_profile.yml
 
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
+
+# Get all SSL objects from devices
+ansible-playbook playbooks/get_ssl_object.yml
+
+# Create new SSL objects
+ansible-playbook playbooks/create_ssl_object.yml
+
+# Edit existing SSL objects
+ansible-playbook playbooks/edit_ssl_object.yml
+
+# Delete SSL objects
+ansible-playbook playbooks/delete_ssl_object.yml
 
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_security_policy.yml

@@ -254,3 +254,43 @@ create_dns_profiles:
 # Usage Scenarios:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
+
+################################## SSL Object Create Variables ###############################
+
+# Define SSL objects to edit
+create_ssl_objects:
+  - ssl_object_name: "server1"                   # Mandatory: exact SSL object name
+    ssl_object_profile: "enable"                 # Options: enable, disable
+    ip_address: "155.1.102.9"                    # Mandatory
+    Port: 443                                    # Optional – default: 443
+    add_certificate: ""                          # Optional – certificate name to add 
+    remove_certificate: ""                       # Optional – certificate name to remove
+    front_sslv3: "disable"                       # Options: enable, disable
+    front_tls1.0: "disable"                      # Options: enable, disable
+    front_tls1.1: "disable"                      # Options: enable, disable
+    front_tls1.2: "enable"                       # Options: enable, disable
+    front_tls1.3: "enable"                       # Options: enable, disable
+    bk_end_dcrypt: "enable"                      # Options: enable, disable
+    bk_end_sslv3: "disable"                      # Options: enable, disable
+    bk_end_tls1.0: "disable"                     # Options: enable, disable
+    bk_end_tls1.1: "enable"                      # Options: enable, disable
+    bk_end_tls1.2: "enable"                      # Options: enable, disable
+    bk_end_tls1.3: "enable"                      # Options: enable, disable
+    bk_end_port: 80                              # Optional – back-end port
+
+### Notes for SSL Objects:
+*** ssl_object_name ***: Mandatory –  SSL object name to add 
+# Supported SSL Object Parameters:
+# ssl_object_profile: enable / disable
+# IP_Address: IP of the server
+# Port: TCP port (default: 443)
+# add_certificate / remove_certificate: certificate management
+# front_sslv3, front_tls1.0, front_tls1.1, front_tls1.2, front_tls1.3: enable / disable
+# cipher_suite: enable / disable
+# front_user_cipher: custom front-end cipher string
+# bk_end_decrypt: enable / disable
+# bk_end_sslv3, bk_end_tls1.0, bk_end_tls1.1, bk_end_tls1.2, bk_end_tls1.3: enable / disable
+# bk_cipher: enable / disable
+# bk_user_cipher: custom back-end cipher string
+# bk_end_port: back-end TCP port
+
