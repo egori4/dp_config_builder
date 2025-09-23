@@ -1,0 +1,64 @@
+---
+- name: Delete SSL objects from DefensePro
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml  # contains ssl_objects list
+
+  tasks:
+    - block:
+
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete SSL objects
+          delete_ssl_object:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            ssl_objects: "{{ delete_ssl_objects | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        - name: Display SSL object deletion results
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+
+              {% if item.response is defined %}
+              EXECUTION RESULTS:
+
+              {% for res in item.response %}
+                - SSL Object: {{ res.ssl_object }}
+                  {% if res.failed | default(false) %}
+                  Status: FAILED
+                  Error: {{ res.response.error | default('Unknown error') }}
+                  Response body: {{ res.response }}
+                  {% else %}
+                  Status: DELETED
+                  {% endif %}
+              {% endfor %}
+
+              {% if not item.response %}
+              No operations performed (no deletions configured).
+              {% endif %}
+              {% else %}
+              No deletion results returned.
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
