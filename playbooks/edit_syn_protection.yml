@@ -1,36 +1,80 @@
 ---
-- name: Edit SYN Protections on DefensePro devices
+- name: Edit SYN protections and profiles
   hosts: cc
   gather_facts: no
   vars_files:
-    - ../vars/cc.yml           # Provider credentials
-    - ../vars/edit_syn_vars.yml  # SYN protections to edit
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
 
   tasks:
     - block:
-        - name: 🔒 Lock device(s)
+        # -----------------------------
+        # Lock the device
+        # -----------------------------
+        - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        - name: 📝 Edit SYN Protections
+        # -----------------------------
+        # Edit SYN protections and attach profiles
+        # -----------------------------
+        - name: Edit SYN protections and profiles
           edit_syn_protection:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            protection_id: "{{ item.1.protection_id | default('500013') }}"   # Add ID if known
-            name: "{{ item.1.protection_name }}"
-            app_port_group: "{{ item.1.protection_params.app_port_group }}"
-            activation_threshold: "{{ item.1.protection_params.activation_threshold }}"
-            termination_threshold: "{{ item.1.protection_params.termination_threshold }}"
-            packet_report: "{{ item.1.protection_params.packet_report }}"
-          loop: "{{ dp_ip | product(syn_mappings) | list }}"
+            dp_ip: "{{ item }}"
+            edit_syn_protections: "{{ edit_syn_protections | default([]) }}"
+            edit_syn_profiles: "{{ edit_syn_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.profile_name }}"
-          register: edit_results
+            label: "Device: {{ item }}"
+          register: syn_edit_results
+
+        # -----------------------------
+        # Display results in a user-friendly format
+        # -----------------------------
+        - name: Display SYN edit results (user-friendly)
+          vars:
+            syn_param_map:
+              rsIDSSYNAttackActivationThreshold: "activation_threshold"
+              rsIDSSYNAttackTerminationThreshold: "termination_threshold"
+              rsIDSSYNDestinationAppPortGroup: "app_port_group"
+              rsIDSSYNAttackPacketReport: "packet_report"
+              rsIDSSynProfilesName: "profile_name"
+              rsIDSSynProfileServiceName: "protection_name"
+
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.failed | default(false) %}
+              Error occurred:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.results | length > 0 %}
+              SYN Configurations Edited:
+              {% for r in item.results %}
+                {% set body = r.debug_info.body if r.debug_info.body is defined else {} %}
+                {% if body %}
+                - Protection/Profile:
+                  {% for k, v in body.items() %}
+                    * {{ syn_param_map[k] | default(k) }}: {{ v }}
+                  {% endfor %}
+                  Response: {{ r.response | default({}) }}
+                {% endif %}
+              {% endfor %}
+              {% else %}
+              No SYN protections/profiles were updated.
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ syn_edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
 
       always:
-        - name: 🔓 Unlock device(s)
+        # -----------------------------
+        # Unlock the device
+        # -----------------------------
+        - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"

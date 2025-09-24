@@ -2,26 +2,20 @@
 # Copy this file to delete_syn_vars.yml and customize with your environment
 
 # Target DefensePro devices - add or remove IP addresses as needed
+# List of DefensePro devices
 dp_ip:
-  - "10.105.192.32"
-  #- "10.105.192.33"
+  - 10.105.192.32
+  - 10.105.192.33
 
-# Define SYN profiles and protections to delete
-syn_mappings:
-  # Example: Delete SYN profile "Test_10" and protection "TEST_10"
-  - profile_name: "Test_20"
-    protection_name: "TEST_70"    # Protection name associated with the profile
-    protection_id: 500015         # Optional numeric ID for SYN protection
+# SYN profiles to delete (detach protections first)
+syn_profile_deletions:
+  - profile_name: "SYN_PROFILE_1"
+    protections:
+      - protection_name: "SYN_PROT_1"
+        protection_id: 500032
+  
 
-  # Another example
-  #- profile_name: "Test_20"
-   # protection_name: "TEST_20"
-   # protection_id: 500021
 
-  # Add more mappings as needed
-  # - profile_name: "Test_30"
-  #   protection_name: "TEST_30"
-  #   protection_id: 500020
 
 # Notes:
 # - profile_name: The SYN profile to delete

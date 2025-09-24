@@ -1,10 +1,10 @@
 ---
-- name: Create and Attach SYN Protections to Profiles
+- name: Create SYN protections and profiles
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/create_syn_vars.yml   # ✅ Added external vars file
+    - ../vars/create_vars.yml
 
   tasks:
     - block:
@@ -13,44 +13,98 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
 
-        - name: Create SYN Protections
-          vars:
-            protection_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
-          loop: "{{ protection_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.protection_name }}"
-          create_syn_protection:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            name: "{{ item.1.protection_name }}"
-            params: "{{ item.1.protection_params }}"
-          register: protection_results
-          failed_when: >
-            protection_results is failed and
-            ('already exist' not in (protection_results.msg | default('')))
-
-        - name: Attach Protections to SYN Profiles
-          vars:
-            profile_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.profile_name }}/{{ item.1.protection_name }}"
+        - name: Configure SYN protections and profiles
           create_syn_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            profile_name: "{{ item.1.profile_name }}"
-            protection_name: "{{ item.1.protection_name }}"
-            params: "{{ item.1.profile_params }}"
-          register: profile_results
-          failed_when: >
-            profile_results is failed and
-            ('already exists' not in (profile_results.msg | default('')) and
-             'same key already exists' not in (profile_results.msg | default('')))
-
+            dp_ip: "{{ item }}"
+            syn_protections: "{{ syn_protections | default([]) }}"
+            syn_profiles: "{{ syn_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: syn_create_results
+        - name: Display SYN creation results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              
+              SYN Configurations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% else %}
+              
+              No SYN protections/profiles configured for creation.
+              {% endif %}
+              {% elif ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed:
+              
+              SYN Configurations ({{ item.debug_info.input.protections_count | default(0) }} protections + {{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              {% if item.debug_info.input.protections_count | default(0) > 0 %}
+                - {{ item.debug_info.input.protections_count }} protection(s) would be created
+              {% endif %}
+              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
+                - {{ item.debug_info.input.profiles_count }} profile(s) would be created
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              
+              Error occurred during SYN creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.response.protections | length > 0 or item.response.profiles | length > 0 %}
+              
+              SYN Configurations created successfully:
+              
+              {% if item.response.protections | length > 0 %}
+              Protections ({{ item.response.protections | length }}):
+              {% for prot in item.response.protections %}
+                - Name: {{ prot.name }}
+                  Index: {{ prot.index }}
+                  Parameters:
+                    Activation Threshold: {{ prot.parameters.activation_threshold }}
+                    Termination Threshold: {{ prot.parameters.termination_threshold }}
+                    App Port Group: {{ prot.parameters.app_port_group }}
+                    Packet Report: {{ prot.parameters.packet_report }}
+              {% endfor %}
+              {% endif %}
+              
+              {% if item.response.profiles | length > 0 %}
+              Profiles ({{ item.response.profiles | length }}):
+              {% for prof in item.response.profiles %}
+                - Profile Name: {{ prof.profile_name }}
+                  Attached Protection: {{ prof.protection_name }}
+                  Parameters:
+                  {% if prof.parameters %}
+                    {% for k, v in prof.parameters.items() %}
+                    - {{ k }}: {{ v }}
+                    {% endfor %}
+                  {% else %}
+                    - None
+                  {% endif %}
+              {% endfor %}
+              {% endif %}
+              {% else %}
+              
+              No SYN protections/profiles were created.
+              {% endif %}
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ syn_create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+            
       always:
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

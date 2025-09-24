@@ -1,0 +1,41 @@
+---
+- name: Get SYN profiles and protections (Simple)
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - name: Get SYN profiles and protections
+      get_syn_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_syn_profile_names: "{{ filter_syn_profile_names | default([]) }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
+      register: syn_profiles_result
+
+    - name: Display SYN profiles and protections (formatted, sorted)
+      vars:
+        formatted_output: |
+          Device: {{ item.item }}
+          Profiles and Protections:
+          {% for profile in item.profiles %}
+          Profile: {{ profile.profile_name }}
+          Protections:
+          {% for prot in profile.protections | sort(attribute='protection_id') %}
+            - protection_name: {{ prot.protection_name }}
+              protection_id: {{ prot.protection_id }}
+              activation_threshold: {{ prot.activation_threshold }}
+              termination_threshold: {{ prot.termination_threshold }}
+              packet_report: {{ prot.packet_report }}
+              app_port_group: {{ prot.app_port_group }}
+          {% endfor %}
+          {% endfor %}
+      debug:
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ syn_profiles_result.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"

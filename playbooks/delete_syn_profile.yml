@@ -1,56 +1,77 @@
 ---
-- name: Delete SYN Protections and Profiles
+- name: Delete SYN profiles and protections
   hosts: cc
   gather_facts: no
   vars_files:
     - ../vars/cc.yml
-    - ../vars/delete_syn_vars.yml   # Use the new vars file
+    - ../vars/delete_vars.yml
 
   tasks:
-
     - block:
-        # Step 1: Lock devices
+        # Step 1: Lock the device
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        # Step 2: Delete SYN Profiles
-        - name: Delete SYN Profiles
-          vars:
-            profile_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
-          loop: "{{ profile_matrix }}"
-          loop_control:
-            label: "{{ item.0 }}/{{ item.1.profile_name }}/{{ item.1.protection_name }}"
+        # Step 2: Delete SYN profiles and protections
+        - name: Delete SYN Profiles and Protections
           delete_syn_profile:
             provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            profile_name: "{{ item.1.profile_name }}"
-            protection_name: "{{ item.1.protection_name }}"
-          register: profile_results
-          failed_when: >
-            profile_results is failed and
-            ('not found' not in (profile_results.msg | default('')))
-
-        # Step 3: Delete SYN Protections
-        - name: Delete SYN Protections
-          vars:
-            protection_matrix: "{{ dp_ip | product(syn_mappings) | list }}"
-          loop: "{{ protection_matrix }}"
+            dp_ip: "{{ item }}"
+            syn_profile_deletions: "{{ syn_profile_deletions | default([]) }}"
+            syn_protection_deletions: "{{ syn_protection_deletions | default([]) }}"
+          loop: "{{ dp_ip }}"
           loop_control:
-            label: "{{ item.0 }}/{{ item.1.protection_id }}"
-          delete_syn_protection:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item.0 }}"
-            protection_id: "{{ item.1.protection_id }}"
-          register: protection_results
-          failed_when: >
-            protection_results is failed and
-            ('still attached' not in (protection_results.msg | default('')))
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        # Step 3: Display deletion results (formatted)
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% set profile_dels = item.response.deleted_from_profiles | default([]) %}
+              {% set protection_dels = item.response.deleted_protections | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+
+              {% if profile_dels %}
+              Profile Operations ({{ profile_dels | length }} completed):
+              {% for del in profile_dels %}
+                - Profile: {{ del.profile_name }}
+                  Protection Removed: {{ del.protection_name }}
+                  Status: {{ del.status }}
+              {% endfor %}
+              {% endif %}
+
+              {% if protection_dels %}
+              Protection Deletions ({{ protection_dels | length }} completed):
+              {% for del in protection_dels %}
+                - Protection: {{ del.protection_name }}
+                  Protection ID: {{ del.protection_id }}
+                  Status: {{ del.status }}
+              {% endfor %}
+              {% endif %}
+
+              {% if errors %}
+              Errors ({{ errors | length }} occurred):
+              {% for error in errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+
+              {% if not profile_dels and not protection_dels and not errors %}
+              No operations performed (no deletions configured).
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
 
       always:
-        # Step 4: Unlock devices
+        # Step 4: Unlock the device
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
