@@ -1,13 +1,14 @@
 ---
 - name: Create HTTPS profiles
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/create_vars.yml
 
   tasks:
-    - block:
+    - name: Create HTTPS profiles block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -62,7 +63,7 @@
               No HTTP profiles were created.
               {% endif %}
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ HTTPS_create_results.results }}"
           loop_control:
@@ -75,7 +76,7 @@
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Applying policies: {{ item }}"
-          when: 
+          when:
             - not (skip_policy_updates | default(false))
             - HTTPS_create_results is defined
             - HTTPS_create_results.changed | default(false)
