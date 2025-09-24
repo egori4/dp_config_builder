@@ -1,13 +1,14 @@
 ---
 - name: Delete security policies
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/delete_vars.yml
 
   tasks:
-    - block:
+    - name: Delete security policies block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -35,13 +36,13 @@
               PREVIEW MODE - Operations that would be performed:
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
-              
+
               Security Policy Deletions ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
                 - {{ op.description }}
               {% endfor %}
               {% else %}
-              
+
               No security policies configured for deletion.
               {% endif %}
               {% else %}
@@ -49,7 +50,7 @@
               {% set deleted_pols = item.response.deleted_policies | default([]) %}
               {% set errors = item.response.errors | default([]) %}
               {% if deleted_pols %}
-              
+
               Security Policies ({{ deleted_pols | length }}/{{ item.response.summary.total_policies_attempted }} successful):
               {% for del in deleted_pols %}
                 - {{ del.policy_name }}: {{ del.status }}
@@ -57,18 +58,18 @@
               {% endfor %}
               {% endif %}
               {% if errors %}
-              
+
               Errors ({{ errors | length }} occurred):
               {% for error in errors %}
                 - {{ error }}
               {% endfor %}
               {% endif %}
               {% if not deleted_pols and not errors %}
-              
+
               No security policies configured for deletion.
               {% endif %}
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ delete_results.results }}"
           loop_control:
