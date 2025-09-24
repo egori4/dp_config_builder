@@ -1030,7 +1030,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
 ```
 ### Create SYN Profile
 ```yml
-POST /mgmt/device/byip/10.105.192.32/config/rsIDSSynProfilesTable/web_syn_profile/syn_prot_tcp_limit
+POST /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}
 
 {
     "rsIDSSYNProfileName": "web_syn_profile",
@@ -1066,28 +1066,27 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
 # API Behavior: Index becomes part of the URL path for creation and editing
 
 ### Get SYN Profiles Response
-GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynProfilesTable
-GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{protection_id}
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynProfilesTable/{profile_name}
 
 Response (mapped and combined):
 {
-    "profiles": [
-        {
-            "profile_name": "SYN_PROFILE_1",
-            "protections": [
-                {
-                    "protection_name": "SYN_PROT_1",
-                    "protection_id": "500030",
-                    "activation_threshold": "3500",
-                    "termination_threshold": "2500",
-                    "packet_report": "enable",
-                    "app_port_group": "http"
-                }
+    "msg": [
+        "Device: 10.105.192.32",
+        "Profiles and Protections:",
+        "Profile: SYN_PROFILE_1",
+        "Protections:",
+        "  - protection_name: SYN_PROT_1",
+        "    protection_id: 500030",
+        "    activation_threshold: 3500",
+        "    termination_threshold: 2500",
+        "    packet_report: enable",
+        "    app_port_group: http",
             ]
         }
-    ]
-}
 
+```
 
 ## Usage:
 # Call get_syn_configuration once per device
@@ -1134,7 +1133,6 @@ syn_protection_deletions:
 
 ### Key Features:
 # Protection cannot be deleted if still associated with any profile
-# Profile is automatically deleted when last protection is removed
 # Both sections are optional – define based on your needs
 # Order: profile deletions processed first, then protection deletions
 # Format: Single list supporting both names (strings) and indexes (integers)

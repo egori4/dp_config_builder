@@ -106,6 +106,18 @@ ansible-playbook playbooks/edit_dns_profile.yml
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
 
+# Create SYN protections and profiles (uses create_syn_profile module)
+ansible-playbook playbooks/create_syn_profiles.yml
+
+# Edit existing SYN protections (uses edit_syn_protections module)
+ansible-playbook playbooks/edit_syn_protections.yml
+
+# Get SYN profiles and protections (uses get_syn_profiles module)
+ansible-playbook playbooks/get_syn_profiles.yml
+
+# Delete SYN profiles and protections (uses delete_syn_profile module)
+ansible-playbook playbooks/delete_syn_profiles.yml
+
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
 ansible-playbook playbooks/create_security_policy.yml
 
@@ -941,74 +953,161 @@ oos_profiles:
     idle_state_timer: seconds for idle timeout.
     Control flags: Use to enable/disable each stage independently.
 
-## SYN Protection Profile Operations
 
-- **Create SYN Protection Profiles:**  
-  Playbook: `playbooks/create_syn_profile.yml`  
-  Module: `plugins/modules/create_syn_profile.py`  
-  Variables: `vars/create_vars.yml` (`syn_profiles` section)
 
-- **Edit SYN Protection Profiles:**  
-  Playbook: `playbooks/edit_syn_protection.yml`  
-  Module: `plugins/modules/edit_syn_protection.py`  
-  Variables: `vars/edit_vars.yml` (`edit_syn_profiles` section)
+### SYN Profiles - Complete Configuration Reference
 
-- **Delete SYN Protection Profiles:**  
-  Playbook: `playbooks/delete_syn_profile.yml`  
-  Module: `plugins/modules/delete_syn_profile.py`  
-  Variables: `vars/delete_vars.yml` (`delete_syn_profiles` section)
+# Important: Both syn_protections and syn_profiles sections are completely optional. You can define one, another, or both, based on your needs.
 
-- **Query SYN Protection Profiles:**  
-  Playbook: `playbooks/get_syn_profile.yml`  
-  Module: `plugins/modules/get_syn_profile.py`  
-  Variables: `vars/get_vars.yml` (`filter_syn_profile_names` optional)
+# Creating SYN Protections (ALL Supported Parameters)
+# OPTIONAL: Define new SYN protections (only if you want to create)
+```yml
+syn_protections:
+  - name: "syn_protection"                     # MANDATORY: Protection name
+    activation_threshold: 2500                 # OPTIONAL: Activation threshold 
+    termination_threshold: 1500                # OPTIONAL: Termination threshold 
+    app_port_group: "http"                     # OPTIONAL: http, https, dns, ftp, smtp, imap, custom, or "" (default: "http")
+    packet_report: "enable"                    # OPTIONAL: enable, disable (default: disable)
+    index: 0                              # OPTIONAL: 0 or 500001+ (default: 0)
 
-### Example Variable Structure
+  # Minimal example (only mandatory parameter)
+  - name: "syn_prot_minimal"                     # MANDATORY: Only this is required
+    # All other parameters use defaults
 
-**vars/create_vars.yml**
-```yaml
+  # Custom index example
+  - name: "syn_prot_custom_index"
+    activation_threshold: 4000
+    termination_threshold: 3000
+    app_port_group: "https"
+    index: 500031
+```
+### Editing SYN Protections (Partial Updates)
+# Edit existing protections - ONLY specify what you want to change
+```yml
+edit_syn_protections:
+  - index: 500030                                # MANDATORY: Must specify which protection to edit
+    activation_threshold: 3500                   # OPTIONAL: Change activation threshold
+    termination_threshold: 2500                  # OPTIONAL: Change termination threshold
+
+  - index: 500031
+    packet_report: "disable"                     # OPTIONAL: Change packet reporting only
+
+  - index: 500032
+    app_port_group: "dns"                        # OPTIONAL: Change app port group
+```
+
+### Getting SYN Profiles and Protections
+# Get all SYN profiles and protections from devices
+# No configuration needed - just run the playbook
+```bash
+ansible-playbook playbooks/get_syn_profiles.yml
+```
+# Filter by specific profile names (configure in get_vars.yml)
+```yml
+filter_syn_profile_names: ["SYN_PROFILE_1", "SYN_PROFILE_2"]  # Show only these profiles
+# filter_syn_profile_names: []                                # Show all profiles (default)
+```
+### Deleting SYN Profiles and Protections
+# OPTIONAL: Remove protections from profiles (without deleting protection itself)
+```yml
+syn_profile_deletions:
+  - profile_name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+      - "SYN_PROT_2"
+
+  - profile_name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_2"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+syn_protection_deletions:
+  - protections_to_delete:
+      - "SYN_PROT_1"         # Delete by name (module looks up index)
+      - "SYN_PROT_2"
+      - 500030               # Delete by index directly
+      - 500031
+```
+
+### Parameter Reference for SYN Protections:
+
+# Parameter	Status	Options	Default	Description
+# name	MANDATORY	Any string	-	Protection name (create only)
+# index	MANDATORY (edit) / optional (create)	Integer	0	Protection index (used for edit/delete)
+# activation_threshold	OPTIONAL	"number"	1000	Threshold to trigger protection
+# termination_threshold	OPTIONAL	"number"	800	Threshold to stop protection
+# app_port_group	OPTIONAL	http, https, dns, ftp, smtp, imap, custom, ""	""	App port filtering
+# packet_report	OPTIONAL	enable, disable	disable	Detailed packet reporting
+
+
+### Key Points for Editing:
+
+# Partial Updates: Only specify parameters you want to change
+# Unchanged Values: Unspecified parameters keep their current values
+# Flexible: Change one parameter or many in a single operation
+
+### SYN Profiles (Optional Section)
+# OPTIONAL: Profiles (can reference existing or newly created protections)
+```yml
 syn_profiles:
-  - profile_name: "syn_profile_1"
-    threshold: 1000
-    action: "block"
-    packet_report_status: "enable"
-    packet_trace_status: "disable"
-    learning_suppression_threshold: 10
-    footprint_strictness: 1
+  - name: "SYN_PROFILE_1"                        # MANDATORY: Profile name
+    protections:                                 # MANDATORY: List of protections
+      - "SYN_PROT_1"                             # Can be newly created
+      - "SYN_PROT_2"                             # Or existing on DefensePro
+
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "syn_prot_comprehensive_example"
+      - "legacy_syn_protection"
 ```
 
-**vars/edit_vars.yml**
-```yaml
-edit_syn_profiles:
-  - profile_name: "syn_profile_1"
-    threshold: 2000
-    action: "report_only"
+### Profile Configuration Notes:
+
+# name: MANDATORY - Unique profile name
+# protections: MANDATORY - List of protection names to include
+# Mixed References: Can combine newly created and existing protections
+# Flexible: Create profiles with any combination of protections
+
+## Usage Pattern Examples
+# Example 1: Create new protections + profiles
+```yml
+syn_protections:
+  - name: "syn_web_protection"
+    activation_threshold: 2500
+    termination_threshold: 1500
+    app_port_group: "http"
+  - name: "syn_api_protection"
+    activation_threshold: 4000
+    termination_threshold: 3000
+    app_port_group: "https"
+
+syn_profiles:
+  - name: "SYN_PROFILE_WEB"
+    protections:
+      - "syn_web_protection"
+      - "syn_api_protection"
+
+# Example 2: Use only existing protections (skip syn_protections)
+syn_profiles:
+  - name: "SYN_PROFILE_EXISTING"
+    protections:
+      - "SYN_PROT_1"
+      - "SYN_PROT_2"
+
+# Example 3: Mixed approach (some new, some existing)
+syn_protections:
+  - name: "syn_new_custom"
+    activation_threshold: 5000
+    termination_threshold: 3500
+    app_port_group: "dns"
+    index: 500032
+syn_profiles:
+  - name: "SYN_PROFILE_MIXED"
+    protections:
+      - "syn_new_custom"         # Newly created above
+      - "SYN_PROT_1"             # Already exists on device
 ```
-
-**vars/delete_vars.yml**
-```yaml
-delete_syn_profiles:
-  - "syn_profile_1"
-  - "syn_profile_2"
-```
-
-**vars/get_vars.yml**
-```yaml
-filter_syn_profile_names:
-  - "syn_profile_1"
-```
-
-### Usage
-
-- Run the playbooks as with other profile types, e.g.:
-  ```bash
-  ansible-playbook playbooks/create_syn_profile.yml
-  ansible-playbook playbooks/edit_syn_protection.yml
-  ansible-playbook playbooks/delete_syn_profile.yml
-  ansible-playbook playbooks/get_syn_profile.yml
-  ```
-
-- All modules support check mode (`--check`) for previewing changes.
+### All modules support check mode (`--check`) for previewing changes.
 
 ### Security Policy Configuration
 

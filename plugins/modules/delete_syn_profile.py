@@ -14,12 +14,6 @@ options:
     description: Radware CC connection details
     type: dict
     required: true
-    suboptions:
-      cc_ip: str
-      username: str
-      password: str
-      verify_ssl: bool
-      log_level: str
   dp_ip:
     description: DefensePro device IP
     type: str
@@ -30,17 +24,12 @@ options:
     required: false
     default: []
     elements: dict
-    suboptions:
-      profile_name: str
-      protections: list
   syn_protection_deletions:
-    description: List of protections to delete entirely (requires numeric IDs)
+    description: List of protections to delete entirely
     type: list
     required: false
     default: []
     elements: dict
-    suboptions:
-      protections_to_delete: list
 author:
   - "Your Name"
 '''
@@ -89,35 +78,47 @@ def run_module():
     syn_profile_deletions = module.params['syn_profile_deletions']
     syn_protection_deletions = module.params['syn_protection_deletions']
 
+    log_level = provider.get('log_level', 'disabled')
+    verify_ssl = provider.get('verify_ssl', False)
     cc_ip = provider.get('cc_ip')
     username = provider.get('username')
     password = provider.get('password')
-    verify_ssl = provider.get('verify_ssl', False)
-    log_level = provider.get('log_level', 'disabled')
 
     if not all([cc_ip, username, password]):
         module.fail_json(msg="provider.cc_ip, provider.username, and provider.password are required")
 
     logger = Logger(verbosity=log_level)
-    debug_info = {}
+    debug_info = {'input': {'dp_ip': dp_ip,
+                            'profile_deletions_count': len(syn_profile_deletions),
+                            'protection_deletions_count': len(syn_protection_deletions)}}
 
     try:
         cc = RadwareCC(cc_ip, username, password, verify_ssl=verify_ssl, log_level=log_level, logger=logger)
 
-        # Step 1: Fetch all SYN protections to resolve names to numeric IDs
+        # Step 1: Fetch all SYN protections for name → ID resolution
         protection_name_to_id = {}
+        valid_ids = set()
         try:
             resp = cc._get(f"https://{cc_ip}/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable")
             data = resp.json()
             for prot in data.get('rsIDSSYNAttackTable', []):
-                protection_name_to_id[prot['rsIDSSYNAttackName']] = prot['rsIDSSYNAttackId']
+                name = prot.get('rsIDSSYNAttackName')
+                pid = prot.get('rsIDSSYNAttackId')
+                if name and pid:
+                    protection_name_to_id[name] = pid
+                    try:
+                        valid_ids.add(int(pid))
+                    except Exception:
+                        pass
             logger.info(f"Fetched {len(protection_name_to_id)} SYN protections from {dp_ip}")
         except Exception as e:
-            module.fail_json(msg=f"Failed to fetch SYN protections: {str(e)}", debug_info=debug_info)
+            if not module.check_mode:
+                module.fail_json(msg=f"Failed to fetch SYN protections: {str(e)}", debug_info=debug_info)
 
         operations = []
+        errors = []
 
-        # Step 2: Remove protections from profiles
+        # Step 2: Prepare profile removals
         for profile in syn_profile_deletions:
             profile_name = profile.get('profile_name')
             protections = profile.get('protections', [])
@@ -125,27 +126,29 @@ def run_module():
                 prot_name = prot.get('protection_name')
                 prot_id = protection_name_to_id.get(prot_name)
                 if not prot_id:
-                    continue  # Skip missing protections silently
-                url = f"https://{cc_ip}/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{prot_name}"
+                    errors.append(f"Protection '{prot_name}' not found on device {dp_ip}")
+                    continue
                 operations.append({
                     'type': 'remove_from_profile',
                     'profile_name': profile_name,
                     'protection_name': prot_name,
-                    'url': url
+                    'url_path': f"/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{prot_name}",
+                    'description': f"Remove '{prot_name}' from profile '{profile_name}'"
                 })
 
-        # Step 3: Delete protections entirely
+        # Step 3: Prepare protection deletions
         for prot_del in syn_protection_deletions:
             for prot_name in prot_del.get('protections_to_delete', []):
                 prot_id = protection_name_to_id.get(prot_name)
                 if not prot_id:
-                    continue  # Skip missing protections silently
-                url = f"https://{cc_ip}/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/{prot_id}"
+                    errors.append(f"Protection '{prot_name}' not found on device {dp_ip}")
+                    continue
                 operations.append({
                     'type': 'delete_protection',
                     'protection_name': prot_name,
                     'protection_id': prot_id,
-                    'url': url
+                    'url_path': f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/{prot_id}",
+                    'description': f"Delete protection '{prot_name}' (ID {prot_id})"
                 })
 
         # Step 4: Execute or preview
@@ -154,14 +157,14 @@ def run_module():
         changes_made = False
 
         for op in operations:
+            if op.get('error'):
+                continue
             try:
                 if module.check_mode:
                     changes_made = True
                     continue
-
-                resp = cc._delete(op['url'])
+                resp = cc._delete(f"https://{cc_ip}{op['url_path']}")
                 resp.raise_for_status()
-
                 if op['type'] == 'remove_from_profile':
                     deleted_from_profiles.append({
                         'profile_name': op['profile_name'],
@@ -175,18 +178,24 @@ def run_module():
                         'status': 'success'
                     })
                 changes_made = True
-            except Exception:
-                # Suppress all errors silently
-                continue
+                logger.info(f"Executed: {op['description']}")
+            except Exception as e:
+                errors.append(f"Failed to execute {op['description']}: {str(e)}")
+                logger.error(f"Failed: {op['description']}")
 
         result = {
             'changed': changes_made,
             'response': {
                 'deleted_from_profiles': deleted_from_profiles,
-                'deleted_protections': deleted_protections
+                'deleted_protections': deleted_protections,
+                'errors': errors
             },
             'debug_info': debug_info
         }
+
+        if errors and not module.check_mode:
+            if not changes_made:
+                module.fail_json(msg=f"All operations failed. Errors: {'; '.join(errors)}", **result)
 
         module.exit_json(**result)
 

@@ -8,7 +8,7 @@
 
   tasks:
     - block:
-        # Step 1: Lock the device
+        # Step 1: Lock device(s)
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -32,6 +32,32 @@
           vars:
             formatted_output: |
               Device: {{ item.item }}
+
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set profile_ops = item.response.profile_operations | default([]) %}
+              {% set protection_ops = item.response.protection_operations | default([]) %}
+
+              {% if profile_ops %}
+              Profile Operations ({{ profile_ops | length }} planned):
+              {% for op in profile_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% endif %}
+
+              {% if protection_ops %}
+              Protection Deletions ({{ protection_ops | length }} planned):
+              {% for op in protection_ops %}
+                - {{ op.description }}
+              {% endfor %}
+              {% endif %}
+
+              {% if not profile_ops and not protection_ops %}
+              No operations configured for deletion.
+              {% endif %}
+
+              {% else %}
+              EXECUTION RESULTS:
               {% set profile_dels = item.response.deleted_from_profiles | default([]) %}
               {% set protection_dels = item.response.deleted_protections | default([]) %}
               {% set errors = item.response.errors | default([]) %}
@@ -64,6 +90,8 @@
               {% if not profile_dels and not protection_dels and not errors %}
               No operations performed (no deletions configured).
               {% endif %}
+
+              {% endif %}
           debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ delete_results.results }}"
@@ -71,7 +99,7 @@
             label: "Device: {{ item.item }}"
 
       always:
-        # Step 4: Unlock the device
+        # Step 4: Unlock device(s)
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
