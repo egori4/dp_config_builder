@@ -78,3 +78,14 @@ filter_security_policy_names: []  # Set to list of policy names to filter, or le
 # - filter_security_policy_names: Optional filter to get specific security policies (leave empty for all)
 # - This operation is read-only and safe to run anytime
 # - Use this to discover existing security policies before creating, editing, or deleting
+
+###################### Get SYN Profile ##########################
+# get_syn_vars.yml
+# Optional filter to fetch only specific SYN profiles
+# Optional: list of SYN profiles to fetch. Leave empty to get all profiles
+# Optional: filter is not used for SYN profiles because protections are not linked to profiles
+
+# Filter SYN protections (only these names, leave empty for all)
+filter_syn_profile_names:
+  - "SYN_PROFILE_1"
+  - "SYN_PROFILE_2"

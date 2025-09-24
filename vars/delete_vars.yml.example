@@ -146,3 +146,28 @@ delete_security_policies:
 # - deletion_mode: OPTIONAL - Controls deletion behavior:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
 #   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
+
+  ###################### SYN Profile Deletions ##########################
+
+# vars/delete_vars.yml
+
+# List of SYN profiles and the protections attached to remove
+# delete_vars.yml
+
+# SYN Profiles and attached protections to remove from profiles
+syn_profile_deletions:
+  - profile_name: "SYN_PROFILE_1"
+    protections:
+      - protection_name: "SYN_PROT_1"
+      #- protection_name: "SYN_PROT_2"
+  - profile_name: "SYN_PROFILE_2"
+    protections:
+      - protection_name: "SYN_PROT_2"
+
+# SYN Protections to delete entirely (must exist on the device)
+syn_protection_deletions:
+  - protections_to_delete:
+      - "SYN_PROT_1"
+      - "SYN_PROT_2"
+
+# Optional: Add more profiles or protections as needed

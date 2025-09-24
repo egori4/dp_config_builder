@@ -159,6 +159,13 @@ dp_config_builder/
 | `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
 | `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 
+### SYN Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_syn_profiles.yml`  | Create new SYN flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-syn-profile)    |
+| `edit_syn_protections.yml` | Modify existing SYN protections         | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-syn-protections) |
+| `delete_syn_profiles.yml`  | Remove SYN profiles and/or protections  | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-syn-profiles)  |
+| `get_syn_profiles.yml`     | Query current SYN profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-syn-profiles)     |
 
 
 ### Security Policy Management

@@ -309,3 +309,30 @@ edit_security_policies:
 # - ert_attackers_feed_profile: "profile_name" (ERT attackers feed profile)
 # - geo_feed_profile: "profile_name" (Geo feed profile)
 # - out_of_state_profile: "profile_name" (Out of state profile)
+
+########################## SYN Protections to Edit ##########################
+# Each protection must include the 'index' on the device for editing
+########################## SYN Protections ##########################
+edit_syn_protections:
+  - index: 500030
+    activation_threshold: 3500
+    termination_threshold: 2500
+    app_port_group: "http"
+    packet_report: "enable"
+  - index: 500031
+    activation_threshold: 4000
+    termination_threshold: 3000
+    app_port_group: "https"
+    packet_report: "disable"
+
+########################## SYN Profiles ##########################
+edit_syn_profiles:
+  - name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_1"
+
+
+

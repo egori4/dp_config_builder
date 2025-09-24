@@ -255,3 +255,35 @@ create_dns_profiles:
 # Usage Scenarios:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
+
+
+########################## SYN Protections ##########################
+
+# Define SYN protections to create per device
+syn_protections:
+  - name: "SYN_PROT_1"
+    activation_threshold: 2500
+    termination_threshold: 1500
+    app_port_group: "http"
+    packet_report: "enable"
+  - name: "SYN_PROT_2"
+    activation_threshold: 3000
+    termination_threshold: 2000
+    app_port_group: "https"
+    packet_report: "disable"
+
+########################## SYN Profiles ##########################
+
+# Define SYN profiles and attach protections
+syn_profiles:
+  - name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_2"
+
+########################## Notes ##########################
+# - Each protection in syn_protections will be created first.
+# - Each profile in syn_profiles will attach the listed protections.
+# - The module `manage_syn_configuration` ensures idempotency.
