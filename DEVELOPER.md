@@ -103,6 +103,11 @@ ORCHESTRATION LAYER
 │   │   ├── edit_dns_profile.yml                 # Modify DNS protection profiles
 │   │   ├── delete_dns_profile.yml               # Remove DNS protection profiles
 │   │   └── get_dns_profile.yml                  # Query DNS protection profiles
+│   ├── 🎯 HTTPS Profile Operations      # Create, edit, delete, and query HTTPS profiles
+│   │   ├── create_https_profile.yml               # Create HTTPS protection profiles
+│   │   ├── edit_https_profile.yml                 # Modify HTTPS protection profiles
+│   │   ├── delete_https_profile.yml               # Remove HTTPS protection profiles
+│   │   └── get_https_profile.yml                  # Query HTTPS protection profiles
 │   ├── 🎯 Security Policy Operations            # Create, edit, and delete security policies with profile bindings
 │   │   ├── create_security_policy.yml           # Create security policies and bind profiles
 │   │   ├── edit_security_policy.yml             # Modify security policies and profile bindings
@@ -139,6 +144,11 @@ ORCHESTRATION LAYER
 │   │   │   ├── edit_oos_profile.py        # Modify existing OOS/Stateful profiles
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 HTTPS Profile Modules (v0.1.6+)
+│   │   │   ├── create_https_profile.py      # Batch creation with validation
+│   │   │   ├── edit_https_profile.py        # Modify existing DNS profiles
+│   │   │   ├── delete_https_profile.py      # Batch deletion with error handling
+│   │   │   └── get_https_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
 │   │   │   ├── create_security_policy.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
@@ -273,7 +283,18 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
-8. **Security Policy Modules** (`plugins/modules/`)
+8. **HTTPS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_https_profile.py`, `edit_https_profile.py`, `delete_https_profile.py`, `get_https_profile.py`
+
+9. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -349,6 +370,14 @@ ORCHESTRATION LAYER
 | **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+
+### HTTPs Profile Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
+| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
+| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
+| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsIDSNewHTTPSFloodProfileTable[/{profile_name}` |
 
 ### Security Policy Management
 
@@ -984,6 +1013,69 @@ DELETE /mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}
 oos_profiles:
   - "OOS_Profile_5"
   - "OOS_Profile_6"
+```
+###  Create HTTPS Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+```
+##### Edit HTTPS Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+```
+Usage:
+Call edit_oos_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get HTTPS Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+
+Response:
+{
+    "rsHttpsFloodProfileTable": [
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileSelectiveChallenge": "2",
+            "rsHttpsFloodProfileCollectiveChallenge": "2",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfilePacketReporting": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_https_profile once per device
+#Optional filtering: filter_https_profile_names: ["https_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete HTTPS Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+
+delete_https_profiles:
+  - name: "http_profile_1"            
+  - name: "http_profile_2"
 ```
 
 ### Edit Security Policy

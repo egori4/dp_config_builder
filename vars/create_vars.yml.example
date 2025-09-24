@@ -158,7 +158,6 @@ bdos_profiles:
 # 1. Create new BDoS profiles: Define bdos_profiles
 # 2. Use existing BDoS profiles only: Skip this section and reference them elsewhere
 
-
 ################################## DNS Profile create Variables ###############################
 # Define DNS profiles to create on each device
 # All parameters use user-friendly values that are automatically mapped to API values
@@ -255,3 +254,20 @@ create_dns_profiles:
 # Usage Scenarios:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
+
+################################## HTTP Profile Create Variables ###############################
+# Define HTTP profiles to create
+# All parameters use user-friendly values that are automatically mapped to API values
+create_https_profiles:
+  - name: "https_profile_1"
+    params:
+      action: "report_only"                             # report_only,block_and_report
+      rate_limit: "2000"                                # Packets per Second per Source
+      https_authentication_on_suspect_sources: "enable"  # enable, disable
+      https_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript" 
+      
+  # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work

@@ -256,6 +256,44 @@ oos_profiles:
         # act_threshold: numeric value
         # term_threshold: numeric value
 
+################################## HTTPS Profile Edit Variables ###############################
+# Define HTTPS profiles to edit
+# Each profile requires name (mandatory) to identify which profile to edit
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+
+edit_https_profiles:
+  - name: "https_profile_1"
+    params:
+      action: "report_only"   # report_only,block_and_report
+      rate_limit: "2000"      # Packets per Second per Source
+      https_authentication_on_suspect_sources: "enable"  # enable, disable
+      https_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript"                   # redirect_302, javascript
+
+  # Example: Minimal update for another HTTPS profile
+  # - name: "http_profile_25"
+  #   params:
+  #     action: report_only
+  #     rate_limit: 20000
+
+# Notes for HTTPS Profiles:
+# SSL Decryption and Encryption should be enabled on the DP for challenge method to work
+# name: Mandatory – exact profile name to edit (use get_https_profile to verify)
+# Only specify parameters you want to change – unspecified parameters remain unchanged
+#
+# Supported HTTPS Profile Parameters:
+#   action: report_only / block_and_report
+#   rate_limit: numeric value (Packets per Second per Source)
+#   selective_challenge: enable / disable
+#   collective_challenge: enable / disable
+#   challenge_method: redirect_302 / Javascript 
+#   rate_limit_status: enable / disable
+#   packet_report: enable / disable
+#   full_session_decryption: enable / disable
+
 ################################## Security Policies Variables ###############################
 # Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit

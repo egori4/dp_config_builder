@@ -122,7 +122,6 @@ dp_config_builder/
 | `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
 | `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
 
-
 **Connection Limit Protection Features**:
 -  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
 -  **Flexible creation**: All parameters optional except name (sensible defaults provided)
@@ -159,7 +158,14 @@ dp_config_builder/
 | `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
 | `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 
+### HTTPS Profile Management
 
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_https_profile.yml` | Create new HTTPS profile        | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-https-profile)  |
+| `edit_https_profile.yml`   | Modify existing HTTPS profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-https-profile)    |
+| `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
+| `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
 
 ### Security Policy Management
 
@@ -270,6 +276,18 @@ ansible-playbook playbooks/edit_oos_profile.yml
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
 
+# Get all HTTPS profiles from devices
+ansible-playbook playbooks/get_https_profile.yml
+
+# Create new HTTPS profiles
+ansible-playbook playbooks/create_https_profile.yml
+
+# Edit existing HTTPS profiles
+ansible-playbook playbooks/edit_https_profile.yml
+
+# Delete HTTPS profiles
+ansible-playbook playbooks/delete_https_profile.yml
+
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_security_policy.yml
 
@@ -292,6 +310,7 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.7 | 2025-09-24 | Added HTTPS Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
