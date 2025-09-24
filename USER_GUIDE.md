@@ -985,7 +985,7 @@ oos_profiles:
 create_https_profiles:
   - name: "https_profile_1"
     params:
-      action: "report_only"   # report_only,block_&_report
+      action: "report_only"   # report_only,block_and_report
       rate_limit: "2000"      # Packets per Second per Source
       http_authentication_on_suspect_sources: "enable"  # enable, disable
       http_authentication_on_all_sources: "enable"      # enable, disable
@@ -1009,7 +1009,7 @@ create_https_profiles:
 edit_https_profiles:
   - name: "http_profile_1"
     params:
-      action: "report_only"                             # report_only,block_&_report
+      action: "report_only"                             # report_only,block_and_report
       rate_limit: "2000"                                # Packets per Second per Source
       http_authentication_on_suspect_sources: "enable"  # enable, disable
       http_authentication_on_all_sources: "enable"      # enable, disable

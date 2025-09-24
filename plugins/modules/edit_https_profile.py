@@ -45,7 +45,7 @@ EXAMPLES = r'''
     dp_ip: 155.1.1.7
     name: "HTTPS_Demo1"
     params:
-      action: "block & report"
+      action: "block_and_report"
       rate_limit: "100000"
       selective_challenge: "disable"
       collective_challenge: "enable"
@@ -65,9 +65,9 @@ changed:
 
 # Friendly → API enumerations
 ENUM_MAPS = {
-    "action": {"report_only": "0", "block_&_report": "1"},
-    "http_authentication_on_suspect_sources": {"enable": "1", "disable": "2"},
-    "http_authentication_on_all_sources": {"enable": "1", "disable": "2"},
+    "action": {"report_only": "0", "block_and_report": "1"},
+    "https_authentication_on_suspect_sources": {"enable": "1", "disable": "2"},
+    "https_authentication_on_all_sources": {"enable": "1", "disable": "2"},
     "challenge_method": {"redirect_302": "1", "javascript": "2"},
     "rate_limit_status": {"enable": "1", "disable": "2"},
     "packet_report": {"enable": "1", "disable": "2"},
@@ -78,8 +78,8 @@ ENUM_MAPS = {
 FIELD_MAP = {
     "action": "rsHttpsFloodProfileAction",
     "rate_limit": "rsHttpsFloodProfileRateLimit",
-    "http_authentication_on_suspect_sources": "rsHttpsFloodProfileSelectiveChallenge",
-    "http_authentication_on_all_sources": "rsHttpsFloodProfileCollectiveChallenge",
+    "https_authentication_on_suspect_sources": "rsHttpsFloodProfileSelectiveChallenge",
+    "https_authentication_on_all_sources": "rsHttpsFloodProfileCollectiveChallenge",
     "challenge_method": "rsHttpsFloodProfileChallengeMethod",
     "rate_limit_status": "rsHttpsFloodProfileRateLimitStatus",
     "packet_report": "rsHttpsFloodProfilePacketReporting",

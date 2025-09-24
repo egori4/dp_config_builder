@@ -258,12 +258,12 @@ create_dns_profiles:
 # Define HTTP profiles to create
 # All parameters use user-friendly values that are automatically mapped to API values
 create_https_profiles:
-  - name: "http_profile_1"
+  - name: "https_profile_1"
     params:
-      action: "report_only"                             # report_only,block_&_report
+      action: "report_only"                             # report_only,block_and_report
       rate_limit: "2000"                                # Packets per Second per Source
-      http_authentication_on_suspect_sources: "enable"  # enable, disable
-      http_authentication_on_all_sources: "enable"      # enable, disable
+      https_authentication_on_suspect_sources: "enable"  # enable, disable
+      https_authentication_on_all_sources: "enable"      # enable, disable
       rate_limit_status: "enable"                       # enable, disable
       packet_report: "disable"                          # enable, disable
       full_session_decryption: "disable"                # enable, disable

@@ -12,8 +12,8 @@ from ansible.module_utils.basic import AnsibleModule
 REVERSE_FIELD_MAP = {
     "rsHttpsFloodProfileAction": "action",
     "rsHttpsFloodProfileRateLimit": "rate_limit",
-    "rsHttpsFloodProfileSelectiveChallenge": "http_authentication_on_suspect_sources",
-    "rsHttpsFloodProfileCollectiveChallenge": "http_authentication_on_all_sources",
+    "rsHttpsFloodProfileSelectiveChallenge": "https_authentication_on_suspect_sources",
+    "rsHttpsFloodProfileCollectiveChallenge": "https_authentication_on_all_sources",
     "rsHttpsFloodProfileChallengeMethod": "challenge_method",
     "rsHttpsFloodProfileRateLimitStatus": "rate_limit_status",
     "rsHttpsFloodProfilePacketReporting": "packet_report",
@@ -22,7 +22,7 @@ REVERSE_FIELD_MAP = {
 
 # Reverse mapping for enum values
 REVERSE_ENUM_MAPS = {
-    "rsHttpsFloodProfileAction": {"0": "report_only", "1": "block_&_report"},
+    "rsHttpsFloodProfileAction": {"0": "report_only", "1": "block_and_report"},
     "rsHttpsFloodProfileSelectiveChallenge": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileCollectiveChallenge": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileChallengeMethod": {"1": "redirect_302", "2": "javascript"},
@@ -169,9 +169,9 @@ def run_module():
 def map_https_flood_profile_parameters(params):
     """Map user-friendly HTTPS Flood parameters to DefensePro API values."""
     ENUM_MAPS = {
-        "action": {"report_only": "0", "block_&_report": "1"},
-        "http_authentication_on_suspect_sources": {"enable": "1", "disable": "2"},
-        "http_authentication_on_all_sources": {"enable": "1", "disable": "2"},
+        "action": {"report_only": "0", "block_and_report": "1"},
+        "https_authentication_on_suspect_sources": {"enable": "1", "disable": "2"},
+        "https_authentication_on_all_sources": {"enable": "1", "disable": "2"},
         "challenge_method": {"redirect_302": "1", "javascript": "2"},
         "rate_limit_status": {"enable": "1", "disable": "2"},
         "packet_report": {"enable": "1", "disable": "2"},
@@ -181,8 +181,8 @@ def map_https_flood_profile_parameters(params):
     FIELD_MAP = {
         "action": "rsHttpsFloodProfileAction",
         "rate_limit": "rsHttpsFloodProfileRateLimit",
-        "http_authentication_on_suspect_sources": "rsHttpsFloodProfileSelectiveChallenge",
-        "http_authentication_on_all_sources": "rsHttpsFloodProfileCollectiveChallenge",
+        "https_authentication_on_suspect_sources": "rsHttpsFloodProfileSelectiveChallenge",
+        "https_authentication_on_all_sources": "rsHttpsFloodProfileCollectiveChallenge",
         "challenge_method": "rsHttpsFloodProfileChallengeMethod",
         "rate_limit_status": "rsHttpsFloodProfileRateLimitStatus",
         "packet_report": "rsHttpsFloodProfilePacketReporting",
