@@ -754,7 +754,7 @@ bdos_profiles:
 *** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
 *** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
-#### Create DNS Profiles  ####
+### Create DNS Profiles  ####
 ```yaml
 # Define DNS profiles to create on each device
 # Configure DNS profiles in `vars/create_vars.yml`:
@@ -940,6 +940,75 @@ oos_profiles:
     idle_state_bandwidth_threshold: threshold for idle state.
     idle_state_timer: seconds for idle timeout.
     Control flags: Use to enable/disable each stage independently.
+
+## SYN Protection Profile Operations
+
+- **Create SYN Protection Profiles:**  
+  Playbook: `playbooks/create_syn_profile.yml`  
+  Module: `plugins/modules/create_syn_profile.py`  
+  Variables: `vars/create_vars.yml` (`syn_profiles` section)
+
+- **Edit SYN Protection Profiles:**  
+  Playbook: `playbooks/edit_syn_protection.yml`  
+  Module: `plugins/modules/edit_syn_protection.py`  
+  Variables: `vars/edit_vars.yml` (`edit_syn_profiles` section)
+
+- **Delete SYN Protection Profiles:**  
+  Playbook: `playbooks/delete_syn_profile.yml`  
+  Module: `plugins/modules/delete_syn_profile.py`  
+  Variables: `vars/delete_vars.yml` (`delete_syn_profiles` section)
+
+- **Query SYN Protection Profiles:**  
+  Playbook: `playbooks/get_syn_profile.yml`  
+  Module: `plugins/modules/get_syn_profile.py`  
+  Variables: `vars/get_vars.yml` (`filter_syn_profile_names` optional)
+
+### Example Variable Structure
+
+**vars/create_vars.yml**
+```yaml
+syn_profiles:
+  - profile_name: "syn_profile_1"
+    threshold: 1000
+    action: "block"
+    packet_report_status: "enable"
+    packet_trace_status: "disable"
+    learning_suppression_threshold: 10
+    footprint_strictness: 1
+```
+
+**vars/edit_vars.yml**
+```yaml
+edit_syn_profiles:
+  - profile_name: "syn_profile_1"
+    threshold: 2000
+    action: "report_only"
+```
+
+**vars/delete_vars.yml**
+```yaml
+delete_syn_profiles:
+  - "syn_profile_1"
+  - "syn_profile_2"
+```
+
+**vars/get_vars.yml**
+```yaml
+filter_syn_profile_names:
+  - "syn_profile_1"
+```
+
+### Usage
+
+- Run the playbooks as with other profile types, e.g.:
+  ```bash
+  ansible-playbook playbooks/create_syn_profile.yml
+  ansible-playbook playbooks/edit_syn_protection.yml
+  ansible-playbook playbooks/delete_syn_profile.yml
+  ansible-playbook playbooks/get_syn_profile.yml
+  ```
+
+- All modules support check mode (`--check`) for previewing changes.
 
 ### Security Policy Configuration
 
