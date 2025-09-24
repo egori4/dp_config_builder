@@ -51,7 +51,6 @@ class RadwareCC:
         session_file, session_time_file = self._get_session_file()
         # Add separator at the start of a new run
         self.log.info("======================================================")
-        reuse_session = False
         if os.path.exists(session_file) and os.path.exists(session_time_file):
             try:
                 with open(session_time_file, "r") as tf:
@@ -128,7 +127,7 @@ class RadwareCC:
                 raise requests.exceptions.HTTPError(err_msg, response=err.response)
             except (requests.exceptions.ConnectionError,
                     requests.exceptions.SSLError,
-                    requests.exceptions.Timeout) as err:
+                    requests.exceptions.Timeout):
                 if attempt < retries:
                     sleep_time = delay * (2 ** (attempt - 1)) + random.uniform(0, 0.5)
                     time.sleep(sleep_time)

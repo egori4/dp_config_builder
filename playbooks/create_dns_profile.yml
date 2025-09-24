@@ -60,7 +60,8 @@
               {% for prof in item.response.created_profiles %}
                 - {{ prof.profile_name }}
                   Parameters:
-                  {% for k, v in prof.user_friendly.items() %}
+                  {% set all_params = prof.user_friendly.phase1 | combine(prof.user_friendly.phase2) %}
+                  {% for k, v in all_params.items() %}
                   - {{ k }}: {{ v }}
                   {% endfor %}
               {% endfor %}

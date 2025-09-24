@@ -177,8 +177,6 @@ def map_dns_profile_parameters(params):
         "action": {"report_only": "0", "block_and_report": "1"},
         "manual_trigger": {"enable": "1", "disable": "2"},
         "packet_report": {"enable": "1", "disable": "2"},
-        "packet_trace": {"enable": "1", "disable": "2"},
-        "subdomains_wl_learning": {"enable": "1", "disable": "2"},
         "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
         # Status toggles (1=enable, 2=disable)
         "a_status": {"enable": "1", "disable": "2"},
@@ -226,11 +224,9 @@ def map_dns_profile_parameters(params):
         "manual_trigger_escalate_period": "rsDnsProtProfileManualTriggerEscalatePeriod",
         # Logging / debugging
         "packet_report": "rsDnsProtProfilePacketReportStatus",
-        "packet_trace": "rsDnsProtProfilePacketTraceStatus",
         # Advanced
         "sig_rate_lim_target": "rsDnsProtProfileSigRateLimTarget",
         "query_name_sensitivity": "rsDnsProtProfileQueryNameMonitoringSensitivity",
-        "subdomains_wl_learning": "rsDnsProtProfileSubdomainsWLLearningState",
         "learning_suppression_threshold": "rsDnsProtProfileLearningSuppressionThreshold",
         "footprint_strictness": "rsDnsProtProfileFootprintStrictness",
     }

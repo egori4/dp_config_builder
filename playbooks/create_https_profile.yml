@@ -1,0 +1,90 @@
+---
+- name: Create HTTPS profiles
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - name: Create HTTPS profiles block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Configure HTTPS profiles
+          create_https_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            https_flood_profiles: "{{ create_https_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: HTTPS_create_results
+
+        - name: Display HTTPS profile creation results
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Planned operations:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              HTTPS Profile Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.profile_name }}
+                  Parameters:
+                  {% for k, v in op.params.items() %}
+                    - {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              No HTTPS profiles configured for creation.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              Error occurred during creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.response.created_profiles | default([]) %}
+              HTTPS Profiles created successfully:
+              {% for prof in item.response.created_profiles %}
+                - {{ prof.profile_name }}
+                  Parameters:
+                  {% for k, v in prof.user_friendly.items() %}
+                  - {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              No HTTP profiles were created.
+              {% endif %}
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ HTTPS_create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - HTTPS_create_results is defined
+            - HTTPS_create_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

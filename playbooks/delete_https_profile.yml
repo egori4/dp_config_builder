@@ -1,0 +1,78 @@
+---
+- name: Delete HTTPS Flood profiles
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml  # contains https_profiles list
+
+  tasks:
+    - name: Delete HTTPS Flood profiles block
+      block:
+        # Lock devices before deletion
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        # Delete HTTPS Flood profiles
+        - name: Delete HTTPS Flood profiles
+          delete_https_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            https_profiles: "{{ delete_https_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        # Display deletion results neatly with failed blocks in red
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+
+              {% if item.response is defined %}
+              EXECUTION RESULTS:
+
+              {% for res in item.response %}
+                - Profile: {{ res.profile.name }}
+                  {% if res.failed | default(false) %}
+                  Status: FAILED
+                  Error: {{ res.response.error | default('Unknown error') }}
+                  Response body: {{ res.response }}
+                  {{ '\033[0m' }}
+                  {% else %}
+                  Status: DELETED
+                  {% endif %}
+              {% endfor %}
+
+              {% if not item.response %}
+              No operations performed (no deletions configured).
+              {% endif %}
+              {% else %}
+              No deletion results returned.
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_policy_updates | default(false))
+          loop_control:
+            label: "Applying policies: {{ item }}"
+
+      always:
+        # Unlock devices after deletion
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"

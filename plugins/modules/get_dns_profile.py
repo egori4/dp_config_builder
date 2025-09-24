@@ -37,6 +37,7 @@ REVERSE_FIELD_MAP = {
     "rsDnsProtProfileDnsSrvStatus": "srv_status",
     "rsDnsProtProfileDnsOtherStatus": "other_status",
     "rsDnsProtProfileFootprintStrictness": "footprint_strictness",
+    "rsDnsProtProfileSigRateLimTarget": "sig_rate_lim_target",
     "rsDnsProtProfileLearningSuppressionThreshold": "learning_suppression_threshold",
     "rsDnsProtProfileManualTriggerStatus": "manual_trigger"
 
@@ -45,8 +46,6 @@ REVERSE_ENUM_MAPS = {
     "rsDnsProtProfileAction": {"0": "report_only", "1": "block_&_report"},
     "rsDnsProtProfileManualTriggerStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfilePacketReportStatus": {"1": "enable", "2": "disable"},
-    "rsDnsProtProfilePacketTraceStatus": {"1": "enable", "2": "disable"},
-    "rsDnsProtProfileSubdomainsWLLearningState": {"0": "enable", "1": "disable"},
     "rsDnsProtProfileFootprintStrictness": {"0": "low", "1": "medium", "2": "high"},
     "rsDnsProtProfileDnsAStatus": {"1": "enable", "2": "disable"},
     "rsDnsProtProfileDnsMxStatus": {"1": "enable", "2": "disable"},

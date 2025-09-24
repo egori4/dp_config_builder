@@ -1,0 +1,72 @@
+---
+- name: Edit HTTPS Flood profiles
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - name: Edit HTTPS Flood profiles block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Edit HTTPS Flood profiles
+          edit_https_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item[0] }}"
+            name: "{{ item[1].name }}"
+            params: "{{ item[1].params }}"
+          loop: "{{ dp_ip | product(edit_https_profiles) | list }}"
+          loop_control:
+            label: "Device: {{ item[0] }} | Profile: {{ item[1].name }}"
+          register: https_edit_results
+
+        - name: Display HTTPS Flood profile edit results
+          vars:
+            formatted_output: |
+              Device: {{ item.item[0] }} | Profile: {{ item.item[1].name }}
+              {% if ansible_check_mode %}
+              PREVIEW MODE - Operations that would be performed
+              {% elif item.failed | default(false) %}
+              Error occurred:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.response | default({}) %}
+              HTTPS Flood Profile edited successfully:
+                Parameters applied:
+                {% for k, v in item.item[1].params.items() %}
+                  - {{ k }}: {{ v }}
+                {% endfor %}
+              {% else %}
+              No changes made.
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ https_edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item[0] }} | Profile: {{ item.item[1].name }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - https_edit_results is defined
+            - https_edit_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
