@@ -110,29 +110,65 @@ def run_module():
 
                     url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsHttpsFloodProfileTable/{profile_name}"
 
+
+                    # Try with all params first
+                    logger.info(f"Creating profile {profile_name}")
+                    logger.debug(f"POST URL: {url}")
+                    logger.debug(f"POST body: {api_params}")
                     try:
-                        logger.info(f"Creating profile {profile_name}")
-                        logger.debug(f"POST URL: {url}")
-                        logger.debug(f"POST body: {api_params}")
                         resp = cc._post(url, json={"rsHttpsFloodProfileName": profile_name, **api_params})
-                        if resp.status_code not in (200, 201):
-                            err = f"Error creating profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                        if resp.status_code in (200, 201):
+                            changes_made = True
+                            created_profiles.append({
+                                'profile_name': profile_name,
+                                'status': 'success',
+                                'params_applied': api_params,
+                                'user_friendly': map_api_values_to_user_friendly(api_params)
+                            })
+                            continue
+                        # If error, check for unsupported key in response
+                        resp_json = resp.json() if resp.content else {}
+                        error_message = resp_json.get('message', '')
+                        logger.debug(f"Error message is {error_message}")
+                        raise Exception(error_message or f"HTTP {resp.status_code} - {resp.text}")
+                    except Exception as e:
+                        err_msg = str(e)
+                        logger.debug(f"Exception message: {err_msg}")
+                        if 'rsHttpsFloodProfilePacketReporting' in err_msg:
+                            logger.warning(f"Key rsHttpsFloodProfilePacketReporting not supported, retrying without it for {profile_name}")
+                            api_params_wo_packet_report = dict(api_params)
+                            api_params_wo_packet_report.pop('rsHttpsFloodProfilePacketReporting', None)
+                            try:
+                                resp2 = cc._post(url, json={"rsHttpsFloodProfileName": profile_name, **api_params_wo_packet_report})
+                                if resp2.status_code in (200, 201):
+                                    changes_made = True
+                                    created_profiles.append({
+                                        'profile_name': profile_name,
+                                        'status': 'success',
+                                        'params_applied': api_params_wo_packet_report,
+                                        'user_friendly': map_api_values_to_user_friendly(api_params_wo_packet_report)
+                                    })
+                                    logger.info(f"Creating profile {profile_name}")
+                                    logger.debug(f"POST URL: {url}")
+                                    logger.debug(f"POST body: {api_params_wo_packet_report}")
+                                    logger.debug(f"Response: {resp2.json()}")
+                                    logger.info(f"Successfully created profile {profile_name} without packet_report")
+                                    continue
+                                else:
+                                    err = f"Error creating profile {profile_name} (retry without packet_report): HTTP {resp2.status_code} - {resp2.text}"
+                                    errors.append(err)
+                                    logger.error(err)
+                                    continue
+                            except Exception as e2:
+                                err = f"Exception for profile {profile_name} (retry without packet_report): {str(e2)}"
+                                errors.append(err)
+                                logger.error(err)
+                                continue
+                        else:
+                            err = f"Error creating profile {profile_name}: {err_msg}"
                             errors.append(err)
                             logger.error(err)
                             continue
-                    except Exception as e:
-                        err = f"Exception for profile {profile_name}: {str(e)}"
-                        errors.append(err)
-                        logger.error(err)
-                        continue
-
-                    changes_made = True
-                    created_profiles.append({
-                        'profile_name': profile_name,
-                        'status': 'success',
-                        'params_applied': api_params,
-                        'user_friendly': map_api_values_to_user_friendly(api_params)
-                    })
 
             result.update({
                 'changed': changes_made,

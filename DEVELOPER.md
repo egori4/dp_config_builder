@@ -283,7 +283,7 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
-8. **HTTP Modules** (`plugins/modules/`)
+8. **HTTPS Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -1014,7 +1014,7 @@ oos_profiles:
   - "OOS_Profile_5"
   - "OOS_Profile_6"
 ```
-###  Create HTTP Profile 
+###  Create HTTPS Profile 
 ```json
 POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
         {

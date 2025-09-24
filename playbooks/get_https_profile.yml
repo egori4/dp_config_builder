@@ -1,49 +1,48 @@
 ---
 - name: Fetch HTTPS Flood profiles from DefensePro
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/get_vars.yml   # Contains dp_ip list and filter_profile_names list
 
   tasks:
-    - block:
-        # Fetch HTTPS Flood profiles from devices
-        - name: Fetch HTTPS Flood profiles
-          get_https_profile:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-            filter_profile_names: "{{ filter_https_profile_names }}"
-          loop: "{{ dp_ip }}"
-          register: http_fetch_results
-          loop_control:
-            label: "Device: {{ item }}"
 
-        # Display fetched HTTPS Flood profiles (formatted)
-        - name: Display HTTPS Flood profiles (formatted)
-          vars:
-            formatted_output: |
-              {% for result in http_fetch_results.results %}
-              Device: {{ result.item }}
-              {% if result.response.formatted_profiles %}
-              HTTPS Flood Profiles Found ({{ result.response.summary.total_entries }} entries):
-              {% for profile in result.response.formatted_profiles %}
-                Profile Name: {{ profile.profile_name }}
-                --------------------------------------------------
-                {% for k, v in profile.items() if k != 'profile_name' %}
-                  {{ "%-35s %s" | format(k, v) }}
-                {% endfor %}
-                --------------------------------------------------
-              {% endfor %}
+    - name: Fetch HTTPS Flood profiles
+      get_https_profile:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_profile_names: "{{ filter_https_profile_names }}"
+      loop: "{{ dp_ip }}"
+      register: http_fetch_results
+      loop_control:
+        label: "Device: {{ item }}"
 
-              Summary:
-                - Total entries: {{ result.response.summary.total_entries }}
-                - Unique profiles: {{ result.response.summary.unique_profiles }}
-                - Profile names: {{ result.response.summary.profile_names | join(', ') }}
-                - Filter applied: {{ result.response.summary.filtered }}
-              {% else %}
-              No HTTPS Flood profiles found or error occurred.
-              {% endif %}
-              {% endfor %}
-          debug:
-            msg: "{{ formatted_output.split('\n') }}"
+    # Display fetched HTTPS Flood profiles (formatted)
+    - name: Display HTTPS Flood profiles (formatted)
+      vars:
+        formatted_output: |
+          {% for result in http_fetch_results.results %}
+          Device: {{ result.item }}
+          {% if result.response.formatted_profiles %}
+          HTTPS Flood Profiles Found ({{ result.response.summary.total_entries }} entries):
+          {% for profile in result.response.formatted_profiles %}
+            Profile Name: {{ profile.profile_name }}
+            --------------------------------------------------
+            {% for k, v in profile.items() if k != 'profile_name' %}
+              {{ "%-35s %s" | format(k, v) }}
+            {% endfor %}
+            --------------------------------------------------
+          {% endfor %}
+
+          Summary:
+            - Total entries: {{ result.response.summary.total_entries }}
+            - Unique profiles: {{ result.response.summary.unique_profiles }}
+            - Profile names: {{ result.response.summary.profile_names | join(', ') }}
+            - Filter applied: {{ result.response.summary.filtered }}
+          {% else %}
+          No HTTPS Flood profiles found or error occurred.
+          {% endif %}
+          {% endfor %}
+      ansible.builtin.debug:
+        msg: "{{ formatted_output.split('\n') }}"

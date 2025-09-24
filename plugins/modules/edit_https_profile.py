@@ -120,16 +120,17 @@ def run_module():
 
     logger = Logger(verbosity=provider.get('log_level', 'disabled'))
 
+    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
+                   log_level=provider.get('log_level', 'disabled'), logger=logger)
+
+    url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsHttpsFloodProfileTable/{profile_name}"
+    debug_info.update({"method": "PUT", "url": url, "body": params})
+
+    if module.check_mode:
+        module.exit_json(changed=True, msg="Check mode: profile would be edited", debug_info=debug_info)
+
+    # Try with all params first
     try:
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
-                       log_level=provider.get('log_level', 'disabled'), logger=logger)
-
-        url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsHttpsFloodProfileTable/{profile_name}"
-        debug_info.update({"method": "PUT", "url": url, "body": params})
-
-        if module.check_mode:
-            module.exit_json(changed=True, msg="Check mode: profile would be edited", debug_info=debug_info)
-
         resp = cc._put(url, json=params)
         debug_info["response_status"] = resp.status_code
 
@@ -140,22 +141,51 @@ def run_module():
 
         if resp.status_code in [200, 204]:
             result["changed"] = True
+            result["response"] = data
+            debug_info["response_json"] = data
         else:
-            module.fail_json(msg=f"Failed to edit profile: HTTP {resp.status_code}", debug_info=debug_info)
-
-        result["response"] = data
-        debug_info["response_json"] = data
+            error_message = data.get('message', '') if isinstance(data, dict) else ''
+            raise Exception(error_message or f"HTTP {resp.status_code} - {resp.text}")
 
     except Exception as e:
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+        err_msg = str(e)
+        logger.debug(f"Exception message: {err_msg}")
+        if 'rsHttpsFloodProfilePacketReporting' in err_msg:
+            logger.warning(f"Key rsHttpsFloodProfilePacketReporting not supported, retrying without it for {profile_name}")
+            logger.info(f"Retrying PUT without 'rsHttpsFloodProfilePacketReporting' for profile {profile_name}")
+            params_wo_packet_report = dict(params)
+            params_wo_packet_report.pop('rsHttpsFloodProfilePacketReporting', None)
+            try:
+              logger.debug(f"PUT {url} with body: {params_wo_packet_report}")
+              resp2 = cc._put(url, json=params_wo_packet_report)
+              debug_info["retry_without_packet_report"] = params_wo_packet_report
+              debug_info["retry_response_status"] = resp2.status_code
+
+              if resp2.headers.get("Content-Type") == "application/json":
+                  data2 = resp2.json()
+              else:
+                  data2 = {"raw": resp2.text}
+
+              if resp2.status_code in [200, 204]:
+                  logger.info(f"Profile {profile_name} edited successfully on retry without packet_report")
+                  result["changed"] = True
+                  result["response"] = data2
+                  debug_info["response_json"] = data2
+              else:
+                  logger.debug(f"Retry failed with status {resp2.status_code}: {resp2.text}")
+                  module.fail_json(msg=f"Failed to edit profile (retry without packet_report): HTTP {resp2.status_code}", debug_info=debug_info)
+            except Exception as e2:
+              logger.debug(f"Exception on retry: {str(e2)}")
+              module.fail_json(msg=f"Exception for profile {profile_name} (retry without packet_report): {str(e2)}", debug_info=debug_info, **result)
+        else:
+            logger.debug(f"Failed to edit profile {profile_name}: {err_msg}")
+            module.fail_json(msg=f"Failed to edit profile {profile_name}: {err_msg}", debug_info=debug_info, **result)
 
     result["debug_info"] = debug_info
     module.exit_json(**result)
 
-
 def main():
-    run_module()
-
+  run_module()
 
 if __name__ == "__main__":
-    main()
+  main()

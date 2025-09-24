@@ -256,8 +256,8 @@ oos_profiles:
         # act_threshold: numeric value
         # term_threshold: numeric value
 
-################################## HTTP Profile Edit Variables ###############################
-# Define HTTP profiles to edit
+################################## HTTPS Profile Edit Variables ###############################
+# Define HTTPS profiles to edit
 # Each profile requires name (mandatory) to identify which profile to edit
 # Only specify parameters you want to change - unspecified parameters remain unchanged
 
@@ -273,18 +273,18 @@ edit_https_profiles:
       full_session_decryption: "disable"                # enable, disable
       #challenge_method: "javascript"                   # redirect_302, javascript
 
-  # Example: Minimal update for another HTTP profile
+  # Example: Minimal update for another HTTPS profile
   # - name: "http_profile_25"
   #   params:
   #     action: report_only
   #     rate_limit: 20000
 
-# Notes for HTTP Profiles:
+# Notes for HTTPS Profiles:
 # SSL Decryption and Encryption should be enabled on the DP for challenge method to work
-# name: Mandatory – exact profile name to edit (use get_http_profile to verify)
+# name: Mandatory – exact profile name to edit (use get_https_profile to verify)
 # Only specify parameters you want to change – unspecified parameters remain unchanged
 #
-# Supported HTTP Profile Parameters:
+# Supported HTTPS Profile Parameters:
 #   action: report_only / block_and_report
 #   rate_limit: numeric value (Packets per Second per Source)
 #   selective_challenge: enable / disable

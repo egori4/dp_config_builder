@@ -941,11 +941,11 @@ oos_profiles:
 ```
 
 ### Get OOS Profiles
-
+```yaml
 # Get all OOS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_oos_profile.yml
-```yaml
+
 oos_profiles:
   - "oos_profile_1"
   - "oos_profile_2"                  # Show all profiles (default)
@@ -978,12 +978,12 @@ oos_profiles:
     Control flags: Use to enable/disable each stage independently.
 
 ### Create HTTPS Profiles ###
-
+```yaml
 # Define HTTPS profiles to create on each device
 # Configure HTTPS profiles in `vars/create_vars.yml`:
 # OPTIONAL: HTTPS profiles (only define if creating new ones)
 
-```yaml
+
 create_https_profiles:
   - name: "https_profile_1"
     params:
@@ -997,14 +997,14 @@ create_https_profiles:
       #challenge_method: "javascript"                   # javascript, redirect_302
 
 
-```
-  # Minimal example (only mandatory parameter)
+
+#Minimal example (only mandatory parameter)
  create_https_profiles:
   - name: "http_profile_2"
     params:
       action: "report_only"
     # All other parameters use defaults
-
+```
 ### Editing HTTPS Profiles (Partial Updates)
 ```yaml
 # Edit existing HTTPS profiles - ONLY specify what you want to change
@@ -1022,11 +1022,11 @@ edit_https_profiles:
 ```
 
 ### Get HTTPS Profiles
-
+```yaml
 # Get all HTTPS profiles from devices
 # No configuration needed - just run the playbook
 ansible-playbook playbooks/get_https_profile.yml
-```yaml
+
 filter_https_profile_names: ["http_profile_3"]
 
 ```

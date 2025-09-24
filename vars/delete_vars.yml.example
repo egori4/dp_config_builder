@@ -122,7 +122,7 @@ delete_dns_profiles:
 # - Deletion is permanent – ensure you have backups or exported configurations if needed
 
 
-###################### HTTP Profile Deletions ##########################
+###################### HTTPS Profile Deletions ##########################
 # Define BDOS profiles to delete on each device
 delete_https_profiles:
   - name: "https_profile_1"             # Must exactly match the profile name on the device

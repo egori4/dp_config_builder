@@ -1,13 +1,14 @@
 ---
 - name: Edit HTTPS Flood profiles
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/edit_vars.yml
 
   tasks:
-    - block:
+    - name: Edit HTTPS Flood profiles block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -44,7 +45,7 @@
               {% else %}
               No changes made.
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ https_edit_results.results }}"
           loop_control:

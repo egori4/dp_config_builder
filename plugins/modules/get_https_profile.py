@@ -14,13 +14,14 @@ from ansible.module_utils.radware_cc import RadwareCC
 # Map API fields → user-friendly
 REVERSE_FIELD_MAP = {
     "rsHttpsFloodProfileAction": "action",
+    "rsHttpsFloodProfileRateLimitStatus": "rate_limit_status",
     "rsHttpsFloodProfileRateLimit": "rate_limit",
     "rsHttpsFloodProfileSelectiveChallenge": "http_authentication_on_suspect_sources",
     "rsHttpsFloodProfileCollectiveChallenge": "http_authentication_on_all_sources",
-    "rsHttpsFloodProfileChallengeMethod": "challenge_method",
-    "rsHttpsFloodProfileRateLimitStatus": "rate_limit_status",
     "rsHttpsFloodProfileFullSessionDecryption": "full_session_decryption",
+    "rsHttpsFloodProfileChallengeMethod": "challenge_method",
     "rsHttpsFloodProfilePacketReporting": "packet_report"
+    
 }
 
 # Map numeric values → user-friendly
@@ -28,10 +29,11 @@ REVERSE_ENUM_MAPS = {
     "rsHttpsFloodProfileAction": {"0": "report_only", "1": "block_and_report"},
     "rsHttpsFloodProfileSelectiveChallenge": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileCollectiveChallenge": {"1": "enable", "2": "disable"},
-    "rsHttpsFloodProfileChallengeMethod": {"1": "redirect_302", "2": "javascript"},
     "rsHttpsFloodProfileRateLimitStatus": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfileFullSessionDecryption": {"1": "enable", "2": "disable"},
     "rsHttpsFloodProfilePacketReporting": {"1": "enable", "2": "disable"},
+    "rsHttpsFloodProfileChallengeMethod": {"1": "redirect_302", "2": "javascript"}
+
 }
 
 
