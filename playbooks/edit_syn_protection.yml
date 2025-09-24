@@ -1,0 +1,81 @@
+---
+- name: Edit SYN protections and profiles
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml
+
+  tasks:
+    - block:
+        # -----------------------------
+        # Lock the device
+        # -----------------------------
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        # -----------------------------
+        # Edit SYN protections and attach profiles
+        # -----------------------------
+        - name: Edit SYN protections and profiles
+          edit_syn_protection:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            edit_syn_protections: "{{ edit_syn_protections | default([]) }}"
+            edit_syn_profiles: "{{ edit_syn_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: syn_edit_results
+
+        # -----------------------------
+        # Display results in a user-friendly format
+        # -----------------------------
+        - name: Display SYN edit results (user-friendly)
+          vars:
+            syn_param_map:
+              rsIDSSYNAttackActivationThreshold: "activation_threshold"
+              rsIDSSYNAttackTerminationThreshold: "termination_threshold"
+              rsIDSSYNDestinationAppPortGroup: "app_port_group"
+              rsIDSSYNAttackPacketReport: "packet_report"
+              rsIDSSynProfilesName: "profile_name"
+              rsIDSSynProfileServiceName: "protection_name"
+
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.failed | default(false) %}
+              Error occurred:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.results | length > 0 %}
+              SYN Configurations Edited:
+              {% for r in item.results %}
+                {% set body = r.debug_info.body if r.debug_info.body is defined else {} %}
+                {% if body %}
+                - Protection/Profile:
+                  {% for k, v in body.items() %}
+                    * {{ syn_param_map[k] | default(k) }}: {{ v }}
+                  {% endfor %}
+                  Response: {{ r.response | default({}) }}
+                {% endif %}
+              {% endfor %}
+              {% else %}
+              No SYN protections/profiles were updated.
+              {% endif %}
+          debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ syn_edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+      always:
+        # -----------------------------
+        # Unlock the device
+        # -----------------------------
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
