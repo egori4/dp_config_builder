@@ -19,7 +19,7 @@
           edit_dns_profile:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            dns_profiles: "{{ dns_profiles | default([]) }}"
+            dns_profiles: "{{ edit_dns_profiles | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
