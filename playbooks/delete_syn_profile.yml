@@ -97,6 +97,15 @@
           loop: "{{ delete_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+            
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_policy_updates | default(false))
+          loop_control:
+            label: "Applying policies: {{ item }}"
 
       always:
         # Step 4: Unlock device(s)

@@ -294,6 +294,63 @@ edit_https_profiles:
 #   packet_report: enable / disable
 #   full_session_decryption: enable / disable
 
+################################## SYN Protections Variables ###############################
+# Define SYN protections to edit
+# Each protection requires index (MANDATORY) to identify which protection to edit
+# Index can be found either by checking on DefensePro UI Protections -> SYN Flood protections menu
+# or by running get_syn_profiles.yml playbook
+# Only specify parameters you want to change - unspecified parameters remain unchanged
+
+edit_syn_protections:
+  - index: 500030                          # Protection index to edit (MANDATORY - starts from 500001)
+    activation_threshold: 3500             # SYN attack activation threshold (optional - only if changing)
+    termination_threshold: 2500            # SYN attack termination threshold (optional - only if changing)
+    app_port_group: "http"                 # Application port group - lowercase (http, https, etc.)
+    packet_report: "enable"                # Packet reporting: enable, disable (optional - only if changing)
+    
+edit_syn_profiles:
+  - name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_1"
+
+# Add the protections under syn profile  
+  # Example: Edit protection index 500031, changing only specific parameters
+  # - index: 500031                        # Another protection to edit
+  #   activation_threshold: 4000           # Only change activation threshold
+  #   termination_threshold: 3000          # Only change termination threshold
+  #   app_port_group: "https"              # Update app port group
+  #   packet_report: "disable"             # Update packet report setting
+
+  # Example: Edit protection index 500032, minimal changes
+  # - index: 500032
+  #   activation_threshold: 2000           # Only change activation threshold
+  #   # All other parameters remain unchanged
+
+# Notes for SYN Protections:
+# - index: MANDATORY - identifies which protection to edit (get from DefensePro UI or get_syn_profiles.yml)
+#   SYN protection indexes typically start from 500001 and increment upward
+# - protection_name: Optional descriptive label for documentation
+# - Only specify parameters you want to change - unspecified parameters keep their current values
+#
+# ALL SUPPORTED SYN Protection PARAMETERS with user-friendly values:
+# - activation_threshold: "number" (Activation threshold, e.g., "2500")
+# - termination_threshold: "number" (Termination threshold, e.g., "1500")
+# - app_port_group: "http", "https", "dns", "smtp", "ftp", "imap" or custom port, "" for all ports (must be lowercase)
+# - packet_report: "enable", "disable" (Detailed packet reporting)
+########################## SYN Profiles ##########################
+edit_syn_profiles:
+  - name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_1"
+
+# Add the protections under syn profile
+
 ################################## Security Policies Variables ###############################
 # Define security policies to edit
 # Each policy requires policy_name (mandatory) to identify which policy to edit
@@ -348,29 +405,7 @@ edit_security_policies:
 # - geo_feed_profile: "profile_name" (Geo feed profile)
 # - out_of_state_profile: "profile_name" (Out of state profile)
 
-########################## SYN Protections to Edit ##########################
-# Each protection must include the 'index' on the device for editing
-########################## SYN Protections ##########################
-edit_syn_protections:
-  - index: 500030
-    activation_threshold: 3500
-    termination_threshold: 2500
-    app_port_group: "http"
-    packet_report: "enable"
-  - index: 500031
-    activation_threshold: 4000
-    termination_threshold: 3000
-    app_port_group: "https"
-    packet_report: "disable"
 
-########################## SYN Profiles ##########################
-edit_syn_profiles:
-  - name: "SYN_PROFILE_1"
-    protections:
-      - "SYN_PROT_1"
-  - name: "SYN_PROFILE_2"
-    protections:
-      - "SYN_PROT_1"
 
 
 

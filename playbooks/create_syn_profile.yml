@@ -19,8 +19,8 @@
           create_syn_configuration:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            syn_protections: "{{ syn_protections | default([]) }}"
-            syn_profiles: "{{ syn_profiles | default([]) }}"
+            syn_protections: "{{ create_syn_protections | default([]) }}"
+            syn_profiles: "{{ create_syn_profiles | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
@@ -100,6 +100,18 @@
           loop: "{{ syn_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+            
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - syn_create_results is defined
+            - syn_create_results.changed | default(false)
             
       always:
         - name: Unlock device(s)

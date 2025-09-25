@@ -70,10 +70,19 @@
           loop_control:
             label: "Device: {{ item.item }}"
 
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - syn_edit_results is defined
+            - syn_edit_results.changed | default(false)
+
       always:
-        # -----------------------------
-        # Unlock the device
-        # -----------------------------
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"

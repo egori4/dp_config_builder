@@ -1060,7 +1060,7 @@ delete_https_profiles:
 # Creating SYN Protections (ALL Supported Parameters)
 # OPTIONAL: Define new SYN protections (only if you want to create)
 ```yaml
-syn_protections:
+create_syn_protections:
   - name: "syn_protection"                     # MANDATORY: Protection name
     activation_threshold: 2500                 # OPTIONAL: Activation threshold 
     termination_threshold: 1500                # OPTIONAL: Termination threshold 
@@ -1078,6 +1078,15 @@ syn_protections:
     termination_threshold: 3000
     app_port_group: "https"
     index: 500031
+
+# Define SYN profiles and attach protections
+create_syn_profiles:
+  - name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_2"
 ```
 ### Editing SYN Protections (Partial Updates)
 # Edit existing protections - ONLY specify what you want to change

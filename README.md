@@ -165,7 +165,9 @@ dp_config_builder/
 | `create_https_profile.yml` | Create new HTTPS profile        | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-https-profile)  |
 | `edit_https_profile.yml`   | Modify existing HTTPS profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-https-profile)    |
 | `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
-| `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |### SYN Profile Management
+| `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
+
+### SYN Profile Management
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
 | `create_syn_profiles.yml`  | Create new SYN flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-syn-profile)    |
@@ -304,6 +306,7 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.8 | 2025-09-24 | Added SYN Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture

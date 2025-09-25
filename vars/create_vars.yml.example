@@ -254,3 +254,143 @@ create_dns_profiles:
 # Usage Scenarios:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
+
+################################## SYN Protections Variables ###############################
+# Define SYN protections to create
+# Each protection must include protection_name (MANDATORY) and required thresholds
+# Protection_index is automatically assigned by DefensePro when creating new protections
+# Only specify parameters relevant to your protection - leave out what is not needed
+
+create_syn_protections:
+  # Example: Create new SYN protection for HTTP
+  - name: "SYN_PROT_1"                       # Descriptive name (MANDATORY)
+    activation_threshold: "3500"             # SYN activation threshold (packets/sec) - string value
+    termination_threshold: "2500"            # SYN termination threshold (packets/sec) - string value
+    app_port_group: "http"                   # Application port group (http, https, smtp, dns, ftp, imap) or "" for all ports
+    packet_report: "enable"                  # Packet reporting: enable, disable (optional)
+
+# Define SYN profiles and attach protections
+create_syn_profiles:
+  - name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_2"
+
+
+# - The module `manage_syn_configuration` ensures idempotency.
+  # Example: Create new SYN protection for HTTPS
+  - name: "HTTPS SYN Protection"
+    activation_threshold: "4000"
+    termination_threshold: "3000"
+    app_port_group: "https"
+    packet_report: "disable"
+
+  # Example: Create minimal SYN protection with only mandatory parameters
+  # - name: "Basic SYN Prot"       # Only provide name + thresholds
+  #   activation_threshold: "2000"
+  #   termination_threshold: "1500"
+
+  # Add more protection entries as needed
+
+# Notes for SYN Protections:
+# - name: MANDATORY descriptive name for each protection
+# - DefensePro will auto-assign protection_index starting from 500030 (check using get_syn_protections.yml)
+# - Only specify parameters you want to configure — others will use DefensePro defaults
+# - ALL SUPPORTED SYN Protections PARAMETERS with user-friendly values:
+# - name: "string" (Unique descriptive name, mandatory)
+# - activation_threshold: "number" (packets/sec as string, e.g., "3000", "5000")
+# - termination_threshold: "number" (packets/sec as string, e.g., "2000", "4000")
+# - app_port_group: "http", "https", "smtp", "dns", "ftp", "imap" or "" for all ports (must be lowercase)
+# - packet_report: "enable", "disable" (Detailed packet reporting)
+### Notes for syn proile
+# - Each protection in syn_protections will be created first.
+# - Each profile in syn_profiles will attach the listed protections.
+
+################################## HTTPS Profile Create Variables ###############################
+# Define HTTPS profiles to create
+# All parameters use user-friendly values that are automatically mapped to API values
+create_https_profiles:
+  - name: "https_profile_1"
+    params:
+      action: "report_only"                             # report_only,block_and_report
+      rate_limit: "2000"                                # Packets per Second per Source
+      https_authentication_on_suspect_sources: "enable"  # enable, disable
+      https_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript" 
+      
+  # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work
+
+########################## Security Policy Configuration ##########################
+
+# Control what gets created during security policy orchestration
+security_policy_config:
+  create_network_classes: true     # Set false if network classes already exist
+  create_cl_profiles: true         # Set false if CL profiles already exist
+  create_out_of_state_profiles: true # Set false if OOS profiles already exist
+  create_bdos_profiles: true       # Set false if BDoS profiles already exist
+  create_dns_profiles: true        # Set false if DNS profiles already exist
+  create_https_profiles: true      # Set false if HTTPS profiles already exist
+
+  create_security_policies: true   # Set false to skip policy creation
+  apply_policies_after_creation: true  # Set false to skip automatic policy updates
+
+# Security policies with profile bindings
+security_policies:
+  - policy_name: "example_security_policy_1"
+    state: "enable"                          # enable, disable
+    action: "report_only"                    # block_and_report, report_only
+    priority: "700"
+    src_network: "any"                       # Network class (created above or existing)
+    dst_network: "egor_test_net"             # Network class or "any" 
+    direction: "oneway"                      # oneway, twoway 
+    packet_reporting_status: "enable"       # enable, disable
+    
+    # Profile bindings (all optional - reference created or existing profiles)
+    connection_limit_profile: "cl_prof_example"         # CL profile (created above or existing)
+    bdos_profile: "BDOS_Profile_50"                      # BDOS profile (created above or existing)
+    # syn_protection_profile: ""                         # SYN profile (if available) 
+    dns_flood_profile: "dns_profile_10"                 # DNS profile (created above or existing)
+    https_flood_profile: "https_profile_1"              # HTTPS profile (created above or existing)
+    # traffic_filters_profile: ""                        # Traffic filter profile (if available)
+    signature_protection_profile: "All-DoS-Shield"      # AppSec profile (if available)
+    # ert_attackers_feed_profile: ""                     # ERT profile (if available)
+    # geo_feed_profile: ""                               # Geo feed profile (if available)
+    # out_of_state_profile: ""                           # Out of state profile (if available)
+
+  # Example of a second policy using different profiles
+  # - policy_name: "example_security_policy_2"
+  #   src_network: "any"
+  #   dst_network: "web_servers"
+  #   direction: "twoway"
+  #   state: "enable"
+  #   action: "block_and_report"
+  #   priority: "200"
+  #   connection_limit_profile: "cl_prof_existing_only"
+
+# Parameter Descriptions:
+# - policy_name: Unique name for the security policy
+# - state: Whether policy is active (enable/disable)
+# - action: What to do when policy triggers (block_and_report/report_only)
+# - priority: Policy priority (1-1000, lower numbers = higher priority)
+# - src_network/dst_network: Source and destination network classes or "any"
+# - direction: Traffic direction to monitor (oneway/twoway/bidirectional)
+# - packet_reporting_status: Enable detailed packet reporting
+# - Profile bindings: Reference profiles created above or existing ones
+#   * connection_limit_profile: Connection limit protection profile
+#   * bdos_profile: Behavioral DoS flood protection profile  
+#   * dns_flood_profile: DNS flood protection profile
+#   * https_flood_profile: HTTPS flood protection profile
+#   * signature_protection_profile: Application security signatures
+#   * out_of_state_profile: Out-of-state connection handling
+#   * Other profile types available as needed
+
+# Usage Notes:
+# 1. Orchestrator creates profiles first, then policies with bindings
+# 2. Use security_policy_config to control which components are created
+# 3. Reference profile names from sections above or use existing profiles
+# 4. Empty profile fields ("") will not bind any profile of that type

@@ -159,27 +159,57 @@ delete_security_policies:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
 #   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
 
-  ###################### SYN Profile Deletions ##########################
+################################## SYN Profile Deletions ###############################
 
-# vars/delete_vars.yml
+# Define which SYN profiles to update by removing specific protections
+# Important: Removing a protection from a profile does NOT delete the protection itself
+#            — it just detaches it from that profile.
 
-# List of SYN profiles and the protections attached to remove
-# delete_vars.yml
-
-# SYN Profiles and attached protections to remove from profiles
 syn_profile_deletions:
-  - profile_name: "SYN_PROFILE_1"
+  - profile_name: "SYN_PROFILE_1"            # Profile to update
     protections:
-      - protection_name: "SYN_PROT_1"
-      #- protection_name: "SYN_PROT_2"
+      - protection_name: "SYN_PROT_1"        # Remove this protection from the profile
+      #- protection_name: "SYN_PROT_2"       # Example: Uncomment to remove additional protection(s)
+
   - profile_name: "SYN_PROFILE_2"
     protections:
-      - protection_name: "SYN_PROT_2"
+      - protection_name: "SYN_PROT_2"        # Remove protection from this profile
 
-# SYN Protections to delete entirely (must exist on the device)
+# Notes for SYN Profile Deletions:
+# - profile_name: REQUIRED — must match exactly the profile name on DefensePro
+# - protections: REQUIRED — list of protection(s) to detach from the profile
+# - Protection removal is by name, module will map to the correct index automatically
+# - If the last protection is removed, the profile itself is automatically deleted
+# - This section is OPTIONAL if you only want to delete protections entirely
+
+################################## SYN Protection Deletions ###############################
+
+# Delete SYN protections entirely (must not be attached to any profile)
+# Can be specified either by name (string) or index (integer)
+
 syn_protection_deletions:
   - protections_to_delete:
-      - "SYN_PROT_1"
-      - "SYN_PROT_2"
+      - "SYN_PROT_1"             # Delete by name (will be mapped to index)
+      - "SYN_PROT_2"             # Delete by name (will be mapped to index)
+      # - 500045                 # Example: delete by index directly
+      # - 500046                 # Example: another direct index delete
 
-# Optional: Add more profiles or protections as needed
+# Notes for SYN Protection Deletions:
+# 1. A protection cannot be deleted while it is still attached to a profile
+# 2. Names: Module will look up and resolve to the correct protection index
+# 3. Indexes: Can be used directly if known (faster, no lookup)
+# 4. Order matters: Profile deletions run before protection deletions
+
+################################## SYN Usage Patterns ###############################
+# Pattern 1: Remove protections from profiles only (keep protections for reuse)
+#   → Define syn_profile_deletions, skip syn_protection_deletions
+#
+# Pattern 2: Delete protections entirely (must not be in profiles)
+#   → Define syn_protection_deletions, skip syn_profile_deletions
+#
+# Pattern 3: Complete cleanup (remove protections from profiles + delete protections)
+#   → Define both sections; module will process profiles first, then protections
+#
+# Pattern 4: Mixed operations
+#   → Remove some protections from profiles, delete others entirely
+#   → Define both sections with different protection names

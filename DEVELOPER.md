@@ -996,6 +996,196 @@ oos_profiles:
   - "OOS_Profile_6"
 ```
 
+### SYN Protections & Profiles ###
+### Create SYN Protection
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
+
+{
+    "rsIDSSYNAttackName": "syn_prot_tcp_limit",
+    "rsIDSSYNAttackActivationThreshold": "3500",
+    "rsIDSSYNAttackTerminationThreshold": "2500",
+    "rsIDSSYNAttackPacketReport": "1",
+    "rsIDSSYNDestinationAppPortGroup": "http"
+}
+```
+### Create SYN Profile
+```json
+POST /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}
+
+{
+    "rsIDSSYNProfileName": "web_syn_profile",
+    "rsIDSSYNProfileAttackName": "syn_prot_tcp_limit"
+}
+```
+### Edit SYN Protections
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
+
+{
+    "rsIDSSYNAttackName": "syn_prot_tcp_limit",
+    "rsIDSSYNAttackActivationThreshold": "4000",
+    "rsIDSSYNAttackTerminationThreshold": "3000",
+    "rsIDSSYNAttackStableThresholdPeriod": "10",
+    "rsIDSSYNAttackPacketReport": "2",
+    "rsIDSSYNAttackSourceType": "3",
+    "rsIDSSYNAttackRisk": "1",
+    "rsIDSSYNVerificationType": "2",
+    "rsIDSSYNDestinationAppPortGroup": "https"
+}
+```
+
+## Usage:
+
+# Call edit_syn_configuration once per device, pass list of protections to edit
+# Each protection dict must include protection_index (mandatory), and any     parameters to change
+
+## All mappings handled internally
+# Index Parameter:
+# Optional: Defaults to 0 if not specified in variables
+# Valid Values: 0 (default) or next available starting from 500001+
+# API Behavior: Index becomes part of the URL path for creation and editing
+
+### Get SYN Profiles Response
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{protection_id}
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynProfilesTable/{profile_name}
+
+Response (mapped and combined):
+{
+    "msg": [
+        "Device: 10.105.192.32",
+        "Profiles and Protections:",
+        "Profile: SYN_PROFILE_1",
+        "Protections:",
+        "  - protection_name: SYN_PROT_1",
+        "    protection_id: 500030",
+        "    activation_threshold: 3500",
+        "    termination_threshold: 2500",
+        "    packet_report: enable",
+        "    app_port_group: http",
+            ]
+        }
+
+```
+
+## Usage:
+# Call get_syn_configuration once per device
+# Optional filtering: filter_syn_profile_names: ["profile1", "profile2"]
+# All API mappings handled internally (reverse of create/edit logic)
+# Returns nested structure: profiles → protections → subsettings
+# Delete SYN Profiles and Protections (delete_syn_configuration)
+# Purpose: Delete SYN protections and profiles with flexible options
+# Module: plugins/modules/delete_syn_configuration.py
+
+## API Endpoints:
+
+### Remove protection from profile:
+```yaml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}
+```
+
+### Delete protection entirely:
+```yaml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSSynAttackTable/{protection_id}
+```
+# Input Parameters:
+
+# OPTIONAL: Remove protections from profiles (profile auto-deleted when last protection removed)
+```yaml
+syn_profile_deletions:
+  - profile_name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+      - "SYN_PROT_2"
+  
+  - profile_name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_X"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+# The format supports both names and indexes:
+syn_protection_deletions:
+  - protections_to_delete:
+      - "SYN_PROT_1"    # Delete by name (module looks up index)
+      - "SYN_PROT_2"    # Delete by name
+```
+
+
+### Key Features:
+# Protection cannot be deleted if still associated with any profile
+# Both sections are optional – define based on your needs
+# Order: profile deletions processed first, then protection deletions
+# Format: Single list supporting both names (strings) and indexes (integers)
+# Smart processing: Module fetches current protections only when string names are used
+# Enhanced validation: Check mode validates both names and indexes against device state
+
+
+
+###  Create HTTPS Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+```
+##### Edit HTTPS Profile 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+```
+Usage:
+Call edit_oos_profile once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get HTTPS Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+
+Response:
+{
+    "rsHttpsFloodProfileTable": [
+        {
+            "rsHttpsFloodProfileName": "HTTPS_Demo20",
+            "rsHttpsFloodProfileAction": "0",
+            "rsHttpsFloodProfileRateLimit": "50000",
+            "rsHttpsFloodProfileSelectiveChallenge": "2",
+            "rsHttpsFloodProfileCollectiveChallenge": "2",
+            "rsHttpsFloodProfileChallengeMethod": "2",
+            "rsHttpsFloodProfileRateLimitStatus": "1",
+            "rsHttpsFloodProfilePacketReporting": "1",
+            "rsHttpsFloodProfileFullSessionDecryption": "1"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_https_profile once per device
+#Optional filtering: filter_https_profile_names: ["https_Profile_5"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete HTTPS Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
+
+delete_https_profiles:
+  - name: "http_profile_1"            
+  - name: "http_profile_2"
+```
+
 ### Edit Security Policy
 ```python
 # Request - Partial update (only specified parameters are changed)
