@@ -94,6 +94,17 @@ ansible-playbook playbooks/edit_oos_profile.yml
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
 
+# See what HTTPS profiles exist
+ansible-playbook playbooks/get_https_profile.yml
+
+# Create new HTTPS profiles
+ansible-playbook playbooks/create_https_profile.yml
+
+# Edit existing HTTPS profiles
+ansible-playbook playbooks/edit_https_profile.yml
+
+# Delete HTTPS profiles
+ansible-playbook playbooks/delete_https_profile.yml
 # Get all DNS profiles from devices
 ansible-playbook playbooks/get_dns_profile.yml
 
@@ -389,6 +400,9 @@ ansible-playbook playbooks/delete_oos_profile.yml
 ### Workflow 12 : Create New  SSL Object
 
 # 1.Define your SSL Object
+### Workflow 12 : Create New HTTPS Profiles
+
+# 1.Define your HTTPS profiles
 ```bash
 nano vars/create_vars.yml
 ```
@@ -415,6 +429,21 @@ ansible-playbook playbooks/delete_ssl_object.yml
 nano vars/edit_vars.yml
 ansible-playbook --check playbooks/edit_ssl_object.yml
 ansible-playbook playbooks/edit_ssl_object.yml
+ansible-playbook --check playbooks/create_https_profile.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_https_profile.yml
+```
+### Workflow 12b : Get HTTPS Profile
+```bash
+ansible-playbook playbooks/get_https_profile.yml
+```
+### Workflow 12c : Delete HTTPS Profile
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_https_profile.yml
+ansible-playbook playbooks/delete_https_profile.yml
 ```
 
 ### Workflow 13: Create Security Policies with Profile Bindings
@@ -802,13 +831,14 @@ bdos_profiles:
 # Define DNS profiles to create on each device
 # Configure DNS profiles in `vars/create_vars.yml`:
 # OPTIONAL: DNS profiles (only define if creating new ones)
-dns_profiles:
+create_dns_profiles:
   - name: "dns_profile_1"               # MANDATORY: Profile name
     state: "enable"                     # OPTIONAL: enable, disable (default: enable)
     params:
       action: "block_&_report"        # OPTIONAL: report_only, block_&_report (default: block_and_report)
       expected_qps: 1000                # OPTIONAL: 0–400000000 (default: 0)
       max_allow_qps: 5000               # OPTIONAL: 0–400000000 (default: 0)
+      sig_rate_lim_target: 10                 # Range: 0-100 in %
 
       # Manual trigger configuration
       manual_trigger: "disable"         # OPTIONAL: enable, disable (default: disable)
@@ -818,11 +848,11 @@ dns_profiles:
       manual_trigger_act_period: 30     # OPTIONAL: seconds
       manual_trigger_term_period: 15
       manual_trigger_escalate_period: 60
+    
       # Logging / debug
       packet_report: "enable"           # OPTIONAL: enable, disable (default: disable)
 
       # Advanced detection
-      query_name_sensitivity: 2         # OPTIONAL: integer level (device-specific)
       learning_suppression_threshold: 10 # OPTIONAL: 0–100 (default: 0)
       footprint_strictness: "medium"    # OPTIONAL: low, medium, high (default: low)
 
@@ -857,17 +887,18 @@ dns_profiles:
 ```yml
 
 # Edit existing DNS profiles - ONLY specify what you want to change
-dns_profiles:
+# Note - If you are editing QPS and quota same time then you have to run the playbook twice. 
+edit_dns_profiles:
   - name: "dns_profile_10"                      # MANDATORY: must specify which profile to edit
     params:
       action: "report_only"                     # OPTIONAL: report_only, block_&_report
       expected_qps: 2000                        # OPTIONAL: Update expected QPS
       max_allow_qps: 8000                       # OPTIONAL: Update max QPS
+      sig_rate_lim_target: 10                   # Range: 0-100 in %
       a_status: "disable"                       # OPTIONAL: Disable A record protection
       mx_status: "enable"                       # OPTIONAL: Enable MX record protection
       footprint_strictness: "high"              # OPTIONAL: Update detection sensitivity
       packet_report: "disable"                  # OPTIONAL: Change logging/reporting
-      packet_trace: "enable"                    # OPTIONAL: Enable packet trace
       a_in_quota: 40                            # OPTIONAL: % share for A record (0–100)
       mx_in_quota: 30                           # OPTIONAL: % share for MX record (0–100)
       cname_in_quota: 20                        # OPTIONAL: % share for CNAME record (0–100)
@@ -888,7 +919,7 @@ filter_dns_profile_names: ["dns_profile_1"]
 ### Delete DNS Profiles
 ```yml
 # Delete DNS profiles by name
-dns_profiles:
+delete_dns_profiles:
   - "dns_profile_1"
   - "dns_profile_2"
 ```
@@ -948,8 +979,9 @@ oos_profiles:
 ### Get OOS Profiles
 # Get all OOS profiles from devices
 # No configuration needed - just run the playbook
-ansible-playbook playbooks/get_oos_profile.yml
 ```yaml
+ansible-playbook playbooks/get_oos_profile.yml
+
 oos_profiles:
   - "oos_profile_1"
   - "oos_profile_2"                  # Show all profiles (default)
@@ -1091,6 +1123,67 @@ Notes for SSL Objects
 # Ensure IP address and port are correct; invalid values will result in API errors.
 
 
+### Create HTTPS Profiles ###
+```yaml
+# Define HTTPS profiles to create on each device
+# Configure HTTPS profiles in `vars/create_vars.yml`:
+# OPTIONAL: HTTPS profiles (only define if creating new ones)
+
+
+create_https_profiles:
+  - name: "https_profile_1"
+    params:
+      action: "report_only"   # report_only,block_and_report
+      rate_limit: "2000"      # Packets per Second per Source
+      http_authentication_on_suspect_sources: "enable"  # enable, disable
+      http_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript"                   # javascript, redirect_302
+
+
+
+#Minimal example (only mandatory parameter)
+ create_https_profiles:
+  - name: "http_profile_2"
+    params:
+      action: "report_only"
+    # All other parameters use defaults
+```
+### Editing HTTPS Profiles (Partial Updates)
+```yaml
+# Edit existing HTTPS profiles - ONLY specify what you want to change
+edit_https_profiles:
+  - name: "http_profile_1"
+    params:
+      action: "report_only"                             # report_only,block_and_report
+      rate_limit: "2000"                                # Packets per Second per Source
+      http_authentication_on_suspect_sources: "enable"  # enable, disable
+      http_authentication_on_all_sources: "enable"      # enable, disable
+      rate_limit_status: "enable"                       # enable, disable
+      packet_report: "disable"                          # enable, disable
+      full_session_decryption: "disable"                # enable, disable
+      #challenge_method: "javascript"                   # javascript, redirect_302, SSL Decryption and Encryption should be enabled on the DP for this to work
+```
+
+### Get HTTPS Profiles
+```yaml
+# Get all HTTPS profiles from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_https_profile.yml
+
+filter_https_profile_names: ["http_profile_3"]
+
+```
+
+### Delete HTTP Profiles
+
+```yaml
+delete_https_profiles:
+  - "https_profile_1"
+  - "https_profile_2"                  # Show all profiles (default)
+```
 
 ### Security Policy Configuration
 

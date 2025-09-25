@@ -62,7 +62,7 @@ def run_module():
             if prof_name not in profiles:
                 profiles[prof_name] = {'profile_name': prof_name, 'protections': []}
             # Find protection details
-            prot = prot_by_id.get(prot_id, {})
+            prot_by_id.get(prot_id, {})
             # Map/translate protection fields (back to dict for easier use)
             prot_raw = prot_by_id.get(prot_id, {})
             prot_settings = {

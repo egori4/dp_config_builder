@@ -1,9 +1,10 @@
 # plugins/modules/create_dns_profile.py
 """
-Unified Ansible module to create DNS Protection profiles on DefensePro devices.
+Unified Ansible module to create DNS Protection profiles on DefensePro devices
+with two-phase execution.
 
-Supports check mode, logging, error handling, and detailed debug info.
-Provides user-friendly summary mapping API fields to human-readable names.
+Phase 1: POST → create profile with core fields, status, and advanced parameters
+Phase 2: PUT → apply quota fields (only if Phase 1 succeeded)
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -75,6 +76,43 @@ def map_api_values_to_user_friendly(api_params):
             user_friendly[name] = v
     return user_friendly
 
+def map_dns_profile_parameters(params):
+    """Map user-friendly DNS parameters to DefensePro API values."""
+    ENUM_MAPS = {
+        "action": {"report_only": "0", "block_&_report": "1"},
+        "manual_trigger": {"enable": "1", "disable": "2"},
+        "packet_report": {"enable": "1", "disable": "2"},
+        "subdomains_allow_list": {"enable": "1", "disable": "2"},
+        "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
+        "a_status": {"enable": "1", "disable": "2"},
+        "mx_status": {"enable": "1", "disable": "2"},
+        "ptr_status": {"enable": "1", "disable": "2"},
+        "aaaa_status": {"enable": "1", "disable": "2"},
+        "text_status": {"enable": "1", "disable": "2"},
+        "soa_status": {"enable": "1", "disable": "2"},
+        "naptr_status": {"enable": "1", "disable": "2"},
+        "srv_status": {"enable": "1", "disable": "2"},
+        "other_status": {"enable": "1", "disable": "2"}
+    }
+
+    FIELD_MAP = {v: k for k, v in REVERSE_FIELD_MAP.items()}
+
+    mapped = {}
+    for key, value in params.items():
+        if key not in FIELD_MAP:
+            continue
+        mapped_key = FIELD_MAP[key]
+
+        if key in ENUM_MAPS:
+            mapped_value = ENUM_MAPS[key].get(str(value).lower())
+            if mapped_value is None:
+                raise ValueError(f"Invalid value '{value}' for {key}. Allowed: {list(ENUM_MAPS[key].keys())}")
+            mapped[mapped_key] = mapped_value
+        else:
+            mapped[mapped_key] = str(value)
+
+    return mapped
+
 def run_module():
     module_args = dict(
         provider=dict(type='dict', required=True),
@@ -95,7 +133,6 @@ def run_module():
     logger = Logger(verbosity=log_level)
 
     debug_info['input'] = {'dp_ip': dp_ip, 'profiles_count': len(dns_profiles)}
-    logger.debug(f"Module input parameters: {module.params}")
 
     try:
         from ansible.module_utils.radware_cc import RadwareCC
@@ -121,50 +158,80 @@ def run_module():
             })
 
         else:
-            if dns_profiles:
-                logger.info(f"Creating {len(dns_profiles)} DNS profiles on {dp_ip}")
+            for profile in dns_profiles:
+                profile_name = profile.get('name')
+                if not profile_name:
+                    err = "Profile name is required (use 'name' field)"
+                    errors.append(err)
+                    logger.error(err)
+                    continue
 
-                for profile in dns_profiles:
-                    profile_name = profile.get('name')
-                    if not profile_name:
-                        err = "Profile name is required (use 'name' field)"
+                try:
+                    api_params = map_dns_profile_parameters(profile.get('params', {}))
+                except ValueError as e:
+                    err = f"Validation failed for profile {profile_name}: {str(e)}"
+                    errors.append(err)
+                    logger.error(err)
+                    continue
+
+                # Split Phase 1 vs Phase 2
+                phase2_keys = [
+                    "rsDnsProtProfileDnsAQuota", "rsDnsProtProfileDnsMxQuota", "rsDnsProtProfileDnsPtrQuota",
+                    "rsDnsProtProfileDnsAaaaQuota", "rsDnsProtProfileDnsTextQuota", "rsDnsProtProfileDnsSoaQuota",
+                    "rsDnsProtProfileDnsNaptrQuota", "rsDnsProtProfileDnsSrvQuota", "rsDnsProtProfileDnsOtherQuota"
+                ]
+                phase1_params = {k: v for k, v in api_params.items() if k not in phase2_keys}
+                phase2_params = {k: v for k, v in api_params.items() if k in phase2_keys}
+
+                url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
+
+                # Phase 1: POST
+                try:
+                    logger.info(f"[Phase 1] Creating profile {profile_name}")
+                    logger.debug(f"POST URL: {url}")
+                    logger.debug(f"POST body: {phase1_params}")
+                    resp = cc._post(url, json={"rsDnsProtProfileName": profile_name, **phase1_params})
+                    if resp.status_code not in (200, 201):
+                        err = f"Phase 1 error for profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
                         errors.append(err)
                         logger.error(err)
                         continue
+                    logger.info(f"[Phase 1] Success for profile {profile_name}")
+                except Exception as e:
+                    err = f"Phase 1 exception for profile {profile_name}: {str(e)}"
+                    errors.append(err)
+                    logger.error(err)
+                    continue
 
-                    try:
-                        api_params = map_dns_profile_parameters(profile.get('params', {}))
-                    except ValueError as e:
-                        err = f"Validation failed for profile {profile_name}: {str(e)}"
-                        errors.append(err)
-                        logger.error(err)
-                        continue
-
-                    url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsDnsProtProfileTable/{profile_name}"
-
-                    try:
-                        logger.info(f"Creating profile {profile_name}")
-                        logger.debug(f"POST URL: {url}")
-                        logger.debug(f"POST body: {api_params}")
-                        resp = cc._post(url, json={"rsDnsProtProfileName": profile_name, **api_params})
+                # Phase 2: PUT (quotas)
+                try:
+                    if phase2_params:
+                        logger.info(f"[Phase 2] Applying quotas for profile {profile_name}")
+                        logger.debug(f"PUT URL: {url}")
+                        logger.debug(f"PUT body: {phase2_params}")
+                        resp = cc._put(url, json=phase2_params)
                         if resp.status_code not in (200, 201):
-                            err = f"Error creating profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
+                            err = f"Phase 2 error for profile {profile_name}: HTTP {resp.status_code} - {resp.text}"
                             errors.append(err)
                             logger.error(err)
-                            continue
-                    except Exception as e:
-                        err = f"Exception for profile {profile_name}: {str(e)}"
-                        errors.append(err)
-                        logger.error(err)
-                        continue
+                        else:
+                            logger.info(f"[Phase 2] Quotas applied successfully for {profile_name}")
+                except Exception as e:
+                    err = f"Phase 2 exception for profile {profile_name}: {str(e)}"
+                    errors.append(err)
+                    logger.error(err)
 
-                    changes_made = True
-                    created_profiles.append({
-                        'profile_name': profile_name,
-                        'status': 'success',
-                        'params_applied': api_params,
-                        'user_friendly': map_api_values_to_user_friendly(api_params)
-                    })
+                changes_made = True
+                created_profiles.append({
+                    'profile_name': profile_name,
+                    'status': 'success',
+                    'params_applied_phase1': phase1_params,
+                    'params_applied_phase2': phase2_params,
+                    'user_friendly': {
+                        'phase1': map_api_values_to_user_friendly(phase1_params),
+                        'phase2': map_api_values_to_user_friendly(phase2_params)
+                    }
+                })
 
             result.update({
                 'changed': changes_made,
@@ -196,80 +263,6 @@ def run_module():
 
     result['debug_info'] = debug_info
     module.exit_json(**result)
-
-
-def map_dns_profile_parameters(params):
-    """Map user-friendly DNS parameters to DefensePro API values."""
-    ENUM_MAPS = {
-        "action": {"report_only": "0", "block_&_report": "1"},
-        "manual_trigger": {"enable": "1", "disable": "2"},
-        "packet_report": {"enable": "1", "disable": "2"},
-        "packet_trace": {"enable": "1", "disable": "2"},
-        "subdomains_allow_list": {"enable": "1", "disable": "2"},
-        "footprint_strictness": {"low": "0", "medium": "1", "high": "2"},
-        "a_status": {"enable": "1", "disable": "2"},
-        "mx_status": {"enable": "1", "disable": "2"},
-        "ptr_status": {"enable": "1", "disable": "2"},
-        "aaaa_status": {"enable": "1", "disable": "2"},
-        "text_status": {"enable": "1", "disable": "2"},
-        "soa_status": {"enable": "1", "disable": "2"},
-        "naptr_status": {"enable": "1", "disable": "2"},
-        "srv_status": {"enable": "1", "disable": "2"},
-        "other_status": {"enable": "1", "disable": "2"}
-    }
-
-    FIELD_MAP = {
-        "expected_qps": "rsDnsProtProfileExpectedQps",
-        "max_allow_qps": "rsDnsProtProfileMaxAllowQps",
-        "a_quota": "rsDnsProtProfileDnsAQuota",
-        "mx_quota": "rsDnsProtProfileDnsMxQuota",
-        "ptr_quota": "rsDnsProtProfileDnsPtrQuota",
-        "aaaa_quota": "rsDnsProtProfileDnsAaaaQuota",
-        "text_quota": "rsDnsProtProfileDnsTextQuota",
-        "soa_quota": "rsDnsProtProfileDnsSoaQuota",
-        "naptr_quota": "rsDnsProtProfileDnsNaptrQuota",
-        "srv_quota": "rsDnsProtProfileDnsSrvQuota",
-        "other_quota": "rsDnsProtProfileDnsOtherQuota",
-        "a_status": "rsDnsProtProfileDnsAStatus",
-        "mx_status": "rsDnsProtProfileDnsMxStatus",
-        "ptr_status": "rsDnsProtProfileDnsPtrStatus",
-        "aaaa_status": "rsDnsProtProfileDnsAaaaStatus",
-        "text_status": "rsDnsProtProfileDnsTextStatus",
-        "soa_status": "rsDnsProtProfileDnsSoaStatus",
-        "naptr_status": "rsDnsProtProfileDnsNaptrStatus",
-        "srv_status": "rsDnsProtProfileDnsSrvStatus",
-        "other_status": "rsDnsProtProfileDnsOtherStatus",
-        "action": "rsDnsProtProfileAction",
-        "manual_trigger": "rsDnsProtProfileManualTriggerStatus",
-        "manual_trigger_act_thresh": "rsDnsProtProfileManualTriggerActThresh",
-        "manual_trigger_term_thresh": "rsDnsProtProfileManualTriggerTermThresh",
-        "manual_trigger_max_qps_target": "rsDnsProtProfileManualTriggerMaxQpsTarget",
-        "manual_trigger_act_period": "rsDnsProtProfileManualTriggerActPeriod",
-        "manual_trigger_term_period": "rsDnsProtProfileManualTriggerTermPeriod",
-        "manual_trigger_escalate_period": "rsDnsProtProfileManualTriggerEscalatePeriod",
-        "packet_report": "rsDnsProtProfilePacketReportStatus",
-        "sig_rate_lim_target": "rsDnsProtProfileSigRateLimTarget",
-        "query_name_sensitivity": "rsDnsProtProfileQueryNameMonitoringSensitivity",
-        "subdomains_allow_list": "rsDnsProtProfileSubdomainsWLLearningState",
-        "learning_suppression_threshold": "rsDnsProtProfileLearningSuppressionThreshold",
-        "footprint_strictness": "rsDnsProtProfileFootprintStrictness"
-    }
-
-    mapped = {}
-    for key, value in params.items():
-        if key not in FIELD_MAP:
-            continue
-        mapped_key = FIELD_MAP[key]
-
-        if key in ENUM_MAPS:
-            mapped_value = ENUM_MAPS[key].get(str(value).lower())
-            if mapped_value is None:
-                raise ValueError(f"Invalid value '{value}' for {key}. Allowed: {list(ENUM_MAPS[key].keys())}")
-            mapped[mapped_key] = mapped_value
-        else:
-            mapped[mapped_key] = str(value)
-
-    return mapped
 
 def main():
     run_module()

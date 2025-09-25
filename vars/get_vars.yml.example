@@ -1,5 +1,5 @@
 ---
-# get_vars.yml.example - Template for getting variables
+# get_vars.yml.example - Template for getting network class variables
 # Copy this file to get_vars.yml and customize with your environment details
 
 # Target DefensePro devices - add or remove IP addresses as needed
@@ -72,6 +72,13 @@ filter_ssl_object_names: ["server1", "server2"]
 
 # filter_ssl_object_names: []  # Fetch all profiles
 # - name: server3   # uncomment/add more as needed
+###################### Get HTTPS Flood Profile ##########################
+# Filter by specific HTTP profile names, or leave empty list for all profiles
+filter_https_profile_names: ["https_profile_1","https_profile_2"]
+# Examples:
+# filter_https_profile_names: ["https_profile_1"]  # Show only one profile
+# filter_https_profile_names: ["https_profile_1", "https_profile_2"]  # Show multiple profiles
+# filter_https_profile_names: []  # Show all profiles (default)
 
 ########################## Security Policy Filter variables ##########################
 # Filter by specific security policy names, or leave empty list for all policies
