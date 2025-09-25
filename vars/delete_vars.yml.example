@@ -123,7 +123,7 @@ delete_dns_profiles:
 
 
 ###################### HTTPS Profile Deletions ##########################
-# Define BDOS profiles to delete on each device
+# Define HTTPS profiles to delete on each device
 delete_https_profiles:
   - name: "https_profile_1"             # Must exactly match the profile name on the device
   - name: "https_profile_2"

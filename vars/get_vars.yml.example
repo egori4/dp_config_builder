@@ -65,7 +65,7 @@ filter_dns_profile_names: ["dns_profile_10"]
 # - To filter for specific profiles, list them as: - name: "dns_profile_1"
 
 ###################### Get HTTPS Flood Profile ##########################
-# Filter by specific HTTP profile names, or leave empty list for all profiles
+# Filter by specific HTTPS profile names, or leave empty list for all profiles
 filter_https_profile_names: ["https_profile_1","https_profile_2"]
 # Examples:
 # filter_https_profile_names: ["https_profile_1"]  # Show only one profile

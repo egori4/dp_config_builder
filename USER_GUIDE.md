@@ -924,8 +924,8 @@ oos_profiles:
     # All other parameters use defaults
 
 ### Editing OOS Profiles (Partial Updates)
-```yaml
 # Edit existing OOS profiles - ONLY specify what you want to change
+```yaml
 oos_profiles:
   - name: "oos_profile_1"     # MANDATORY: must specify which profile to edit
     params:
@@ -941,9 +941,9 @@ oos_profiles:
 ```
 
 ### Get OOS Profiles
-```yaml
 # Get all OOS profiles from devices
 # No configuration needed - just run the playbook
+```yaml
 ansible-playbook playbooks/get_oos_profile.yml
 
 oos_profiles:
@@ -978,12 +978,10 @@ oos_profiles:
     Control flags: Use to enable/disable each stage independently.
 
 ### Create HTTPS Profiles ###
-```yaml
 # Define HTTPS profiles to create on each device
 # Configure HTTPS profiles in `vars/create_vars.yml`:
 # OPTIONAL: HTTPS profiles (only define if creating new ones)
-
-
+```yaml
 create_https_profiles:
   - name: "https_profile_1"
     params:
@@ -1006,10 +1004,10 @@ create_https_profiles:
     # All other parameters use defaults
 ```
 ### Editing HTTPS Profiles (Partial Updates)
-```yaml
 # Edit existing HTTPS profiles - ONLY specify what you want to change
+```yaml
 edit_https_profiles:
-  - name: "http_profile_1"
+  - name: "https_profile_1"
     params:
       action: "report_only"                             # report_only,block_and_report
       rate_limit: "2000"                                # Packets per Second per Source
@@ -1022,11 +1020,10 @@ edit_https_profiles:
 ```
 
 ### Get HTTPS Profiles
-```yaml
 # Get all HTTPS profiles from devices
 # No configuration needed - just run the playbook
-ansible-playbook playbooks/get_https_profile.yml
-
+# ansible-playbook playbooks/get_https_profile.yml
+```yaml
 filter_https_profile_names: ["http_profile_3"]
 
 ```

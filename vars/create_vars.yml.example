@@ -255,8 +255,8 @@ create_dns_profiles:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
 
-################################## HTTP Profile Create Variables ###############################
-# Define HTTP profiles to create
+################################## HTTPS Profile Create Variables ###############################
+# Define HTTPS profiles to create
 # All parameters use user-friendly values that are automatically mapped to API values
 create_https_profiles:
   - name: "https_profile_1"
