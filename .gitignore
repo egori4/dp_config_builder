@@ -12,3 +12,5 @@ playbooks/log
 tmp/
 *__pycache__/
 .vscode/
+.ansible/
+merge_beta_to_all.sh

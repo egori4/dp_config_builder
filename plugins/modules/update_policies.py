@@ -77,7 +77,7 @@ def run_module():
                     # Try to parse response for additional info
                     try:
                         response_data = resp.json() if hasattr(resp, 'json') else {}
-                    except:
+                    except Exception:
                         response_data = {"response_text": str(resp.text) if hasattr(resp, 'text') else "Success"}
                     
                     # Determine success status
