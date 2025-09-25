@@ -145,10 +145,10 @@ ORCHESTRATION LAYER
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 SYN Protection Profile Modules (v0.1.9+)
-│   │   │   ├── create_syn_profile.py      # Create SYN Flood profiles
-│   │   │   ├── edit_syn_protection.py     # Modify existing SYN Flood profiles
-│   │   │   ├── delete_syn_profile.py      # Remove SYN Flood profiles
-│   │   │   └── get_syn_profile.py         # Query SYN Flood profiles
+│   │   │   ├── create_syn_configuration.py      # Create SYN Flood profiles
+│   │   │   ├── edit_syn_configuration.py     # Modify existing SYN Flood profiles
+│   │   │   ├── delete_syn_configuration.py      # Remove SYN Flood profiles
+│   │   │   └── get_syn_configuration.py         # Query SYN Flood profiles
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
 │   │   │   ├── create_security_policy.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
@@ -283,7 +283,7 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
-8. **SYN Protection Profile Modules** (`plugins/modules/`) - **Architecture v0.1.7+**
+8. **SYN Protection Profile Modules** (`plugins/modules/`) - **Architecture v0.1.8+**
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -292,7 +292,7 @@ ORCHESTRATION LAYER
      - Check mode with preview functionality showing exact operations
      - Formatted output with success/failure indicators
      - List-based filtering support for get operations
-   - **Modules**: `create_syn_profile.py`, `edit_syn_protection.py`, `delete_syn_profile.py`, `get_syn_profile.py`
+   - **Modules**: `create_syn_configuration.py`, `edit_syn_configuration.py`, `delete_syn_configuration.py`, `get_syn_configuration.py`
 
 9. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
@@ -1008,7 +1008,7 @@ Response:
 #API mappings handled internally
 
 ### Delete OOS Profile ###
-```yml
+```yaml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}
 
 oos_profiles:
@@ -1017,7 +1017,7 @@ oos_profiles:
 ```
 ### SYN Protections & Profiles ###
 ### Create SYN Protection
-```yml
+```json
 POST /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
 
 {
@@ -1029,7 +1029,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
 }
 ```
 ### Create SYN Profile
-```yml
+```json
 POST /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}
 
 {
@@ -1038,7 +1038,7 @@ POST /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}
 }
 ```
 ### Edit SYN Protections
-```yml
+```json
 PUT /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
 
 {
@@ -1100,18 +1100,18 @@ Response (mapped and combined):
 ## API Endpoints:
 
 ### Remove protection from profile:
-```bash
+```yaml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}
 ```
 
 ### Delete protection entirely:
-```bash
+```yaml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSSynAttackTable/{protection_id}
 ```
 # Input Parameters:
 
 # OPTIONAL: Remove protections from profiles (profile auto-deleted when last protection removed)
-```yml
+```yaml
 syn_profile_deletions:
   - profile_name: "SYN_PROFILE_1"
     protections:
