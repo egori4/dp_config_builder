@@ -17,7 +17,7 @@
 
         # Step 2: Delete SYN profiles and protections
         - name: Delete SYN Profiles and Protections
-          delete_syn_profile:
+          delete_syn_configuration:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
             syn_profile_deletions: "{{ syn_profile_deletions | default([]) }}"
@@ -92,7 +92,7 @@
               {% endif %}
 
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ delete_results.results }}"
           loop_control:

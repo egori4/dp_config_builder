@@ -16,7 +16,7 @@
           when: not (skip_device_lock | default(false))
 
         - name: Configure SYN protections and profiles
-          create_syn_profile:
+          create_syn_configuration:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
             syn_protections: "{{ syn_protections | default([]) }}"
@@ -95,7 +95,7 @@
               No SYN protections/profiles were created.
               {% endif %}
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ syn_create_results.results }}"
           loop_control:

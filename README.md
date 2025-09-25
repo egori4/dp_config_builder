@@ -277,6 +277,18 @@ ansible-playbook playbooks/edit_oos_profile.yml
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
 
+# SYN Profiles Example
+ansible-playbook playbooks/create_syn_profiles.yml
+
+# Edit SYN Protections (uses edit_syn_configuration module)
+ansible-playbook playbooks/edit_syn_protections.yml
+
+# Get SYN Profiles (uses get_syn_configuration module)
+ansible-playbook playbooks/get_syn_profiles.yml
+
+# Delete SYN Profiles (uses delete_syn_configuration module)
+ansible-playbook playbooks/delete_syn_profiles.yml
+
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_security_policy.yml
 
@@ -299,6 +311,8 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.8 | 2025-09-24 | Added SYN Flood functionality |
+| v0.1.7 | 2025-09-23 | Added HTTPS Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture

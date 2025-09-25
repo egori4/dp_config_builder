@@ -21,7 +21,7 @@
         # Edit SYN protections and attach profiles
         # -----------------------------
         - name: Edit SYN protections and profiles
-          edit_syn_protection:
+          edit_syn_configuration:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
             edit_syn_protections: "{{ edit_syn_protections | default([]) }}"
@@ -64,7 +64,7 @@
               {% else %}
               No SYN protections/profiles were updated.
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ syn_edit_results.results }}"
           loop_control:

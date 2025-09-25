@@ -961,7 +961,7 @@ oos_profiles:
 
 # Creating SYN Protections (ALL Supported Parameters)
 # OPTIONAL: Define new SYN protections (only if you want to create)
-```yml
+```yaml
 syn_protections:
   - name: "syn_protection"                     # MANDATORY: Protection name
     activation_threshold: 2500                 # OPTIONAL: Activation threshold 
@@ -983,7 +983,7 @@ syn_protections:
 ```
 ### Editing SYN Protections (Partial Updates)
 # Edit existing protections - ONLY specify what you want to change
-```yml
+```yaml
 edit_syn_protections:
   - index: 500030                                # MANDATORY: Must specify which protection to edit
     activation_threshold: 3500                   # OPTIONAL: Change activation threshold
@@ -999,17 +999,17 @@ edit_syn_protections:
 ### Getting SYN Profiles and Protections
 # Get all SYN profiles and protections from devices
 # No configuration needed - just run the playbook
-```bash
+```yaml
 ansible-playbook playbooks/get_syn_profiles.yml
 ```
 # Filter by specific profile names (configure in get_vars.yml)
-```yml
+```yaml
 filter_syn_profile_names: ["SYN_PROFILE_1", "SYN_PROFILE_2"]  # Show only these profiles
 # filter_syn_profile_names: []                                # Show all profiles (default)
 ```
 ### Deleting SYN Profiles and Protections
 # OPTIONAL: Remove protections from profiles (without deleting protection itself)
-```yml
+```yaml
 syn_profile_deletions:
   - profile_name: "SYN_PROFILE_1"
     protections:
@@ -1048,7 +1048,7 @@ syn_protection_deletions:
 
 ### SYN Profiles (Optional Section)
 # OPTIONAL: Profiles (can reference existing or newly created protections)
-```yml
+```yaml
 syn_profiles:
   - name: "SYN_PROFILE_1"                        # MANDATORY: Profile name
     protections:                                 # MANDATORY: List of protections
@@ -1070,7 +1070,7 @@ syn_profiles:
 
 ## Usage Pattern Examples
 # Example 1: Create new protections + profiles
-```yml
+```yaml
 syn_protections:
   - name: "syn_web_protection"
     activation_threshold: 2500
