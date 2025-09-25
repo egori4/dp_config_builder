@@ -400,9 +400,6 @@ ansible-playbook playbooks/delete_oos_profile.yml
 ### Workflow 12 : Create New  SSL Object
 
 # 1.Define your SSL Object
-### Workflow 12 : Create New HTTPS Profiles
-
-# 1.Define your HTTPS profiles
 ```bash
 nano vars/create_vars.yml
 ```
@@ -429,24 +426,34 @@ ansible-playbook playbooks/delete_ssl_object.yml
 nano vars/edit_vars.yml
 ansible-playbook --check playbooks/edit_ssl_object.yml
 ansible-playbook playbooks/edit_ssl_object.yml
-ansible-playbook --check playbooks/create_https_profile.yml
+```
+
+### Workflow 13 : Create New HTTPS Profiles
+
+# 1.Define your HTTPS profiles
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansble-playbook --check playbooks/create_https_profile.yml
 ```
 # 3.Apply configuration
 ```bash
 ansible-playbook playbooks/create_https_profile.yml
 ```
-### Workflow 12b : Get HTTPS Profile
+### Workflow 13b : Get HTTPS Profile
 ```bash
 ansible-playbook playbooks/get_https_profile.yml
 ```
-### Workflow 12c : Delete HTTPS Profile
+### Workflow 13c : Delete HTTPS Profile
 ```bash
 nano vars/delete_vars.yml
 ansible-playbook --check playbooks/delete_https_profile.yml
 ansible-playbook playbooks/delete_https_profile.yml
 ```
 
-### Workflow 13: Create Security Policies with Profile Bindings
+### Workflow 14: Create Security Policies with Profile Bindings
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -479,7 +486,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 14: Apply DefensePro Policy Updates
+### Workflow 15: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml

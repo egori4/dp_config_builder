@@ -150,7 +150,7 @@ ORCHESTRATION LAYER
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 SSL Object Modules (v0.1.5+)
-│   │   │    ├── create_ssl_object.py               Batch creation with validation
+│   │   │    ├── create_ssl_object.py               # Batch creation with validation
 │   │   │    ├── edit_ssl_object.py                 # Modify SSL Object
 │   │   │    ├── delete_ssl_object.py               # Batch deletion with error handling
 │   │   │    └── get_ssl_object.py                  # Enhanced querying with filtering
