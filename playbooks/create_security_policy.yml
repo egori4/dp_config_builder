@@ -1,8 +1,60 @@
 ---
 # Security Policy Creation Orchestrator Playbook
 # This playbook creates all prerequisite components then creates security policies with profile bindings
+#
+# USAGE MODES:
+# 1. Excel Mode: Set excel_mode=true and excel_file variable to use Excel as input source (automatic conversion)
+# 2. YAML Mode: Use traditional vars files (create_vars.yml)
+#
+# Variables can be set in vars files or passed as extra vars:
+#   excel_mode: false (default) - Use YAML mode
+#   excel_file: "" (default) - Excel file path when excel_mode is true
+#
+# Examples:
+#   # Excel Mode - via extra vars (overrides defaults)
+#   ansible-playbook playbooks/create_security_policy.yml -e excel_mode=true -e excel_file=dp_config_template.xlsx
+#
+#   # Excel Mode - via vars file defaults
+#   ansible-playbook playbooks/create_security_policy.yml
+#
+#   # Traditional YAML Mode (default)
+#   ansible-playbook playbooks/create_security_policy.yml
 
-# Device locking at the beginning for orchestrated flows
+# Pre-processing: Convert Excel to create_vars.yml if Excel mode is enabled
+- name: "Excel to YAML Variable Conversion (if Excel mode enabled)"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    _excel_mode: "{{ excel_mode | default(false) }}"
+    _excel_file: "{{ excel_file | default('') }}"
+    # _excel_mode: true  # Override set to true or false as needed
+    # _excel_file: "dp_config_template.xlsx"  # Override set to the desired Excel file path
+  vars_files:
+    - ../vars/cc.yml
+
+  tasks:
+    - name: "Convert Excel file to vars/create_vars.yml"
+      excel_to_vars:
+        provider: "{{ cc }}"
+        excel_file: "{{ _excel_file }}"
+      when:
+        - _excel_mode | bool
+        - _excel_file != ""
+
+    - name: "Display conversion status"
+      ansible.builtin.debug:
+        msg: |
+          {% if _excel_mode | bool %}
+          {% if _excel_file != "" %}
+          Excel mode: Successfully converted {{ _excel_file }} to vars/create_vars.yml
+          {% else %}
+          Excel mode enabled but no excel_file specified - skipping conversion
+          {% endif %}
+          {% else %}
+          Traditional YAML mode: Using existing vars/create_vars.yml
+          {% endif %}
+
+# Device locking and orchestrated flows
 - name: "Centralized Device Locking for Orchestration"
   hosts: cc
   gather_facts: false
@@ -11,70 +63,81 @@
     - ../vars/create_vars.yml
 
   tasks:
-    - name: "Lock device(s) for orchestrated creation"
-      dp_lock:
-        provider: "{{ cc }}"
-        dp_ip: "{{ item }}"
-      loop: "{{ dp_ip }}"
-      when: security_policy_config.create_security_policies | default(false)
-
-# Import existing playbooks for prerequisite components
-- name: "Import Network Class Creation Playbook"
-  import_playbook: create_network_class.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_network_classes | default(false)
-
-- name: "Import CL Profiles Creation Playbook"
-  import_playbook: create_cl_profiles.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_cl_profiles | default(false)
-
-
-- name: "Import Out of State Profiles Creation Playbook"
-  import_playbook: create_oos_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_out_of_state_profiles | default(false)
-
-
-- name: "Import BDoS Profiles Creation Playbook"
-  import_playbook: create_bdos_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_bdos_profiles | default(false)
-
-- name: "Import DNS Flood Profiles Creation Playbook"
-  import_playbook: create_dns_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_dns_profiles | default(false)
-
-- name: "Import HTTPS Flood Profiles Creation Playbook"
-  import_playbook: create_https_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_https_profiles | default(false)
-
-
-# Main security policy creation playbook
-- name: "Create DefensePro Security Policies"
-  hosts: cc
-  gather_facts: false
-  vars_files:
-    - ../vars/cc.yml
-    - ../vars/create_vars.yml
-
-  tasks:
-    - name: "Create and apply DefensePro security policies block"
+    - name: "Orchestrate security policy and profile creation"
       block:
+        - name: "Lock device(s) for orchestrated creation"
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: "Create network classes and groups"
+          create_network_class:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            netclasses: "{{ netclasses }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: network_class_results
+          when: security_policy_config.create_network_classes | default(false)
+
+        - name: "Configure connection limit protections and profiles"
+          create_cl_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            cl_protections: "{{ cl_protections }}"
+            cl_profiles: "{{ cl_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: cl_results
+          when: security_policy_config.create_cl_profiles | default(false)
+
+        - name: "Configure OOS profiles"
+          create_oos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            oos_profiles: "{{ oos_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: oos_results
+          when: security_policy_config.create_out_of_state_profiles | default(false)
+
+        - name: "Configure BDOS profiles"
+          create_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            bdos_profiles: "{{ bdos_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: bdos_results
+          when: security_policy_config.create_bdos_profiles | default(false)
+
+        - name: "Configure DNS profiles"
+          create_dns_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            dns_profiles: "{{ dns_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: dns_results
+          when: security_policy_config.create_dns_profiles | default(false)
+
+        - name: "Configure HTTPS profiles"
+          create_https_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            https_profiles: "{{ https_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: https_results
+          when: security_policy_config.create_https_profiles | default(false)
+
         - name: "Create DefensePro security policies"
           create_security_policy:
             provider: "{{ cc }}"

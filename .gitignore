@@ -14,3 +14,4 @@ tmp/
 .vscode/
 .ansible/
 merge_beta_to_all.sh
+dp_config_template.xlsx
