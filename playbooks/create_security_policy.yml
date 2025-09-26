@@ -11,80 +11,92 @@
     - ../vars/create_vars.yml
 
   tasks:
-    - name: "Lock device(s) for orchestrated creation"
-      dp_lock:
-        provider: "{{ cc }}"
-        dp_ip: "{{ item }}"
-      loop: "{{ dp_ip }}"
-      when: security_policy_config.create_security_policies | default(false)
-
-# Import existing playbooks for prerequisite components
-- name: "Import Network Class Creation Playbook"
-  import_playbook: create_network_class.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_network_classes | default(false)
-
-- name: "Import CL Profiles Creation Playbook"
-  import_playbook: create_cl_profiles.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_cl_profiles | default(false)
-
-
-- name: "Import Out of State Profiles Creation Playbook"
-  import_playbook: create_oos_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_out_of_state_profiles | default(false)
-
-
-- name: "Import BDoS Profiles Creation Playbook"
-  import_playbook: create_bdos_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_bdos_profiles | default(false)
-
-- name: "Import DNS Flood Profiles Creation Playbook"
-  import_playbook: create_dns_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_dns_profiles | default(false)
-
-- name: "Import HTTPS Flood Profiles Creation Playbook"
-  import_playbook: create_https_profile.yml
-  vars:
-    skip_policy_updates: true  # Orchestrator will handle policy updates at the end
-    skip_device_lock: true     # Orchestrator handles device locking centrally
-  when: security_policy_config.create_https_profiles | default(false)
-
-
-# Main security policy creation playbook
-- name: "Create DefensePro Security Policies"
-  hosts: cc
-  gather_facts: false
-  vars_files:
-    - ../vars/cc.yml
-    - ../vars/create_vars.yml
-
-  tasks:
-    - name: "Create and apply DefensePro security policies block"
+    - name: "Orchestrate security policy and profile creation"
       block:
+        - name: "Lock device(s) for orchestrated creation"
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: "Create network classes and groups"
+          create_network_class:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            netclasses: "{{ netclasses }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: network_class_results
+          when: security_policy_config.create_network_classes | default(false)
+
+        - name: "Configure connection limit protections and profiles"
+          create_cl_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            cl_protections: "{{ cl_protections }}"
+            cl_profiles: "{{ cl_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: cl_results
+          when: security_policy_config.create_cl_profiles | default(false)
+
+        - name: "Configure OOS profiles"
+          create_oos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            oos_profiles: "{{ oos_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: oos_results
+          when: security_policy_config.create_out_of_state_profiles | default(false)
+
+        - name: "Configure BDOS profiles"
+          create_bdos_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            bdos_profiles: "{{ bdos_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: bdos_results
+          when: security_policy_config.create_bdos_profiles | default(false)
+
+        - name: "Configure DNS profiles"
+          create_dns_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            dns_profiles: "{{ create_dns_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: dns_results
+          when: security_policy_config.create_dns_profiles | default(false)
+
+        - name: "Configure HTTPS profiles"
+          create_https_profile:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            https_flood_profiles: "{{ create_https_profiles }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: https_results
+          when: security_policy_config.create_https_profiles | default(false)
+
         - name: "Create DefensePro security policies"
           create_security_policy:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            security_policies: "{{ security_policies }}"
+            security_policies: "{{ create_security_policies }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
           register: security_policy_results
           when: security_policy_config.create_security_policies | default(false)
+
 
         - name: "Display security policy creation results"
           vars:
@@ -94,13 +106,21 @@
               PREVIEW MODE - Operations that would be performed:
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
-
               Security Policy Creations ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
                 - Policy: {{ op.policy_name }} ({{ op.src_network }} -> {{ op.dst_network }})
-              {% if op.connection_limit_profile %}
-                  CL Profile: {{ op.connection_limit_profile }}
-              {% endif %}
+                  Profiles:
+                    {% if op.get('connection_limit_profile') %}CL: {{ op.connection_limit_profile }}
+                    {% endif %}{% if op.get('bdos_profile') %}BDoS: {{ op.bdos_profile }}
+                    {% endif %}{% if op.get('dns_flood_profile') %}DNS: {{ op.dns_flood_profile }}
+                    {% endif %}{% if op.get('https_flood_profile') %}HTTPS: {{ op.https_flood_profile }}
+                    {% endif %}{% if op.get('out_of_state_profile') %}OOS: {{ op.out_of_state_profile }}
+                    {% endif %}{% if op.get('signature_protection_profile') %}Signature: {{ op.signature_protection_profile }}
+                    {% endif %}{% if op.get('syn_protection_profile') %}SYN: {{ op.syn_protection_profile }}
+                    {% endif %}{% if op.get('traffic_filters_profile') %}Traffic: {{ op.traffic_filters_profile }}
+                    {% endif %}{% if op.get('ert_attackers_feed_profile') %}ERT: {{ op.ert_attackers_feed_profile }}
+                    {% endif %}{% if op.get('geo_feed_profile') %}Geo: {{ op.geo_feed_profile }}
+                    {% endif %}
               {% endfor %}
               {% else %}
 
@@ -116,10 +136,20 @@
               Security Policies ({{ summary.successful_policies | default(0) }}/{{ summary.total_policies_attempted | default(0) }} successful):
               {% for policy in created_policies %}
                 - {{ policy.policy_name }}: {{ policy.src_network }} -> {{ policy.dst_network }}
-                  ({{ policy.direction }}{% if policy.priority is defined %}, Priority: {{ policy.priority }}{% endif %})
-              {% if policy.connection_limit_profile %}
-                  CL Profile: {{ policy.connection_limit_profile }}
-              {% endif %}
+                  {% if policy.direction is defined %}Direction: {{ policy.direction }}
+                  {% endif %}{% if policy.priority is defined %}Priority: {{ policy.priority }}
+                  {% endif %}Profiles:
+                    {% if policy.get('connection_limit_profile') %}CL: {{ policy.connection_limit_profile }}
+                    {% endif %}{% if policy.get('bdos_profile') %}BDoS: {{ policy.bdos_profile }}
+                    {% endif %}{% if policy.get('dns_flood_profile') %}DNS: {{ policy.dns_flood_profile }}
+                    {% endif %}{% if policy.get('https_flood_profile') %}HTTPS: {{ policy.https_flood_profile }}
+                    {% endif %}{% if policy.get('out_of_state_profile') %}OOS: {{ policy.out_of_state_profile }}
+                    {% endif %}{% if policy.get('signature_protection_profile') %}Signature: {{ policy.signature_protection_profile }}
+                    {% endif %}{% if policy.get('syn_protection_profile') %}SYN: {{ policy.syn_protection_profile }}
+                    {% endif %}{% if policy.get('traffic_filters_profile') %}Traffic: {{ policy.traffic_filters_profile }}
+                    {% endif %}{% if policy.get('ert_attackers_feed_profile') %}ERT: {{ policy.ert_attackers_feed_profile }}
+                    {% endif %}{% if policy.get('geo_feed_profile') %}Geo: {{ policy.geo_feed_profile }}
+                    {% endif %}
               {% endfor %}
               {% endif %}
               {% if errors %}

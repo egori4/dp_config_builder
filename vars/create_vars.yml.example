@@ -287,7 +287,7 @@ security_policy_config:
   apply_policies_after_creation: true  # Set false to skip automatic policy updates
 
 # Security policies with profile bindings
-security_policies:
+create_security_policies:
   - policy_name: "example_security_policy_1"
     state: "enable"                          # enable, disable
     action: "report_only"                    # block_and_report, report_only
