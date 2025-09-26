@@ -1,0 +1,71 @@
+---
+- name: Create Protected SSL Objects (Unified)
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - name: Create and configure SSL objects block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Create SSL objects
+          create_ssl_object:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            ssl_objects: "{{ create_ssl_objects | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: create_results
+
+        - name: Display SSL creation results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              EXECUTION RESULTS:
+              {% set created_objects = item.response.created_objects | default([]) %}
+              {% if created_objects %}
+              SSL Objects created successfully:
+              {% for obj in created_objects %}
+                - {{ obj.ssl_object_name }}
+                  Parameters:
+                  {% for key, value in obj.parameters.items() %}
+                    - {{ key }}: {{ value }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              No SSL objects configured for creation.
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - create_results is defined
+            - create_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

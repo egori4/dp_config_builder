@@ -1,0 +1,73 @@
+---
+- name: Edit SSL Objects on DefensePro
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/edit_vars.yml   # Contains edit_ssl_objects list
+
+  tasks:
+
+    - name: Edit SSL Objects Block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Edit SSL Objects
+          edit_ssl_object:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            edit_ssl_objects: "{{ edit_ssl_objects | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: edit_results
+
+        - name: Display SSL edit results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              EXECUTION RESULTS:
+              {% set edited_objects = item.response.edited_objects | default([]) %}
+              {% if edited_objects %}
+              SSL Objects edited successfully:
+              {% for obj in edited_objects %}
+                - {{ obj.ssl_object_name }}
+                  Parameters:
+                  {% for key, value in obj.parameters.items() %}
+                    - {{ key }}: {{ value }}
+                  {% endfor %}
+                  Status: {{ obj.status }}
+              {% endfor %}
+              {% else %}
+              No SSL objects configured for editing.
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ edit_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - https_edit_results is defined
+            - https_edit_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
