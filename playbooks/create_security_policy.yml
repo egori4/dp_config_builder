@@ -81,24 +81,6 @@
             label: "Device: {{ item }}"
           register: network_class_results
           when: security_policy_config.create_network_classes | default(false)
-    - name: "Orchestrate security policy and profile creation"
-      block:
-        - name: "Lock device(s) for orchestrated creation"
-          dp_lock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-
-        - name: "Create network classes and groups"
-          create_network_class:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-            netclasses: "{{ netclasses }}"
-          loop: "{{ dp_ip }}"
-          loop_control:
-            label: "Device: {{ item }}"
-          register: network_class_results
-          when: security_policy_config.create_network_classes | default(false)
 
         - name: "Configure connection limit protections and profiles"
           create_cl_configuration:
