@@ -323,13 +323,14 @@ ansible-playbook playbooks/delete_security_policy.yml
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities, formatting log module
+| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities
 <br>• Added update policies playbook
 <br>• Enhanced Policy creation module logic, effectiveness holistically
 <br>• Added conditional Update policies and conditional lock/unlock when creating profiles/policies
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.9 | 2025-09-26 | Added Protected SSL Object functionality |
 | v0.1.7 | 2025-09-24 | Added HTTPS Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |

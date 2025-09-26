@@ -1,14 +1,14 @@
 ---
 - name: Delete SSL objects from DefensePro
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/delete_vars.yml  # contains ssl_objects list
 
   tasks:
-    - block:
-
+    - name: Delete SSL objects block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -50,7 +50,7 @@
               {% else %}
               No deletion results returned.
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ delete_results.results }}"
           loop_control:
