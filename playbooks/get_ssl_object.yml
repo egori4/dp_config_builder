@@ -1,7 +1,7 @@
 ---
 - name: Get Specific SSL Objects from DefensePro
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/get_vars.yml   # contains dp_ip (list of device IPs) and filter_ssl_object_names
@@ -19,7 +19,7 @@
         label: "Device: {{ item }}"
 
     - name: Build readable SSL object output
-      set_fact:
+      ansible.builtin.set_fact:
         ssl_formatted_output: |
           {% for result in ssl_fetch_results.results %}
           Device: {{ result.item }}
@@ -51,5 +51,5 @@
           {% endfor %}
 
     - name: Display SSL objects
-      debug:
+      ansible.builtin.debug:
         msg: "{{ ssl_formatted_output.split('\n') }}"

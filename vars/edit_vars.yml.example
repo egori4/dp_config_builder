@@ -273,7 +273,7 @@ edit_ssl_objects:
     front_tls1.1: "disable"                      # Options: enable, disable
     front_tls1.2: "enable"                       # Options: enable, disable
     front_tls1.3: "enable"                       # Options: enable, disable
-    bk_end_dcrypt: "enable"                      # Options: enable, disable
+    bk_end_decrypt: "enable"                      # Options: enable, disable
     bk_end_sslv3: "disable"                      # Options: enable, disable
     bk_end_tls1.0: "disable"                     # Options: enable, disable
     bk_end_tls1.1: "enable"                      # Options: enable, disable
@@ -282,7 +282,7 @@ edit_ssl_objects:
     bk_end_port: 80                              # Optional – back-end port
 
 ### Notes for SSL Objects:
-*** ssl_object_name ***: Mandatory – exact SSL object name to edit (use get_ssl_object to verify)
+# *** ssl_object_name ***: Mandatory – exact SSL object name to edit (use get_ssl_object to verify)
 # Only specify parameters you want to change – unspecified parameters remain unchanged
 # Supported SSL Object Parameters:
 # ssl_object_profile: enable / disable

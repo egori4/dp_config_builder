@@ -1,14 +1,15 @@
 ---
 - name: Edit SSL Objects on DefensePro
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/edit_vars.yml   # Contains edit_ssl_objects list
 
   tasks:
 
-    - block:
+    - name: Edit SSL Objects Block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -45,7 +46,7 @@
               {% else %}
               No SSL objects configured for editing.
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ edit_results.results }}"
           loop_control:

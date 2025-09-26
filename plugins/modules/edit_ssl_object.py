@@ -71,7 +71,7 @@ def run_module():
                     "rsProtectedObjTLS11Enable": ENABLE_MAP.get(ssl.get('front_tls1.1', 'enable'), '1'),
                     "rsProtectedObjTLS12Enable": ENABLE_MAP.get(ssl.get('front_tls1.2', 'enable'), '1'),
                     "rsProtectedObjTLS13Enable": ENABLE_MAP.get(ssl.get('front_tls1.3', 'enable'), '1'),
-                    "rsBEDecryptionEnable": ENABLE_MAP.get(ssl.get('bk_end_dcrypt', 'enable'), '1'),
+                    "rsBEDecryptionEnable": ENABLE_MAP.get(ssl.get('bk_end_decrypt', 'enable'), '1'),
                     "rsBEProtectedObjSSLV3Enable": ENABLE_MAP.get(ssl.get('bk_end_sslv3', 'disable'), '2'),
                     "rsBEProtectedObjTLS10Enable": ENABLE_MAP.get(ssl.get('bk_end_tls1.0', 'disable'), '2'),
                     "rsBEProtectedObjTLS11Enable": ENABLE_MAP.get(ssl.get('bk_end_tls1.1', 'enable'), '1'),

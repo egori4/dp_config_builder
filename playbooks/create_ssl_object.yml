@@ -1,13 +1,14 @@
 ---
 - name: Create Protected SSL Objects (Unified)
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/create_vars.yml
 
   tasks:
-    - block:
+    - name: Create and configure SSL objects block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -43,7 +44,7 @@
               {% else %}
               No SSL objects configured for creation.
               {% endif %}
-          debug:
+          ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ create_results.results }}"
           loop_control:
@@ -56,7 +57,7 @@
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Applying policies: {{ item }}"
-          when: 
+          when:
             - not (skip_policy_updates | default(false))
             - create_results is defined
             - create_results.changed | default(false)
