@@ -63,7 +63,6 @@
     skip_device_lock: true     # Orchestrator handles device locking centrally
   when: security_policy_config.create_https_profiles | default(false)
 
-  
 
 # Main security policy creation playbook
 - name: "Create DefensePro Security Policies"
