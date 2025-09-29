@@ -1,0 +1,54 @@
+---
+- name: Get Traffic Filter profiles and protections
+  hosts: cc
+  gather_facts: no
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - name: Get traffic filter profiles and protections
+      get_traffic_filter:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_tf_profile_names: "{{ filter_tf_profile_names | default([]) }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
+      register: tf_profiles_result
+
+    - name: Display traffic filter profiles and protections (formatted)
+      vars:
+        formatted_output: |
+          Device: {{ item.item }}
+          Profiles and Protections:
+
+          {% for profile in item.profiles %}
+          Profile: {{ profile.profile_name }} | Num of Rules: {{ profile.num_of_rules }} | Action: {{ profile.action }}
+          {% if profile.protections | length == 0 %}
+          Protections: None
+          {% else %}
+          Protections:
+          {% for prot in profile.protections %}
+            - Protection Name: {{ prot.protection_name }}
+              Protection ID: {{ prot.protection_id }}
+              State: {{ prot.state }}
+              Priority: {{ prot.priority }}
+              Protocol: {{ prot.protocol }}
+              Threshold PPS: {{ prot.threshold_pps }}
+              Packet Report: {{ prot.packet_report }}
+          {% endfor %}
+          {% endif %}
+          {% endfor %}
+      debug:
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ tf_profiles_result.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"
+
+    - name: Display raw debug info from module
+      debug:
+        var: item.debug_info
+      loop: "{{ tf_profiles_result.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"

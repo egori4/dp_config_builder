@@ -1,0 +1,63 @@
+---
+- name: Delete Traffic Filter profiles and protections
+  hosts: cc
+  gather_facts: true
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - name: Delete traffic filter block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Delete traffic filter profiles/protections
+          delete_traffic_filter:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            traffic_filters: "{{ traffic_filters }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: tf_delete_results
+
+        - name: Display Traffic Filter delete results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.failed | default(false) %}
+              Error: {{ item.msg | default('Unknown error') }}
+              {% else %}
+              Deleted Profiles: {{ item.response.deleted_profiles | length }}
+              Deleted Protections: {{ item.response.deleted_protections | length }}
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ tf_delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: "Apply policy updates per device"
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - tf_delete_results is defined
+            - tf_delete_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
