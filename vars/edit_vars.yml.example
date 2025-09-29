@@ -389,3 +389,34 @@ edit_security_policies:
 # - ert_attackers_feed_profile: "profile_name" (ERT attackers feed profile)
 # - geo_feed_profile: "profile_name" (Geo feed profile)
 # - out_of_state_profile: "profile_name" (Out of state profile)
+
+########################## Traffic Filter Profiles & Protections ##########################
+# vars/edit_vars.yml
+# Corrected Traffic Filter edits
+
+# vars/edit_tf_vars_test.yml
+
+# Minimal Traffic Filter profiles for testing
+tf_profiles:
+  - profile_name: "TF_PROFILE_1"
+    action: "report_only"      # options: report_only, block_and_report
+
+# Minimal Traffic Filter protections for testing
+tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"              # enable/disable
+    match_criteria: "match"       # options: match, not-match
+    protocol: "tcp"               # options: any, tcp, udp, icmp, igmp, sctp, icmpv6, gre, ipinip
+    tcp_syn: "enable"
+    tcp_ack: "enable"
+    tcp_rst: "disable"
+    tcp_synack: "enable"
+    tcp_finack: "disable"
+    tcp_pshack: "enable"
+    threshold_pps: 0
+    threshold_bps: 10000
+    threshold_unit: "kbps"         # options: pps, kbps, empty
+    packet_report: "enable"       # enable/disable
+    attack_tracking_type: "all"  # options: all, per_source, per_destination, per_source_and_destination, track_returning_traffic
+    custom_protocol: ""

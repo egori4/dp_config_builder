@@ -165,3 +165,19 @@ delete_security_policies:
 # - deletion_mode: OPTIONAL - Controls deletion behavior:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
 #   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
+
+########################## Traffic Filter Deletions ##########################
+
+# delete_vars.yml
+# Structure must match what the module expects: "profiles" and "protections"
+
+traffic_filters:
+  profiles:
+    - name: "TF_PROFILE_1"
+    - name: "TF_PROFILE_2"
+
+  protections:
+    - profile_name: "TF_PROFILE_1"
+      name: "TF_PROT_1"
+    - profile_name: "TF_PROFILE_2"
+      name: "TF_PROT_2"

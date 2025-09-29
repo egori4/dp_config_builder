@@ -414,23 +414,22 @@ tf_protections:
     status: "enable"                # enable, disable (Default: enable)
     match_criteria: "match"         # match, not-match
     protocol: "tcp"                 # any, tcp, udp, icmp, etc.
-    tcp_syn: "enable"               # enable/disable
-    tcp_ack: "enable"               # enable/disable
-    tcp_rst: "disable"              # enable/disable
-    tcp_synack: "enable"            # enable/disable
-    tcp_finack: "enable"            # enable/disable
-    tcp_pshack: "disable"           # enable/disable
-    threshold_pps: "5000"           # pps
-    threshold_bps: "0"              # bps
+    tcp_syn: "enable"
+    tcp_ack: "enable"
+    tcp_rst: "disable"
+    tcp_synack: "enable"
+    tcp_finack: "enable"
+    tcp_pshack: "disable"
+    threshold_pps: "5000"
+    threshold_bps: "0"
     packet_report: "enable"         # enable, disable
     threshold_unit: "pps"           # empty, kbps, pps
     attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
 
 
-
   - profile_name: "TF_PROFILE_2"
     protection_name: "TF_PROT_2"
-    status: "enable"                # enable, disable (Default: enable)
+    status: "enable"             
     match_criteria: "match"         # match, not-match
     protocol: "tcp"                 # any, tcp, udp, icmp, etc.
     tcp_syn: "enable"
@@ -444,6 +443,5 @@ tf_protections:
     packet_report: "enable"         # enable, disable
     threshold_unit: "pps"           # empty, kbps, pps
     attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
-
 
   

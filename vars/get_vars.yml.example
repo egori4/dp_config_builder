@@ -93,3 +93,9 @@ filter_security_policy_names: []  # Set to list of policy names to filter, or le
 # - filter_security_policy_names: Optional filter to get specific security policies (leave empty for all)
 # - This operation is read-only and safe to run anytime
 # - Use this to discover existing security policies before creating, editing, or deleting
+
+###################### Get Traffic Filter Profile ##########################
+# Optional: filter to only fetch specific traffic filter profiles
+filter_tf_profile_names:
+  - "TF_PROFILE_1"
+  - "TF_PROT_1"
