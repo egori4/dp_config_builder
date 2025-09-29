@@ -282,6 +282,7 @@ edit_ssl_objects:
     bk_end_port: 80                              # Optional – back-end port
 
 ### Notes for SSL Objects:
+# The certificate API supports only one operation per call: you can either add a certificate or remove one, but not both simultaneously.
 # *** ssl_object_name ***: Mandatory – exact SSL object name to edit (use get_ssl_object to verify)
 # Only specify parameters you want to change – unspecified parameters remain unchanged
 # Supported SSL Object Parameters:
