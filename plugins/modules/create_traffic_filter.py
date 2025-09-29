@@ -9,21 +9,19 @@ Provides user-friendly summary mapping API fields to human-readable names.
 from ansible.module_utils.basic import AnsibleModule
 
 def map_prot_input_to_user_friendly(prot):
-    """Create a readable user_friendly mapping from the original protection input."""
+    """Convert protection input to human-readable values."""
     protocol = str(prot.get('protocol', 'any')).lower()
-    
-    # Map booleans / flags to enable/disable
+
     def flag(val):
         if val is None:
             return None
         return "enable" if str(val).lower() in ['enabled', 'enable', '2'] else "disable"
-    
+
     user_friendly = {
         "profile_name": prot.get('profile_name'),
         "protection_name": prot.get('protection_name'),
-        "match_criteria": prot.get('match_criteria', '1'),
+        "match_criteria": prot.get('match_criteria', 'match'),
         "protocol": protocol,
-        "packet_size": prot.get('packet_size', ''),
         "tcp_syn": flag(prot.get('tcp_syn')) if protocol in ['tcp', 'any'] else None,
         "tcp_ack": flag(prot.get('tcp_ack')) if protocol in ['tcp', 'any'] else None,
         "tcp_rst": flag(prot.get('tcp_rst')) if protocol in ['tcp', 'any'] else None,
@@ -33,9 +31,8 @@ def map_prot_input_to_user_friendly(prot):
         "threshold_pps": prot.get('threshold_pps', '10000'),
         "threshold_bps": prot.get('threshold_bps', '0'),
         "packet_report": flag(prot.get('packet_report')),
-        "threshold_used": prot.get('threshold_used', '2'),
-        "attack_tracking_type": prot.get('attack_tracking_type', '0'),
-        "custom_protocol": prot.get('custom_protocol', '')
+        "threshold_unit": prot.get('threshold_unit', 'pps'),
+        "attack_tracking_type": prot.get('attack_tracking_type', 'all')
     }
 
     # Remove None values
@@ -45,14 +42,20 @@ def map_protection_parameters(prot):
     """Map user-friendly values to API values for Traffic Filter protections."""
     TCP_FLAGS_MAP = {'enable': '2', 'disable': '1'}
     PACKET_REPORT_MAP = {'enable': '1', 'disable': '2'}
-    protocol_map = {'any': '0', 'tcp': '2', 'udp': '3'}
+    PROTOCOL_MAP = {
+        'any': '0', 'tcp': '1', 'udp': '2', 'icmp': '3', 'igmp': '4',
+        'sctp': '5', 'icmpv6': '6', 'gre': '7', 'ipinip': '8'
+    }
+    THRESHOLD_USED_MAP = {'empty': '0', 'kbps': '1', 'pps': '2'}
+    ATTACK_TRACKING_MAP = {'all': '0', 'per_source': '2', 'per_destination': '3', 'per_source_and_destination': '4', 'track_returning_traffic': '5'}
+    MATCH_CRITERIA_MAP = {'match': '1', 'not-match': '2'}
+    STATUS_MAP = {'enable': '1', 'disable': '2'}
 
     payload = {
         "rsNewTrafficFilterProfileName": prot['profile_name'],
         "rsNewTrafficFilterName": prot['protection_name'],
-        "rsNewTrafficFilterMatchCriteria": str(prot.get('match_criteria', '1')),
-        "rsNewTrafficFilterProtocol": protocol_map.get(prot.get('protocol', 'any'), '0'),
-        "rsNewTrafficFilterPacketSize": str(prot.get('packet_size', '')),
+        "rsNewTrafficFilterMatchCriteria": MATCH_CRITERIA_MAP.get(prot.get('match_criteria', 'match'), '1'),
+        "rsNewTrafficFilterProtocol": PROTOCOL_MAP.get(prot.get('protocol', 'any'), '0'),
         "rsNewTrafficFilterTCPFlagsSyn": TCP_FLAGS_MAP.get(prot.get('tcp_syn', 'enable'), '2'),
         "rsNewTrafficFilterTCPFlagsAck": TCP_FLAGS_MAP.get(prot.get('tcp_ack', 'enable'), '2'),
         "rsNewTrafficFilterTCPFlagsRst": TCP_FLAGS_MAP.get(prot.get('tcp_rst', 'enable'), '2'),
@@ -61,9 +64,10 @@ def map_protection_parameters(prot):
         "rsNewTrafficFilterTCPFlagsPshAck": TCP_FLAGS_MAP.get(prot.get('tcp_pshack', 'enable'), '2'),
         "rsNewTrafficFilterThresholdPPS": str(prot.get('threshold_pps', '10000')),
         "rsNewTrafficFilterThresholdBPS": str(prot.get('threshold_bps', '0')),
+        "rsNewTrafficFilterState": STATUS_MAP.get(prot.get('status', 'enable'), '1'),
         "rsNewTrafficFilterPacketReport": PACKET_REPORT_MAP.get(prot.get('packet_report', 'enable'), '1'),
-        "rsNewTrafficFilterThresholdUsed": str(prot.get('threshold_used', '2')),
-        "rsNewTrafficFilterAttackTrackingType": str(prot.get('attack_tracking_type', '0')),
+        "rsNewTrafficFilterThresholdUsed": THRESHOLD_USED_MAP.get(prot.get('threshold_unit', 'pps'), '2'),
+        "rsNewTrafficFilterAttackTrackingType": ATTACK_TRACKING_MAP.get(prot.get('attack_tracking_type', 'all'), '0'),
         "rsNewTrafficFilterCustomProtocol": prot.get('custom_protocol', '')
     }
     return payload

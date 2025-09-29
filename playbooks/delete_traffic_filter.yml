@@ -1,7 +1,7 @@
 ---
 - name: Delete Traffic Filter profiles and protections
   hosts: cc
-  gather_facts: true
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/delete_vars.yml
@@ -25,34 +25,60 @@
           loop_control:
             label: "Device: {{ item }}"
           register: tf_delete_results
+          ignore_errors: true
 
-        - name: Display Traffic Filter delete results (formatted)
-          vars:
-            formatted_output: |
+        - name: Display Traffic Filter delete results (user-friendly)
+          ansible.builtin.debug:
+            msg: |
+              {% set profiles = item.response.deleted_profiles | default([]) %}
+              {% set protections = item.response.deleted_protections | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+
               Device: {{ item.item }}
+
               {% if item.failed | default(false) %}
               Error: {{ item.msg | default('Unknown error') }}
               {% else %}
-              Deleted Profiles: {{ item.response.deleted_profiles | length }}
-              Deleted Protections: {{ item.response.deleted_protections | length }}
+                  {% if profiles | length > 0 %}
+              Deleted Profiles:
+                  {% for prof in profiles %}
+                    - {{ prof.profile_name }} | Status: {{ prof.response.status | default('unknown') }}
+                      {% if prof.user_friendly is defined %}
+                      {% for k, v in prof.user_friendly.items() %}
+                        - {{ k }}: {{ v }}
+                      {% endfor %}
+                      {% endif %}
+                  {% endfor %}
+                  {% else %}
+              No profiles were deleted.
+                  {% endif %}
+
+                  {% if protections | length > 0 %}
+              Deleted Protections:
+                  {% for prot in protections %}
+                    - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) | Status: {{ prot.response.status | default('unknown') }}
+                      {% if prot.user_friendly is defined %}
+                      {% for k, v in prot.user_friendly.items() %}
+                        - {{ k }}: {{ v }}
+                      {% endfor %}
+                      {% endif %}
+                  {% endfor %}
+                  {% else %}
+              No protections were deleted.
+                  {% endif %}
+
+                  {% if errors | length > 0 %}
+              Errors:
+                  {% for err in errors %}
+                    - {{ err }}
+                  {% endfor %}
+                  {% else %}
+              No errors.
+                  {% endif %}
               {% endif %}
-          ansible.builtin.debug:
-            msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ tf_delete_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
-
-        - name: "Apply policy updates per device"
-          update_policies:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-          loop_control:
-            label: "Applying policies: {{ item }}"
-          when:
-            - not (skip_policy_updates | default(false))
-            - tf_delete_results is defined
-            - tf_delete_results.changed | default(false)
 
       always:
         - name: Unlock device(s)
