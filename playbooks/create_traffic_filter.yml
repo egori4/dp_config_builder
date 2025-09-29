@@ -1,69 +1,92 @@
 ---
 - name: Create Traffic Filter profiles and protections
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/create_vars.yml
 
   tasks:
-    - block:
-        - name: Lock device(s)
-          dp_lock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-          when: not (skip_device_lock | default(false))
+    - name: Lock device(s)
+      dp_lock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      when: not (skip_device_lock | default(false))
 
-        - name: Configure Traffic Filter profiles and protections
-          create_traffic_filter:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-            tf_profiles: "{{ tf_profiles | default([]) }}"
-            tf_protections: "{{ tf_protections | default([]) }}"
-          loop: "{{ dp_ip }}"
-          loop_control:
-            label: "Device: {{ item }}"
-          register: tf_create_results
+    - name: Configure Traffic Filter profiles and protections
+      create_traffic_filter:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        tf_profiles: "{{ tf_profiles | default([]) }}"
+        tf_protections: "{{ tf_protections | default([]) }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
+      register: tf_create_results
 
-        - name: Display TF creation results (formatted)
-          vars:
-            formatted_output: |
-              Device: {{ item.item }}
-              {% if item.failed | default(false) %}
-              Error occurred during creation:
-                - {{ item.msg | default('Unknown error') }}
-              {% else %}
-              Traffic Filter Configurations created successfully:
-              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
-                - {{ item.debug_info.input.profiles_count }} profile(s) created
-              {% endif %}
-              {% if item.debug_info.input.protections_count | default(0) > 0 %}
-                - {{ item.debug_info.input.protections_count }} protection(s) created
-              {% endif %}
-              {% endif %}
-          debug:
-            msg: "{{ formatted_output.split('\n') }}"
-          loop: "{{ tf_create_results.results }}"
-          loop_control:
-            label: "Device: {{ item.item }}"
+    - name: Display Traffic Filter creation results
+      vars:
+        formatted_output: |
+          Device: {{ item.item }}
+          {% if ansible_check_mode %}
+          PREVIEW MODE - Operations that would be performed
+          {% elif item.failed | default(false) %}
+          Error occurred:
+            - {{ item.msg | default('Unknown error') }}
+          {% else %}
+          EXECUTION RESULTS:
 
-        - name: Apply policy updates per device
-          update_policies:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-          loop_control:
-            label: "Applying policies: {{ item }}"
-          when:
-            - not (skip_policy_updates | default(false))
-            - tf_create_results is defined
-            - tf_create_results.changed | default(false)
+            {% if item.response.created_profiles | length > 0 %}
+            Traffic Filter Profiles created successfully:
+            {% for prof in item.response.created_profiles %}
+              - {{ prof.profile_name }}
+                Parameters:
+                {% for k, v in prof.user_friendly.items() if k != 'profile_name' and v is not none %}
+                  - {{ k }}: {{ v }}
+                {% endfor %}
+            {% endfor %}
+            {% endif %}
 
-      always:
-        - name: Unlock device(s)
-          dp_unlock:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-          when: not (skip_device_lock | default(false))
+            {% if item.response.created_protections | length > 0 %}
+            Traffic Filter Protections created successfully:
+            {% for prot in item.response.created_protections %}
+              - {{ prot.protection_name }} (Profile: {{ prot.profile_name }})
+                Parameters:
+                {% for k, v in prot.user_friendly.items() if k not in ['profile_name', 'protection_name'] and v is not none %}
+                  - {{ k }}: {{ v }}
+                {% endfor %}
+            {% endfor %}
+            {% endif %}
+
+            {% if item.response.errors | length > 0 %}
+            Errors:
+            {% for err in item.response.errors %}
+              - {{ err }}
+            {% endfor %}
+            {% endif %}
+          {% endif %}
+      ansible.builtin.debug:
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ tf_create_results.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"
+
+    - name: Apply policy updates per device
+      update_policies:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Applying policies: {{ item }}"
+      when:
+        - not (skip_policy_updates | default(false))
+        - tf_create_results is defined
+        - tf_create_results.changed | default(false)
+
+    - name: Unlock device(s)
+      dp_unlock:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+      loop: "{{ dp_ip }}"
+      when: not (skip_device_lock | default(false))

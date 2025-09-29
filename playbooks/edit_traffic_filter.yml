@@ -15,43 +15,75 @@
           loop: "{{ dp_ip }}"
           when: not (skip_device_lock | default(false))
 
-        - name: Edit traffic filter profiles/protections
+        - name: Edit Traffic Filter profiles and protections
           edit_traffic_filter:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            traffic_filters: "{{ traffic_filters }}"
+            traffic_filters: "{{ traffic_filters | default({}) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
-          register: tf_edit_results
+          register: traffic_filter_results
+          ignore_errors: yes
 
-        - name: Display Traffic Filter edit results (formatted)
+        # --- FIX APPLIED HERE: Whitespace removed to ensure clean output ---
+        - name: Display Traffic Filter results (cleanest, user-friendly)
           vars:
-            formatted_output: |
-              Device: {{ item.item }}
-              {% if item.failed | default(false) %}
-              Error: {{ item.msg | default('Unknown error') }}
+            output_lines: |
+              {% set profiles = item.response.edited_profiles | default([]) %}
+              {% set protections = item.response.edited_protections | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+
+              **Device: {{ item.item }}**
+
+              {% if profiles | length > 0 %}
+              **Traffic Filter Profiles Edited ({{ profiles | length }}):**
+              {% for prof in profiles %}
+              - **Profile Name:** {{ prof.profile_name }}
+              {% if prof.user_friendly is defined %}
+              {% for k, v in prof.user_friendly.items() %}
+              -   {{ k | replace('_', ' ') | capitalize }}: {{ v }}
+              {% endfor %}
+              {% endif %}
+              {% if prof.error is defined %}
+              - **Error:** {{ prof.error }}
+              {% endif %}
+              {% endfor %}
               {% else %}
-              Edited Profiles: {{ item.response.edited_profiles | length }}
-              Edited Protections: {{ item.response.edited_protections | length }}
+              No profiles were edited.
+              {% endif %}
+
+              {% if protections | length > 0 %}
+              **Traffic Filter Protections Edited ({{ protections | length }}):**
+              {% for prot in protections %}
+              - **Protection Name:** {{ prot.protection_name }} (Profile: {{ prot.user_friendly.filter_profile_name | default(prot.profile_name) }})
+              {% if prot.user_friendly is defined %}
+              {% for k, v in prot.user_friendly.items() %}
+              -   {{ k | replace('_', ' ') | capitalize }}: {{ v }}
+              {% endfor %}
+              {% endif %}
+              {% if prot.error is defined %}
+              - **Error:** {{ prot.error }}
+              {% endif %}
+              {% endfor %}
+              {% else %}
+              No protections were edited.
+              {% endif %}
+
+              {% if errors | length > 0 %}
+              **Errors Detected:**
+              {% for err in errors %}
+              - {{ err }}
+              {% endfor %}
+              {% else %}
+              No device-level errors detected.
               {% endif %}
           debug:
-            msg: "{{ formatted_output.split('\n') }}"
-          loop: "{{ tf_edit_results.results }}"
+            # Splits the multi-line string into a list, which is the best way to print clean output
+            msg: "{{ output_lines.split('\n') }}"
+          loop: "{{ traffic_filter_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
-
-        - name: "Apply policy updates per device"
-          update_policies:
-            provider: "{{ cc }}"
-            dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
-          loop_control:
-            label: "Applying policies: {{ item }}"
-          when:
-            - not (skip_policy_updates | default(false))
-            - tf_edit_results is defined
-            - tf_edit_results.changed | default(false)
 
       always:
         - name: Unlock device(s)

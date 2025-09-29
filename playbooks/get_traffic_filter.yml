@@ -1,7 +1,7 @@
 ---
 - name: Get Traffic Filter profiles and protections
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/get_vars.yml
@@ -40,14 +40,14 @@
           {% endfor %}
           {% endif %}
           {% endfor %}
-      debug:
+      ansible.builtin.debug:
         msg: "{{ formatted_output.split('\n') }}"
       loop: "{{ tf_profiles_result.results }}"
       loop_control:
         label: "Device: {{ item.item }}"
 
     - name: Display raw debug info from module
-      debug:
+      ansible.builtin.debug:
         var: item.debug_info
       loop: "{{ tf_profiles_result.results }}"
       loop_control:
