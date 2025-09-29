@@ -1,13 +1,14 @@
 ---
 - name: Delete SYN profiles and protections
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/delete_vars.yml
 
   tasks:
-    - block:
+    - name: Delete SYN profiles and protections block
+      block:
         # Step 1: Lock device(s)
         - name: Lock device(s)
           dp_lock:
@@ -97,7 +98,6 @@
           loop: "{{ delete_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
-            
         - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"

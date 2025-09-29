@@ -1,7 +1,7 @@
 ---
 - name: Get SYN profiles and protections (Simple)
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/get_vars.yml

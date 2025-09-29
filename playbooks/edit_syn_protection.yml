@@ -1,25 +1,19 @@
 ---
 - name: Edit SYN protections and profiles
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/edit_vars.yml
 
   tasks:
-    - block:
-        # -----------------------------
-        # Lock the device
-        # -----------------------------
+    - name: Edit SYN protections block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
-
-        # -----------------------------
-        # Edit SYN protections and attach profiles
-        # -----------------------------
         - name: Edit SYN protections and profiles
           edit_syn_configuration:
             provider: "{{ cc }}"
@@ -30,11 +24,7 @@
           loop_control:
             label: "Device: {{ item }}"
           register: syn_edit_results
-
-        # -----------------------------
-        # Display results in a user-friendly format
-        # -----------------------------
-        - name: Display SYN edit results (user-friendly)
+        - name: Display SYN edit results
           vars:
             syn_param_map:
               rsIDSSYNAttackActivationThreshold: "activation_threshold"

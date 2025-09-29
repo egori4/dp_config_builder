@@ -93,6 +93,4 @@ filter_security_policy_names: []  # Set to list of policy names to filter, or le
 # Optional: filter is not used for SYN profiles because protections are not linked to profiles
 
 # Filter SYN protections (only these names, leave empty for all)
-filter_syn_profile_names:
-  - "SYN_PROFILE_1"
-  - "SYN_PROFILE_2"
+filter_syn_profile_names: ["SYN_PROFILE_1", "SYN_PROFILE_2"]

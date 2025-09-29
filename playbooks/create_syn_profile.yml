@@ -1,13 +1,14 @@
 ---
 - name: Create SYN protections and profiles
   hosts: cc
-  gather_facts: no
+  gather_facts: false
   vars_files:
     - ../vars/cc.yml
     - ../vars/create_vars.yml
 
   tasks:
-    - block:
+    - name: SYN protections and profiles block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -33,19 +34,19 @@
               PREVIEW MODE - Operations that would be performed:
               {% set planned_ops = item.response.planned_operations | default([]) %}
               {% if planned_ops %}
-              
               SYN Configurations ({{ planned_ops | length }} planned):
               {% for op in planned_ops %}
                 - {{ op.description }}
               {% endfor %}
               {% else %}
-              
               No SYN protections/profiles configured for creation.
               {% endif %}
               {% elif ansible_check_mode %}
               PREVIEW MODE - Operations that would be performed:
-              
-              SYN Configurations ({{ item.debug_info.input.protections_count | default(0) }} protections + {{ item.debug_info.input.profiles_count | default(0) }} profiles):
+              SYN Configurations (
+                {{ item.debug_info.input.protections_count | default(0) }} protections
+                + {{ item.debug_info.input.profiles_count | default(0) }} profiles
+              ):
               {% if item.debug_info.input.protections_count | default(0) > 0 %}
                 - {{ item.debug_info.input.protections_count }} protection(s) would be created
               {% endif %}
@@ -55,13 +56,10 @@
               {% else %}
               EXECUTION RESULTS:
               {% if item.failed | default(false) %}
-              
               Error occurred during SYN creation:
                 - {{ item.msg | default('Unknown error') }}
               {% elif item.response.protections | length > 0 or item.response.profiles | length > 0 %}
-              
               SYN Configurations created successfully:
-              
               {% if item.response.protections | length > 0 %}
               Protections ({{ item.response.protections | length }}):
               {% for prot in item.response.protections %}
@@ -74,7 +72,6 @@
                     Packet Report: {{ prot.parameters.packet_report }}
               {% endfor %}
               {% endif %}
-              
               {% if item.response.profiles | length > 0 %}
               Profiles ({{ item.response.profiles | length }}):
               {% for prof in item.response.profiles %}
@@ -91,7 +88,6 @@
               {% endfor %}
               {% endif %}
               {% else %}
-              
               No SYN protections/profiles were created.
               {% endif %}
               {% endif %}
@@ -100,7 +96,6 @@
           loop: "{{ syn_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
-            
         - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"
@@ -112,7 +107,6 @@
             - not (skip_policy_updates | default(false))
             - syn_create_results is defined
             - syn_create_results.changed | default(false)
-            
       always:
         - name: Unlock device(s)
           dp_unlock:
