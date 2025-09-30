@@ -17,38 +17,37 @@
         label: "Device: {{ item }}"
       register: tf_profiles_result
 
-    - name: Display traffic filter profiles and protections (formatted)
+    - name: Display traffic filter profiles and protections (user-friendly)
       vars:
+        indent: "  "
         formatted_output: |
           Device: {{ item.item }}
-          Profiles and Protections:
-
           {% for profile in item.profiles %}
           Profile: {{ profile.profile_name }} | Num of Rules: {{ profile.num_of_rules }} | Action: {{ profile.action }}
-          {% if profile.protections | length == 0 %}
-          Protections: None
-          {% else %}
+          {% if profile.protections %}
           Protections:
           {% for prot in profile.protections %}
-            - Protection Name: {{ prot.protection_name }}
-              Protection ID: {{ prot.protection_id }}
-              State: {{ prot.state }}
-              Priority: {{ prot.priority }}
-              Protocol: {{ prot.protocol }}
-              Threshold PPS: {{ prot.threshold_pps }}
-              Packet Report: {{ prot.packet_report }}
+          {{ indent }}- Protection Name: {{ prot.protection_name }}
+          {{ indent*2 }}Protection ID: {{ prot.protection_id }}
+          {{ indent*2 }}State: {{ prot.state }}
+          {{ indent*2 }}Priority: {{ prot.priority }}
+          {{ indent*2 }}Protocol: {{ prot.protocol }}
+          {{ indent*2 }}Threshold PPS: {{ prot.threshold_pps }}
+          {{ indent*2 }}Threshold BPS: {{ prot.threshold_bps }}
+          {{ indent*2 }}Packet Report: {{ prot.packet_report }}
+          {{ indent*2 }}Src: {{ prot.src_network }}:{{ prot.src_port }}
+          {{ indent*2 }}Dst: {{ prot.dst_network }}:{{ prot.dst_port }}
+          {{ indent*2 }}VLAN: {{ prot.vlan }}
+          {% for flag in ['tcp_syn','tcp_ack','tcp_rst','tcp_synack','tcp_finack','tcp_pshack'] %}
+          {{ indent*2 }}{{ flag | replace('_',' ') | title }}: {{ prot[flag] }}
           {% endfor %}
+          {% endfor %}
+          {% else %}
+          Protections: None
           {% endif %}
           {% endfor %}
       ansible.builtin.debug:
         msg: "{{ formatted_output.split('\n') }}"
-      loop: "{{ tf_profiles_result.results }}"
-      loop_control:
-        label: "Device: {{ item.item }}"
-
-    - name: Display raw debug info from module
-      ansible.builtin.debug:
-        var: item.debug_info
       loop: "{{ tf_profiles_result.results }}"
       loop_control:
         label: "Device: {{ item.item }}"

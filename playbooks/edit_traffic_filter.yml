@@ -7,8 +7,8 @@
     - ../vars/edit_vars.yml
 
   tasks:
-
-    - block:
+    - name: Edit Traffic Filter block
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -20,8 +20,8 @@
           edit_traffic_filter:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            tf_profiles: "{{ tf_profiles | default([]) }}"
-            tf_protections: "{{ tf_protections | default([]) }}"
+            tf_profiles: "{{ edit_tf_profiles | default([]) }}"
+            tf_protections: "{{ edit_tf_protections | default([]) }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
@@ -84,6 +84,18 @@
           loop: "{{ traffic_filter_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - tf_edit_results is defined
+            - tf_edit_results.changed | default(false)
 
       always:
         - name: Unlock device(s)

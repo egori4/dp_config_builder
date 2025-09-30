@@ -1,9 +1,31 @@
 """
 Unified Ansible module to delete DefensePro Traffic Filter profiles and protections.
-Handles failures gracefully and reports deleted items.
+Handles failures gracefully and reports deleted items with logging.
 """
 
 from ansible.module_utils.basic import AnsibleModule
+
+
+def pretty_deleted_protections(protections):
+    """Return nicely formatted string of deleted protections."""
+    lines = []
+    for prot in protections:
+        profile_name = prot.get("profile_name")
+        protection_name = prot.get("protection_name")
+        status = "deleted" if "error" not in prot else f"failed: {prot['error']}"
+        lines.append(f"  - {protection_name} (Profile: {profile_name}) -> {status}")
+    return "\n".join(lines)
+
+
+def pretty_deleted_profiles(profiles):
+    """Return nicely formatted string of deleted profiles."""
+    lines = []
+    for prof in profiles:
+        profile_name = prof.get("profile_name")
+        status = "deleted" if "error" not in prof else f"failed: {prof['error']}"
+        lines.append(f"  - {profile_name} -> {status}")
+    return "\n".join(lines)
+
 
 def run_module():
     module_args = dict(
@@ -57,6 +79,7 @@ def run_module():
                     logger.info(f"Deleting Traffic Filter protection '{protection_name}' under profile '{profile_name}'")
                     resp = cc._delete(url)
                     data = resp.json() if hasattr(resp, "json") else {"status": resp.status_code}
+                    logger.debug(f"Delete protection response: {data}")
                     deleted_protections.append({
                         "profile_name": profile_name,
                         "protection_name": protection_name,
@@ -64,12 +87,14 @@ def run_module():
                     })
                     result["changed"] = True
                 except Exception as e:
+                    err_msg = str(e)
+                    logger.error(f"Failed to delete protection '{protection_name}' under profile '{profile_name}': {err_msg}")
                     deleted_protections.append({
                         "profile_name": profile_name,
                         "protection_name": protection_name,
-                        "error": str(e)
+                        "error": err_msg
                     })
-                    result["failed_items"].append(f"{profile_name}/{protection_name}: {str(e)}")
+                    result["failed_items"].append(f"{profile_name}/{protection_name}: {err_msg}")
 
             # === Delete profiles ===
             for profile in profiles:
@@ -80,21 +105,26 @@ def run_module():
                     logger.info(f"Deleting Traffic Filter profile '{profile_name}'")
                     resp = cc._delete(url)
                     data = resp.json() if hasattr(resp, "json") else {"status": resp.status_code}
+                    logger.debug(f"Delete profile response: {data}")
                     deleted_profiles.append({
                         "profile_name": profile_name,
                         "response": data
                     })
                     result["changed"] = True
                 except Exception as e:
+                    err_msg = str(e)
+                    logger.error(f"Failed to delete profile '{profile_name}': {err_msg}")
                     deleted_profiles.append({
                         "profile_name": profile_name,
-                        "error": str(e)
+                        "error": err_msg
                     })
-                    result["failed_items"].append(f"{profile_name}: {str(e)}")
+                    result["failed_items"].append(f"{profile_name}: {err_msg}")
 
         result["response"] = {
             "deleted_profiles": deleted_profiles,
             "deleted_protections": deleted_protections,
+            "pretty_profiles": pretty_deleted_profiles(deleted_profiles),
+            "pretty_protections": pretty_deleted_protections(deleted_protections)
         }
         result["debug_info"] = debug_info
 

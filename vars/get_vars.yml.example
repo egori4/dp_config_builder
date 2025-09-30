@@ -80,6 +80,16 @@ filter_https_profile_names: ["https_profile_1","https_profile_2"]
 # filter_https_profile_names: ["https_profile_1", "https_profile_2"]  # Show multiple profiles
 # filter_https_profile_names: []  # Show all profiles (default)
 
+###################### Get Traffic Filter Profile ##########################
+# Filter by specific Traffic Filter profile names, or leave empty list for all profiles
+filter_tf_profile_names: ["TF_PROFILE_1", "TF_PROFILE_2"]
+
+# Examples:
+# filter_tf_profile_names: ["TF_PROFILE_1"]           # Show only one profile
+# filter_tf_profile_names: ["TF_PROFILE_1","TF_PROFILE_2"]  # Show multiple profiles
+# filter_tf_profile_names: []                          # Show all profiles (default)
+
+
 ########################## Security Policy Filter variables ##########################
 # Filter by specific security policy names, or leave empty list for all policies
 filter_security_policy_names: []  # Set to list of policy names to filter, or leave empty for all
@@ -94,8 +104,3 @@ filter_security_policy_names: []  # Set to list of policy names to filter, or le
 # - This operation is read-only and safe to run anytime
 # - Use this to discover existing security policies before creating, editing, or deleting
 
-###################### Get Traffic Filter Profile ##########################
-# Optional: filter to only fetch specific traffic filter profiles
-filter_tf_profile_names:
-  - "TF_PROFILE_1"
-  - "TF_PROT_1"

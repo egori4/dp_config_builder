@@ -1,125 +1,125 @@
 """
-Ansible module to fetch DefensePro Traffic Filter profiles, associated protections, and protection settings.
+Ansible module to fetch DefensePro Traffic Filter profiles and associated protections.
 
-- Fetches all profiles and protections from DefensePro via CyberController API
-- Combines and maps data to a nested structure: profiles -> protections
-- Returns user-friendly nested response with enabled/disabled mapping
+- Fetches profiles and protections from a DefensePro device via CyberController API.
+- Returns only relevant information: profile -> protections mapping + summary.
+- Logs main actions with logger.info and raw API responses with logger.debug.
 """
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.logger import Logger
 from ansible.module_utils.radware_cc import RadwareCC
 
+# Mapping API values to user-friendly strings
+ENABLED_DISABLED_MAP = {"1": "enabled", "2": "disabled"}
+PROTOCOL_MAP = {
+    "0": "any", "1": "tcp", "2": "udp", "3": "icmp", "4": "igmp",
+    "5": "sctp", "6": "icmpv6", "7": "gre", "8": "ipinip"
+}
+ACTION_MAP = {"0": "report_only", "1": "report_only", "10": "drop"}
+
+
 def run_module():
     module_args = dict(
-        provider=dict(type='dict', required=True),
-        dp_ip=dict(type='str', required=True),
-        filter_tf_profile_names=dict(type='list', required=False, default=[])
+        provider=dict(type="dict", required=True),
+        dp_ip=dict(type="str", required=True),
+        filter_tf_profile_names=dict(type="list", required=False, default=[]),
     )
-    result = dict(changed=False, profiles=[], debug_info={})
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
-    provider = module.params['provider']
-    dp_ip = module.params['dp_ip']
-    filter_tf_profile_names = module.params['filter_tf_profile_names']
-    log_level = provider.get('log_level', 'disabled')
-    logger = Logger(verbosity=log_level)
-    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
-    debug_info = {}
 
-    # Reverse mappings (API value -> user-friendly)
-    ENABLED_DISABLED_MAP = {'1': 'enabled', '2': 'disabled'}
-    PROTOCOL_MAP = {'0': 'any', '2': 'tcp', '3': 'udp'}
-    ACTION_MAP = {'0': 'report_only', '1': 'report_only', '10': 'drop'}
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
+    provider = module.params["provider"]
+    dp_ip = module.params["dp_ip"]
+    filter_tf_profile_names = module.params["filter_tf_profile_names"]
+
+    log_level = provider.get("log_level", "disabled")
+    logger = Logger(verbosity=log_level)
+    cc = RadwareCC(
+        provider["cc_ip"], provider["username"], provider["password"],
+        log_level=log_level, logger=logger
+    )
 
     try:
-        # 1. Get all profiles
-        profile_path = f"/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable"
-        profile_url = f"https://{provider['cc_ip']}{profile_path}"
-        logger.info(f"Fetching traffic filter profiles from {dp_ip}")
-        resp = cc._get(profile_url)
-        profiles_raw = resp.json().get('rsNewTrafficProfileTable', [])
-        debug_info['profiles_raw_count'] = len(profiles_raw)
+        # Fetch all traffic filter profiles
+        profile_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable"
+        logger.info(f"Fetching Traffic Filter profiles from {dp_ip}")
+        resp_profiles = cc._get(profile_url)
+        profiles_raw = resp_profiles.json().get("rsNewTrafficProfileTable", [])
+        logger.debug(f"Raw profiles data: {profiles_raw}")
 
-        # 2. Get all protections
-        prot_path = f"/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable"
-        prot_url = f"https://{provider['cc_ip']}{prot_path}"
-        logger.info(f"Fetching traffic filter protections from {dp_ip}")
-        resp = cc._get(prot_url)
-        protections_raw = resp.json().get('rsNewTrafficFilterTable', [])
-        debug_info['protections_raw_count'] = len(protections_raw)
+        # Fetch all protections
+        prot_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable"
+        logger.info(f"Fetching Traffic Filter protections from {dp_ip}")
+        resp_prots = cc._get(prot_url)
+        protections_raw = resp_prots.json().get("rsNewTrafficFilterTable", [])
+        logger.debug(f"Raw protections data: {protections_raw}")
 
-        # 3. Build nested profile structure
+        # Build nested profile structure
         profiles = {}
-        for profile in profiles_raw:
-            prof_name = profile['rsNewTrafficProfileName']
+        for prof in profiles_raw:
+            prof_name = prof.get("rsNewTrafficProfileName")
             if prof_name not in profiles:
                 profiles[prof_name] = {
-                    'profile_name': prof_name,
-                    'num_of_rules': int(profile.get('rsNewTrafficProfileNumOfRules', 0)),
-                    'action': ACTION_MAP.get(profile.get('rsNewTrafficProfileAction', ''), profile.get('rsNewTrafficProfileAction', '')),
-                    'protections': []
+                    "profile_name": prof_name,
+                    "num_of_rules": int(prof.get("rsNewTrafficProfileNumOfRules", 0)),
+                    "action": ACTION_MAP.get(prof.get("rsNewTrafficProfileAction", ""), prof.get("rsNewTrafficProfileAction", "")),
+                    "protections": []
                 }
 
-        # 4. Add protections to profiles
+        # Add protections to profiles
         for prot in protections_raw:
-            prof_name = prot.get('rsNewTrafficFilterProfileName')
+            prof_name = prot.get("rsNewTrafficFilterProfileName")
             if prof_name in profiles:
                 prot_entry = {
-                    'protection_name': prot.get('rsNewTrafficFilterName'),
-                    'protection_id': prot.get('rsNewTrafficFilterID'),
-                    'state': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterState', ''), prot.get('rsNewTrafficFilterState', '')),
-                    'priority': prot.get('rsNewTrafficFilterPriority', '0'),
-                    'protocol': PROTOCOL_MAP.get(prot.get('rsNewTrafficFilterProtocol', ''), prot.get('rsNewTrafficFilterProtocol', '')),
-                    'threshold_pps': prot.get('rsNewTrafficFilterThresholdPPS', '0'),
-                    'threshold_bps': prot.get('rsNewTrafficFilterThresholdBPS', '0'),
-                    'packet_report': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterPacketReport', ''), prot.get('rsNewTrafficFilterPacketReport', '')),
-                    'vlan': prot.get('rsNewTrafficFilterVLAN', 'Any'),
-
-                    # TCP Flags mapped
-                    'tcp_syn': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterTCPFlagsSyn', ''), prot.get('rsNewTrafficFilterTCPFlagsSyn', '')),
-                    'tcp_ack': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterTCPFlagsAck', ''), prot.get('rsNewTrafficFilterTCPFlagsAck', '')),
-                    'tcp_rst': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterTCPFlagsRst', ''), prot.get('rsNewTrafficFilterTCPFlagsRst', '')),
-                    'tcp_synack': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterTCPFlagsSynAck', ''), prot.get('rsNewTrafficFilterTCPFlagsSynAck', '')),
-                    'tcp_finack': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterTCPFlagsFinAck', ''), prot.get('rsNewTrafficFilterTCPFlagsFinAck', '')),
-                    'tcp_pshack': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterTCPFlagsPshAck', ''), prot.get('rsNewTrafficFilterTCPFlagsPshAck', '')),
-
-                    # DNS Types mapped
-                    'dns_type_a': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeA', ''), prot.get('rsNewTrafficFilterDnsTypeA', '')),
-                    'dns_type_aaaa': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeAAAA', ''), prot.get('rsNewTrafficFilterDnsTypeAAAA', '')),
-                    'dns_type_mx': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeMX', ''), prot.get('rsNewTrafficFilterDnsTypeMX', '')),
-                    'dns_type_ptr': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypePTR', ''), prot.get('rsNewTrafficFilterDnsTypePTR', '')),
-                    'dns_type_cname': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeCNAME', ''), prot.get('rsNewTrafficFilterDnsTypeCNAME', '')),
-                    'dns_type_ns': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeNS', ''), prot.get('rsNewTrafficFilterDnsTypeNS', '')),
-                    'dns_type_txt': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeTXT', ''), prot.get('rsNewTrafficFilterDnsTypeTXT', '')),
-                    'dns_type_any': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeANY', ''), prot.get('rsNewTrafficFilterDnsTypeANY', '')),
-                    'dns_type_soa': ENABLED_DISABLED_MAP.get(prot.get('rsNewTrafficFilterDnsTypeSOA', ''), prot.get('rsNewTrafficFilterDnsTypeSOA', '')),
-
-                    'src_network': prot.get('rsNewTrafficFilterSrcNetwork', ''),
-                    'src_port': prot.get('rsNewTrafficFilterSrcPort', ''),
-                    'dst_network': prot.get('rsNewTrafficFilterDstNetwork', ''),
-                    'dst_port': prot.get('rsNewTrafficFilterDstPort', '')
+                    "protection_name": prot.get("rsNewTrafficFilterName"),
+                    "protection_id": prot.get("rsNewTrafficFilterID"),
+                    "state": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterState", ""), prot.get("rsNewTrafficFilterState", "")),
+                    "priority": prot.get("rsNewTrafficFilterPriority", "0"),
+                    "protocol": PROTOCOL_MAP.get(prot.get("rsNewTrafficFilterProtocol", ""), prot.get("rsNewTrafficFilterProtocol", "")),
+                    "threshold_pps": prot.get("rsNewTrafficFilterThresholdPPS", "0"),
+                    "threshold_bps": prot.get("rsNewTrafficFilterThresholdBPS", "0"),
+                    "packet_report": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterPacketReport", ""), prot.get("rsNewTrafficFilterPacketReport", "")),
+                    "vlan": prot.get("rsNewTrafficFilterVLAN", "Any"),
+                    "src_network": prot.get("rsNewTrafficFilterSrcNetwork", ""),
+                    "src_port": prot.get("rsNewTrafficFilterSrcPort", ""),
+                    "dst_network": prot.get("rsNewTrafficFilterDstNetwork", ""),
+                    "dst_port": prot.get("rsNewTrafficFilterDstPort", ""),
+                    # TCP flags
+                    "tcp_syn": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsSyn", ""), prot.get("rsNewTrafficFilterTCPFlagsSyn", "")),
+                    "tcp_ack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsAck", ""), prot.get("rsNewTrafficFilterTCPFlagsAck", "")),
+                    "tcp_rst": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsRst", ""), prot.get("rsNewTrafficFilterTCPFlagsRst", "")),
+                    "tcp_synack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsSynAck", ""), prot.get("rsNewTrafficFilterTCPFlagsSynAck", "")),
+                    "tcp_finack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsFinAck", ""), prot.get("rsNewTrafficFilterTCPFlagsFinAck", "")),
+                    "tcp_pshack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsPshAck", ""), prot.get("rsNewTrafficFilterTCPFlagsPshAck", ""))
                 }
-                profiles[prof_name]['protections'].append(prot_entry)
+                profiles[prof_name]["protections"].append(prot_entry)
 
-        # Apply filtering if filter_tf_profile_names is provided
+        # Apply profile filter if provided
         all_profiles = list(profiles.values())
         if filter_tf_profile_names:
-            filtered_profiles = [p for p in all_profiles if p['profile_name'] in filter_tf_profile_names]
-            result['profiles'] = filtered_profiles
-            debug_info['filter_applied'] = True
-            debug_info['filter_tf_profile_names'] = filter_tf_profile_names
+            filtered_profiles = [p for p in all_profiles if p["profile_name"] in filter_tf_profile_names]
+            profiles_to_return = filtered_profiles
+            logger.info(f"Filtered profiles to: {filter_tf_profile_names}")
         else:
-            result['profiles'] = all_profiles
-            debug_info['filter_applied'] = False
+            profiles_to_return = all_profiles
 
-        result['debug_info'] = debug_info
-        module.exit_json(**result)
+        # Build summary
+        summary = {
+            "total_profiles": len(profiles_to_return),
+            "total_protections": sum(len(p["protections"]) for p in profiles_to_return)
+        }
+
+        # Return only relevant info
+        module.exit_json(profiles=profiles_to_return, summary=summary)
 
     except Exception as e:
-        logger.error(f"Exception: {str(e)}")
-        module.fail_json(msg=str(e), debug_info=debug_info, **result)
+        logger.error(f"Exception fetching Traffic Filter data: {str(e)}")
+        module.fail_json(msg=str(e))
+
 
 def main():
     run_module()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

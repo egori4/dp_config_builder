@@ -20,7 +20,7 @@
           delete_traffic_filter:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-            traffic_filters: "{{ traffic_filters }}"
+            traffic_filters: "{{ delete_traffic_filters }}"
           loop: "{{ dp_ip }}"
           loop_control:
             label: "Device: {{ item }}"
@@ -79,6 +79,18 @@
           loop: "{{ tf_delete_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - tf_delete_results is defined
+            - tf_delete_results.changed | default(false)
 
       always:
         - name: Unlock device(s)

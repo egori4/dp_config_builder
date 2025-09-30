@@ -311,6 +311,73 @@ create_https_profiles:
       
   # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work
 
+########################## Traffic Filter Profiles and Protections ##########################
+# Define Traffic Filter profiles to create per device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip creating some profiles/protections by leaving the list empty
+
+# Traffic Filter profiles to create
+create_tf_profiles:
+  - name: "TF_PROFILE_1"
+    params:
+      action: "report_only"          # Options: report_only, block_and_report
+
+  - name: "TF_PROFILE_2"
+    params:
+      action: "block_and_report"     # Options: report_only, block_and_report
+
+########################## Traffic Filter Profiles and Protections ##########################
+# List of Traffic Filter profiles and protections to create per device
+# Each item contains tf_profiles and tf_protections lists
+# tf_profiles: list of profiles to create
+# tf_protections: list of protections under the profiles
+
+# Create Traffic Filter Profiles
+
+create_tf_profiles:
+  - profile_name: "TF_PROFILE_1"
+    action: "report_only"           # report_only, block_and_report
+  - profile_name: "TF_PROFILE_2"
+    action: "block_and_report"      # report_only, block_and_report
+
+create_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"                # enable, disable (Default: enable)
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
+    tcp_syn: "enable"               # TCP SYN flag handling
+    tcp_ack: "enable"               # TCP ACK flag handling
+    tcp_rst: "enable"               # TCP RST flag handling
+    tcp_synack: "enable"            # TCP SYN-ACK flag handling
+    tcp_finack: "enable"            # TCP FIN-ACK flag handling
+    tcp_pshack: "enable"            # TCP PSH-ACK flag handling
+    threshold_pps: "5000"           # Optional: rate limit in packets per second
+    threshold_bps: "0"              # Optional: rate limit in bits per second
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # kbps, pps
+    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+
+  - profile_name: "TF_PROFILE_2"
+    protection_name: "TF_PROT_2"
+    status: "enable"             
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
+    tcp_syn: "enable"
+    tcp_ack: "enable"
+    tcp_rst: "enable"
+    tcp_synack: "enable"
+    tcp_finack: "enable"
+    tcp_pshack: "enable"
+    threshold_pps: "5000"
+    threshold_bps: "0"
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # empty, kbps, pps
+    attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+  
+  
 ########################## Security Policy Configuration ##########################
 
 # Control what gets created during security policy orchestration
@@ -381,67 +448,3 @@ create_security_policies:
 # 3. Reference profile names from sections above or use existing profiles
 # 4. Empty profile fields ("") will not bind any profile of that type
 
-########################## Traffic Filter Profiles and Protections ##########################
-# Define Traffic Filter profiles to create per device
-# All parameters use user-friendly values that are automatically mapped to API values
-# You can skip creating some profiles/protections by leaving the list empty
-
-# Traffic Filter profiles to create
-create_tf_profiles:
-  - name: "TF_PROFILE_1"
-    params:
-      action: "report_only"          # Options: report_only, block_and_report
-
-  - name: "TF_PROFILE_2"
-    params:
-      action: "block_and_report"     # Options: report_only, block_and_report
-
-########################## Traffic Filter Profiles and Protections ##########################
-# List of Traffic Filter profiles and protections to create per device
-# Each item contains tf_profiles and tf_protections lists
-# tf_profiles: list of profiles to create
-# tf_protections: list of protections under the profiles
-
-tf_profiles:
-  - profile_name: "TF_PROFILE_1"
-    action: "report_only"           # report_only, block_and_report
-  - profile_name: "TF_PROFILE_2"
-    action: "block_and_report"
-
-tf_protections:
-  - profile_name: "TF_PROFILE_1"
-    protection_name: "TF_PROT_1"
-    status: "enable"                # enable, disable (Default: enable)
-    match_criteria: "match"         # match, not-match
-    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
-    tcp_syn: "enable"
-    tcp_ack: "enable"
-    tcp_rst: "disable"
-    tcp_synack: "enable"
-    tcp_finack: "enable"
-    tcp_pshack: "disable"
-    threshold_pps: "5000"
-    threshold_bps: "0"
-    packet_report: "enable"         # enable, disable
-    threshold_unit: "pps"           # empty, kbps, pps
-    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
-
-
-  - profile_name: "TF_PROFILE_2"
-    protection_name: "TF_PROT_2"
-    status: "enable"             
-    match_criteria: "match"         # match, not-match
-    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
-    tcp_syn: "enable"
-    tcp_ack: "enable"
-    tcp_rst: "disable"
-    tcp_synack: "enable"
-    tcp_finack: "enable"
-    tcp_pshack: "disable"
-    threshold_pps: "5000"
-    threshold_bps: "0"
-    packet_report: "enable"         # enable, disable
-    threshold_unit: "pps"           # empty, kbps, pps
-    attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
-
-  

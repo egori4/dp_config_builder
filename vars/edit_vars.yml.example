@@ -397,26 +397,45 @@ edit_security_policies:
 # vars/edit_tf_vars_test.yml
 
 # Minimal Traffic Filter profiles for testing
-tf_profiles:
+edit_tf_profiles:
   - profile_name: "TF_PROFILE_1"
     action: "report_only"      # options: report_only, block_and_report
 
 # Minimal Traffic Filter protections for testing
-tf_protections:
+edit_tf_protections:
   - profile_name: "TF_PROFILE_1"
     protection_name: "TF_PROT_1"
-    status: "enable"              # enable/disable
-    match_criteria: "match"       # options: match, not-match
-    protocol: "tcp"               # options: any, tcp, udp, icmp, igmp, sctp, icmpv6, gre, ipinip
+    status: "enable"                # enable, disable (Default: enable)
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
+    tcp_syn: "enable"               # TCP SYN flag handling
+    tcp_ack: "enable"               # TCP ACK flag handling
+    tcp_rst: "enable"               # TCP RST flag handling
+    tcp_synack: "enable"            # TCP SYN-ACK flag handling
+    tcp_finack: "enable"            # TCP FIN-ACK flag handling
+    tcp_pshack: "enable"            # TCP PSH-ACK flag handling
+    threshold_pps: "5000"           # Optional: rate limit in packets per second
+    threshold_bps: "0"              # Optional: rate limit in bits per second
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # kbps, pps
+    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+
+  - profile_name: "TF_PROFILE_2"
+    protection_name: "TF_PROT_2"
+    status: "enable"             
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
     tcp_syn: "enable"
     tcp_ack: "enable"
-    tcp_rst: "disable"
+    tcp_rst: "enable"
     tcp_synack: "enable"
-    tcp_finack: "disable"
+    tcp_finack: "enable"
     tcp_pshack: "enable"
-    threshold_pps: 0
-    threshold_bps: 10000
-    threshold_unit: "kbps"         # options: pps, kbps, empty
-    packet_report: "enable"       # enable/disable
-    attack_tracking_type: "all"  # options: all, per_source, per_destination, per_source_and_destination, track_returning_traffic
-    custom_protocol: ""
+    threshold_pps: "5000"
+    threshold_bps: "0"
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # empty, kbps, pps
+    attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+  
