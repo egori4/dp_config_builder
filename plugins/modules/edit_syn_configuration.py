@@ -2,9 +2,9 @@
 """
 Unified Ansible module to edit DefensePro SYN protections and attach protections to SYN profiles.
 
-- First edits the existing SYN protections (partial update supported)
-- Then attaches protections to SYN profiles (multi-attach)
-- Provides user-friendly debug info and response
+- Edits existing SYN protections (partial update supported)
+- Attaches protections to SYN profiles (multi-attach)
+- Provides user-friendly debug info and logging
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -68,14 +68,20 @@ def run_module():
             url = f"https://{provider['cc_ip']}{path}"
             prot_result['debug_info'] = {'method': 'PUT', 'url': url, 'body': body}
 
+            logger.info(f"Editing SYN protection {prot_index} on device {dp_ip}")
+            logger.debug(f"PUT URL: {url}, body: {body}")
+
             try:
                 if not module.check_mode:
                     resp = cc._put(url, json=body)
                     prot_result['response'] = resp.json()
                     prot_result['changed'] = True
                     any_changed = True
+                    logger.info(f"Edited SYN protection {prot_index} successfully")
+                    logger.debug(f"Response: {prot_result['response']}")
             except Exception as e:
                 prot_result['debug_info']['error'] = str(e)
+                logger.error(f"Failed to edit SYN protection {prot_index}: {str(e)}")
 
             result['results'].append(prot_result)
             debug_info['protections'].append(prot_result['debug_info'])
@@ -98,14 +104,20 @@ def run_module():
                 url = f"https://{provider['cc_ip']}{path}"
                 prof_result['debug_info'] = {'method': 'POST', 'url': url, 'body': body}
 
+                logger.info(f"Attaching protection {protection_name} to SYN profile {profile_name} on device {dp_ip}")
+                logger.debug(f"POST URL: {url}, body: {body}")
+
                 try:
                     if not module.check_mode:
                         resp = cc._post(url, json=body)
                         prof_result['response'] = resp.json()
                         prof_result['changed'] = True
                         any_changed = True
+                        logger.info(f"Attached protection {protection_name} to profile {profile_name}")
+                        logger.debug(f"Response: {prof_result['response']}")
                 except Exception as e:
                     prof_result['debug_info']['error'] = str(e)
+                    logger.error(f"Failed to attach protection {protection_name} to profile {profile_name}: {str(e)}")
 
                 result['results'].append(prof_result)
                 debug_info['profiles'].append(prof_result['debug_info'])

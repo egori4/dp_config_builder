@@ -123,9 +123,6 @@ def run_module():
                     })
                     changes_made = True
 
-        # -------------------------------
-        # Prepare user-friendly result
-        # -------------------------------
         result['changed'] = changes_made
         result['response'] = {
             'protections': created_protections,

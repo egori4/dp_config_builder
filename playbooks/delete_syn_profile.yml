@@ -9,14 +9,12 @@
   tasks:
     - name: Delete SYN profiles and protections block
       block:
-        # Step 1: Lock device(s)
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
 
-        # Step 2: Delete SYN profiles and protections
         - name: Delete SYN Profiles and Protections
           delete_syn_configuration:
             provider: "{{ cc }}"
@@ -28,7 +26,6 @@
             label: "Device: {{ item }}"
           register: delete_results
 
-        # Step 3: Display deletion results (formatted)
         - name: Display deletion results (formatted)
           vars:
             formatted_output: |

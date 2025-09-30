@@ -182,7 +182,7 @@ syn_profile_deletions:
 # - If the last protection is removed, the profile itself is automatically deleted
 # - This section is OPTIONAL if you only want to delete protections entirely
 
-################################## SYN Protection Deletions ###############################
+### SYN Protection Deletions 
 
 # Delete SYN protections entirely (must not be attached to any profile)
 # Can be specified either by name (string) or index (integer)
@@ -199,8 +199,6 @@ syn_protection_deletions:
 # 2. Names: Module will look up and resolve to the correct protection index
 # 3. Indexes: Can be used directly if known (faster, no lookup)
 # 4. Order matters: Profile deletions run before protection deletions
-
-################################## SYN Usage Patterns ###############################
 # Pattern 1: Remove protections from profiles only (keep protections for reuse)
 #   → Define syn_profile_deletions, skip syn_protection_deletions
 #
