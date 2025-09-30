@@ -1243,7 +1243,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_na
 ```
 ###  Create TF Protection
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_name}/{protection_name}
+POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}
 {
     "rsNewTrafficFilterProfileName": "Test1",
     "rsNewTrafficFilterName": "test1",
