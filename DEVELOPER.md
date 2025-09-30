@@ -109,11 +109,11 @@ ORCHESTRATION LAYER
 │   │   ├── delete_ssl_object.yml               # Remove SSL Object
 │   │   └── get_ssl_object.yml                  # Query SSL Object
 │   ├── 🎯 HTTPS Profile Operations      # Create, edit, delete, and query HTTPS profiles
-│   │   ├── create_https_profile.yml               # Create HTTPS protection profiles
-│   │   ├── edit_https_profile.yml                 # Modify HTTPS protection profiles
-│   │   ├── delete_https_profile.yml               # Remove HTTPS protection profiles
-│   │   └── get_https_profile.yml                  # Query HTTPS protection profiles
-│   ├── 🎯 Traffic Filter Operations      # Create, edit, delete, and query Traffic Filter
+│   │   ├── create_https_profile.yml           # Create HTTPS protection profiles
+│   │   ├── edit_https_profile.yml             # Modify HTTPS protection profiles
+│   │   ├── delete_https_profile.yml           # Remove HTTPS protection profiles
+│   │   └── get_https_profile.yml              # Query HTTPS protection profiles
+│   ├── 🎯 Traffic Filter Operations          # Create, edit, delete, and query Traffic Filter
 │   │   ├── create_traffic_filter.yml               # Create Traffic Filter
 │   │   ├── edit_traffic_filter.yml                 # Modify Traffic Filter
 │   │   ├── delete_traffic_filter.yml               # Remove Traffic Filter
@@ -159,7 +159,7 @@ ORCHESTRATION LAYER
 │   │   │    ├── edit_ssl_object.py                 # Modify SSL Object
 │   │   │    ├── delete_ssl_object.py               # Batch deletion with error handling
 │   │   │    └── get_ssl_object.py                  # Enhanced querying with filtering
-│   │   ├── 🔧 HTTPS Profile Modules (v0.1.6+)
+│   │   ├── 🔧 HTTPS Profile Modules (v0.1.7+)
 │   │   │   ├── create_https_profile.py      # Batch creation with validation
 │   │   │   ├── edit_https_profile.py        # Modify existing DNS profiles
 │   │   │   ├── delete_https_profile.py      # Batch deletion with error handling
@@ -433,10 +433,10 @@ ORCHESTRATION LAYER
 ### Traffic Filter Management
 | Operation | Method | Endpoint |
 |-----------|--------|----------|
-| **Create Traffic Filter** | POST   | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{filter_name}` |
-| **Edit Traffic Filter**   | PUT    | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{filter_name}` |
-| **Delete Traffic Filter** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{filter_name}` |
-| **Get Traffic Filter**    | GET    | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{filter_name}` |
+| **Create Traffic Filter** | POST   | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
+| **Edit Traffic Filter**   | PUT    | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
+| **Delete Traffic Filter** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
+| **Get Traffic Filter**    | GET    | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
 
 ### Security Policy Management
 
@@ -1243,7 +1243,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_na
 ```
 ###  Create TF Protection
 ```json
-POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_name}/{filter_name}
+POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_name}/{protection_name}
 {
     "rsNewTrafficFilterProfileName": "Test1",
     "rsNewTrafficFilterName": "test1",
@@ -1267,7 +1267,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_na
 ```
 ##### Edit Traffic Filter 
 ```json
-PUT /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{filter_name}
+PUT /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}
 
 {
     "rsNewTrafficFilterProfileName": "Test1",
@@ -1297,7 +1297,7 @@ Each profile dict must include profile_name (mandatory) and any parameters to ch
 
 #### Get TF Profile 
 ```json
-GET /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{filter_name}
+GET /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}
 
 Response:
 {
@@ -1361,7 +1361,7 @@ Response:
 
 ### Delete TF Profile ###
 ```yml
-DELETE /mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}
+DELETE /mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}/{protection_name}
 
 delete_traffic_filters:
   profiles:
