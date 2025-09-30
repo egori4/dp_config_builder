@@ -1243,17 +1243,17 @@ create_tf_protections:
     protection_name: "TF_PROT_1"
     status: "enable"                # enable, disable (Default: enable)
     match_criteria: "match"         # match, not-match
-    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
-    tcp_syn: "enable"
-    tcp_ack: "enable"
-    tcp_rst: "disable"
-    tcp_synack: "enable"
-    tcp_finack: "enable"
-    tcp_pshack: "disable"
-    threshold_pps: "5000"
-    threshold_bps: "0"
+    protocol: "tcp"                 # any, tcp, udp, icmp
+    tcp_syn: "enable"               # enable, disable
+    tcp_ack: "enable"               # enable, disable
+    tcp_rst: "disable"              # enable, disable
+    tcp_synack: "enable"            # enable, disable
+    tcp_finack: "enable"            # enable, disable
+    tcp_pshack: "disable"           # enable, disable
+    threshold_pps: "5000"           # packet per second threshold
+    threshold_bps: "0"              # bits per second threshold
     packet_report: "enable"         # enable, disable
-    threshold_unit: "pps"           # empty, kbps, pps
+    threshold_unit: "pps"           # kbps, pps
     attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
 
 
@@ -1275,7 +1275,7 @@ edit_tf_protections:
     tcp_pshack: "enable"
     threshold_pps: 0
     threshold_bps: 10000
-    threshold_unit: "kbps"         # options: pps, kbps, empty
+    threshold_unit: "kbps"         # options: pps, kbps
     packet_report: "enable"       # enable/disable
     attack_tracking_type: "all"  # options: all, per_source, per_destination, per_source_and_destination, track_returning_traffic
 
@@ -1309,6 +1309,9 @@ delete_traffic_filters:
       name: "TF_PROT_1"
     - profile_name: "TF_PROFILE_2"
       name: "TF_PROT_2"                # Show all profiles (default)
+
+  # you can delete multiple profiles and protections in one run.
+  # either you can delete just protections, or both.
 ```
 ### Notes for Traffic Filter Profiles
 
