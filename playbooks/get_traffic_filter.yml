@@ -17,7 +17,7 @@
         label: "Device: {{ item }}"
       register: tf_profiles_result
 
-    - name: Display traffic filter profiles and protections (user-friendly)
+    - name: Display traffic filter profiles and protections
       vars:
         # Use a literal block scalar to build the full, clean output string
         formatted_output: |
@@ -26,7 +26,6 @@
           No Traffic Filter profiles found on this device.
           {% else %}
           {% for profile in item.profiles %}
-          ==================================================
           **Profile Name:** {{ profile.profile_name }}
           **Action:** {{ profile.action }} | **Rules:** {{ profile.num_of_rules }}
           {% if profile.protections %}
@@ -52,7 +51,6 @@
           {% endif %}
           {% endfor %}
           {% endif %}
-      # Split the clean multi-line string into a list for clean, aligned display
       ansible.builtin.debug:
         msg: "{{ formatted_output.split('\n') }}"
       loop: "{{ tf_profiles_result.results }}"
