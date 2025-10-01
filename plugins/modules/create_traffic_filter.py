@@ -44,7 +44,7 @@ def map_prot_input_to_user_friendly(prot):
 def map_protection_parameters(prot):
     """Map user-friendly values to API values for Traffic Filter protections."""
     # Maps for API conversion
-    TCP_FLAGS_MAP = {'enable': '2', 'disable': '1'}
+    TCP_FLAGS_MAP = {'enable': '1', 'disable': '0'}
     PACKET_REPORT_MAP = {'enable': '1', 'disable': '2'}
     PROTOCOL_MAP = {'any': '0', 'tcp': '1', 'udp': '2', 'icmp': '3', 'igmp': '4',
                     'sctp': '5', 'icmpv6': '6', 'gre': '7', 'ipinip': '8'}
