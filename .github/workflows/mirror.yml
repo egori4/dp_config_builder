@@ -1,0 +1,26 @@
+name: Mirror to radware/dp_config_builder
+
+   on:
+     push:
+       branches:
+         - '**'  # Mirror all branches
+     delete:
+       branches:
+         - '**'  # Mirror branch deletions
+
+   jobs:
+     mirror:
+       runs-on: ubuntu-latest
+       steps:
+         - name: Checkout source repository
+           uses: actions/checkout@v4
+           with:
+             fetch-depth: 0  # Fetch all history for all branches and tags
+
+         - name: Mirror to target repository
+           env:
+             TARGET_REPO: https://github.com/radware/dp_config_builder.git
+             GITHUB_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+           run: |
+             git remote add mirror https://x-access-token:${GITHUB_TOKEN}@github.com/radware/dp_config_builder.git
+             git push mirror --mirror
