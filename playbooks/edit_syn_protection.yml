@@ -14,6 +14,8 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
         - name: Edit SYN protections and profiles
           edit_syn_configuration:
             provider: "{{ cc }}"
@@ -24,7 +26,8 @@
           loop_control:
             label: "Device: {{ item }}"
           register: syn_edit_results
-        - name: Display SYN edit results
+
+        - name: Display SYN edit results (formatted)
           vars:
             syn_param_map:
               rsIDSSYNAttackActivationThreshold: "activation_threshold"
@@ -44,11 +47,12 @@
               {% for r in item.results %}
                 {% set body = r.debug_info.body if r.debug_info.body is defined else {} %}
                 {% if body %}
-                - Protection/Profile:
+                - {{ 'Protection' if body.get('rsIDSSYNAttackActivationThreshold') is defined else 'Profile' }}:
                   {% for k, v in body.items() %}
                     * {{ syn_param_map[k] | default(k) }}: {{ v }}
                   {% endfor %}
-                  Response: {{ r.response | default({}) }}
+                {% else %}
+                - No changes applied
                 {% endif %}
               {% endfor %}
               {% else %}
@@ -78,3 +82,4 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

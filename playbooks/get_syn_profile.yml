@@ -1,5 +1,5 @@
 ---
-- name: Get SYN profiles and protections (Simple)
+- name: Get SYN profiles and protections (Aligned)
   hosts: cc
   gather_facts: false
   vars_files:
@@ -17,23 +17,34 @@
         label: "Device: {{ item }}"
       register: syn_profiles_result
 
-    - name: Display SYN profiles and protections (formatted, sorted)
+    - name: Display SYN profiles and protections (formatted, aligned)
       vars:
         formatted_output: |
           Device: {{ item.item }}
+          {% if item.failed | default(false) %}
+          ERROR: Failed to fetch SYN profiles/protections
+            - {{ item.msg | default('Unknown error') }}
+          {% elif item.profiles | length == 0 %}
+          No SYN profiles found on this device.
+          {% else %}
           Profiles and Protections:
-          {% for profile in item.profiles %}
-          Profile: {{ profile.profile_name }}
-          Protections:
-          {% for prot in profile.protections | sort(attribute='protection_id') %}
-            - protection_name: {{ prot.protection_name }}
-              protection_id: {{ prot.protection_id }}
-              activation_threshold: {{ prot.activation_threshold }}
-              termination_threshold: {{ prot.termination_threshold }}
-              packet_report: {{ prot.packet_report }}
-              app_port_group: {{ prot.app_port_group }}
+          {% for profile in item.profiles | sort(attribute='profile_name') %}
+            Profile: {{ profile.profile_name }}
+            {% if profile.protections | length > 0 %}
+            Protections ({{ profile.protections | length }}):
+            {% for prot in profile.protections | sort(attribute='protection_id') %}
+              - protection_name: {{ prot.protection_name }}
+                protection_id: {{ prot.protection_id }}
+                activation_threshold: {{ prot.activation_threshold }}
+                termination_threshold: {{ prot.termination_threshold }}
+                packet_report: {{ prot.packet_report }}
+                app_port_group: {{ prot.app_port_group }}
+            {% endfor %}
+            {% else %}
+            No protections attached to this profile.
+            {% endif %}
           {% endfor %}
-          {% endfor %}
+          {% endif %}
       ansible.builtin.debug:
         msg: "{{ formatted_output.split('\n') }}"
       loop: "{{ syn_profiles_result.results }}"

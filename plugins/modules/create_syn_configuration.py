@@ -2,9 +2,8 @@
 """
 Unified Ansible module to manage DefensePro SYN protections and profiles.
 
-This module handles both SYN protection creation and SYN profile creation
-in a single operation, simplifying the playbook structure and providing
-a user-friendly response output.
+- Handles both SYN protection creation and SYN profile creation.
+- Provides structured results and full debug details (METHOD, URI, Response Code).
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -19,7 +18,7 @@ def run_module():
     )
 
     result = dict(changed=False, response={})
-    debug_info = {}
+    debug_info = {"operations": []}
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     provider = module.params['provider']
@@ -52,8 +51,9 @@ def run_module():
             # -------------------------------
             PACKET_REPORT_MAP = {"enable": 1, "disable": 2}
 
-            for i, protection in enumerate(syn_protections):
+            for protection in syn_protections:
                 protection_name = protection['name']
+                index = protection.get('index', 0)
                 body = {
                     "rsIDSSYNAttackName": protection_name,
                     "rsIDSSYNAttackActivationThreshold": protection.get("activation_threshold", 1000),
@@ -62,17 +62,16 @@ def run_module():
                     "rsIDSSYNAttackPacketReport": PACKET_REPORT_MAP.get(protection.get("packet_report", "disable"), 2)
                 }
 
-                index = protection.get('index', 0)
-                if i > 0:
-                    # Refresh device state to avoid API caching issues
-                    refresh_device_state(cc, dp_ip, provider, logger)
-
                 path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/{index}"
                 url = f"https://{provider['cc_ip']}{path}"
 
                 logger.info(f"Creating SYN protection '{protection_name}' at index {index}")
                 resp = cc._post(url, json=body)
-                data = resp.json()
+
+                try:
+                    data = resp.json()
+                except Exception:
+                    data = {"raw_text": resp.text}
 
                 created_protections.append({
                     'name': protection_name,
@@ -83,9 +82,21 @@ def run_module():
                         "app_port_group": body["rsIDSSYNDestinationAppPortGroup"],
                         "packet_report": protection.get("packet_report", "disable"),
                     },
+                    'request': {"method": "POST", "uri": url},
+                    'response_code': resp.status_code,
                     'raw_response': data
                 })
+
+                debug_info['operations'].append({
+                    "type": "protection_create",
+                    "name": protection_name,
+                    "method": "POST",
+                    "uri": url,
+                    "status_code": resp.status_code
+                })
+
                 changes_made = True
+                refresh_device_state(cc, dp_ip, provider, logger)
 
             # -------------------------------
             # Step 2: Create SYN profiles
@@ -105,7 +116,7 @@ def run_module():
                     if "params" in profile:
                         for k, v in profile["params"].items():
                             api_key = FIELD_MAP.get(k, k)
-                            api_value = VALUE_MAP.get(k, {}).get(v.lower(), v) if k in VALUE_MAP else v
+                            api_value = VALUE_MAP.get(k, {}).get(v.lower(), v) if isinstance(v, str) else v
                             body[api_key] = api_value
 
                     path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}"
@@ -113,15 +124,32 @@ def run_module():
 
                     logger.info(f"Creating SYN profile '{profile_name}' with protection '{protection_name}'")
                     resp = cc._post(url, json=body)
-                    data = resp.json()
+
+                    try:
+                        data = resp.json()
+                    except Exception:
+                        data = {"raw_text": resp.text}
 
                     created_profiles.append({
                         'profile_name': profile_name,
                         'protection_name': protection_name,
                         'parameters': profile.get("params", {}),
+                        'request': {"method": "POST", "uri": url},
+                        'response_code': resp.status_code,
                         'raw_response': data
                     })
+
+                    debug_info['operations'].append({
+                        "type": "profile_create",
+                        "profile": profile_name,
+                        "protection": protection_name,
+                        "method": "POST",
+                        "uri": url,
+                        "status_code": resp.status_code
+                    })
+
                     changes_made = True
+                    refresh_device_state(cc, dp_ip, provider, logger)
 
         result['changed'] = changes_made
         result['response'] = {
@@ -147,8 +175,8 @@ def refresh_device_state(cc, dp_ip, provider, logger):
     try:
         path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable"
         url = f"https://{provider['cc_ip']}{path}"
-        cc._get(url)
-        logger.debug(f"Refreshed device state for {dp_ip}")
+        resp = cc._get(url)
+        logger.debug(f"Refreshed device state for {dp_ip} (status {resp.status_code})")
     except Exception as e:
         logger.debug(f"State refresh failed (non-critical): {str(e)}")
 

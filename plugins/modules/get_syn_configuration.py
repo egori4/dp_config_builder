@@ -30,27 +30,48 @@ def run_module():
                        log_level=log_level, logger=logger)
         debug_info = {}
 
-        # Reverse mapping
         PACKET_REPORT_MAP = {'1': 'enable', '2': 'disable'}
 
+        # -------------------------------
         # 1. Get SYN protections
+        # -------------------------------
         prot_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable"
         logger.info(f"Fetching SYN protections from {dp_ip}")
         prot_resp = cc._get(prot_url)
+        logger.debug({
+            "method": "GET",
+            "url": prot_url,
+            "body": None,
+            "response_code": prot_resp.status_code,
+            "response_body": prot_resp.text
+        })
         syn_protections = prot_resp.json().get('rsIDSSYNAttackTable', [])
         debug_info['syn_protections_raw_count'] = len(syn_protections)
 
+        # -------------------------------
         # 2. Get SYN profiles
+        # -------------------------------
         prof_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable"
         logger.info(f"Fetching SYN profiles from {dp_ip}")
         prof_resp = cc._get(prof_url)
+        logger.debug({
+            "method": "GET",
+            "url": prof_url,
+            "body": None,
+            "response_code": prof_resp.status_code,
+            "response_body": prof_resp.text
+        })
         syn_profiles = prof_resp.json().get('rsIDSSynProfilesTable', [])
         debug_info['syn_profiles_raw_count'] = len(syn_profiles)
 
-        # 3. Build a protection lookup by name
+        # -------------------------------
+        # 3. Build protection lookup
+        # -------------------------------
         prot_by_name = {p.get('rsIDSSYNAttackName'): p for p in syn_protections}
 
-        # 4. Build nested profile structure with snake_case keys
+        # -------------------------------
+        # 4. Build nested profile structure
+        # -------------------------------
         profiles_dict = {}
         for profile in syn_profiles:
             profile_name = profile.get('rsIDSSynProfilesName', 'DEFAULT_PROFILE')
@@ -58,38 +79,43 @@ def run_module():
             if profile_name not in profiles_dict:
                 profiles_dict[profile_name] = {'profile_name': profile_name, 'protections': []}
 
-            # Get protection details
             prot_details = prot_by_name.get(protection_name, {})
             prot_struct = {
                 'protection_name': protection_name,
                 'protection_id': prot_details.get('rsIDSSYNAttackId'),
                 'activation_threshold': prot_details.get('rsIDSSYNAttackActivationThreshold'),
                 'termination_threshold': prot_details.get('rsIDSSYNAttackTerminationThreshold'),
-                'packet_report': PACKET_REPORT_MAP.get(str(prot_details.get('rsIDSSYNAttackPacketReport')), prot_details.get('rsIDSSYNAttackPacketReport')),
+                'packet_report': PACKET_REPORT_MAP.get(str(prot_details.get('rsIDSSYNAttackPacketReport')),
+                                                       prot_details.get('rsIDSSYNAttackPacketReport')),
                 'app_port_group': prot_details.get('rsIDSSYNDestinationAppPortGroup')
             }
             profiles_dict[profile_name]['protections'].append(prot_struct)
 
-        # Apply filter if provided
+        # -------------------------------
+        # 5. Apply filter if provided
+        # -------------------------------
         all_profiles = list(profiles_dict.values())
         if filter_syn_profile_names:
             filtered_profiles = [p for p in all_profiles if p['profile_name'] in filter_syn_profile_names]
             result['profiles'] = filtered_profiles
-            debug_info['filter_applied'] = True
-            debug_info['filter_syn_profile_names'] = filter_syn_profile_names
-            debug_info['filtered_count'] = len(filtered_profiles)
-            debug_info['total_count'] = len(all_profiles)
+            debug_info.update({
+                'filter_applied': True,
+                'filter_syn_profile_names': filter_syn_profile_names,
+                'filtered_count': len(filtered_profiles),
+                'total_count': len(all_profiles)
+            })
         else:
             result['profiles'] = all_profiles
-            debug_info['filter_applied'] = False
-            debug_info['total_count'] = len(all_profiles)
+            debug_info.update({
+                'filter_applied': False,
+                'total_count': len(all_profiles)
+            })
 
         result['debug_info'] = debug_info
         module.exit_json(**result)
 
     except Exception as e:
         logger.error(f"Exception: {str(e)}")
-        # Ensure debug_info exists to prevent fail_json error
         module.fail_json(msg=str(e), debug_info=debug_info or {})
 
 def main():

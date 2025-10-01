@@ -26,6 +26,7 @@
           loop_control:
             label: "Device: {{ item }}"
           register: syn_create_results
+
         - name: Display SYN creation results (formatted)
           vars:
             formatted_output: |
@@ -77,13 +78,11 @@
               {% for prof in item.response.profiles %}
                 - Profile Name: {{ prof.profile_name }}
                   Attached Protection: {{ prof.protection_name }}
-                  Parameters:
                   {% if prof.parameters %}
-                    {% for k, v in prof.parameters.items() %}
+                  Parameters:
+                  {% for k, v in prof.parameters.items() %}
                     - {{ k }}: {{ v }}
-                    {% endfor %}
-                  {% else %}
-                    - None
+                  {% endfor %}
                   {% endif %}
               {% endfor %}
               {% endif %}
@@ -96,6 +95,7 @@
           loop: "{{ syn_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+
         - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"
@@ -107,6 +107,7 @@
             - not (skip_policy_updates | default(false))
             - syn_create_results is defined
             - syn_create_results.changed | default(false)
+
       always:
         - name: Unlock device(s)
           dp_unlock:

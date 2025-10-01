@@ -105,7 +105,6 @@
             label: "Applying policies: {{ item }}"
 
       always:
-        # Step 4: Unlock device(s)
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
