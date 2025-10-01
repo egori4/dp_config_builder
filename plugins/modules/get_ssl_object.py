@@ -21,8 +21,6 @@ def format_ssl_object_for_display(raw_obj):
         "ssl_object_profile": ENABLE_DISABLE_MAP.get(raw_obj.get("rsProtectedObjEnable"), raw_obj.get("rsProtectedObjEnable")),
         "ip_address": raw_obj.get("rsProtectedObjIpAddr"),
         "Port": raw_obj.get("rsProtectedObjApplPort"),
-        "add_certificate": raw_obj.get("rsProtectedObjAddCertificate"),
-        "remove_certificate": raw_obj.get("rsProtectedObjRemoveCertificate"),
         "front_sslv3": ENABLE_DISABLE_MAP.get(raw_obj.get("rsProtectedObjSSLV3Enable")),
         "front_tls1.0": ENABLE_DISABLE_MAP.get(raw_obj.get("rsProtectedObjTLS10Enable")),
         "front_tls1.1": ENABLE_DISABLE_MAP.get(raw_obj.get("rsProtectedObjTLS11Enable")),
