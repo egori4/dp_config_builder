@@ -28,6 +28,7 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           
       - name: Configure Git
+        if: github.event_name == 'push'
         run: |
           git config user.name "GitHub Actions Mirror Bot"
           git config user.email "actions@github.com"
@@ -46,7 +47,6 @@ jobs:
       - name: Delete branch from radware
         if: github.event_name == 'delete'
         run: |
-          # For delete events, use github.event.ref instead of GITHUB_REF
           BRANCH_NAME="${{ github.event.ref }}"
           echo "Deleting branch: $BRANCH_NAME"
           
