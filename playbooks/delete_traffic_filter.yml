@@ -4,7 +4,7 @@
   gather_facts: false
   vars_files:
     - ../vars/cc.yml
-    - ../vars/delete_vars.yml   # contains dp_ip (list of device IPs) and delete_traffic_filters (profiles & protections)
+    - ../vars/delete_vars.yml  # contains dp_ip (list of device IPs) and delete_traffic_filters (profiles & protections)
 
   tasks:
 
@@ -32,57 +32,57 @@
           register: tf_delete_results
           ignore_errors: true
 
-        # Display deletion results in user-friendly format
+        # --- CORRECTED DISPLAY TASK ---
+        # This task uses the fixed formatting technique for clean output.
         - name: Display Traffic Filter deletion results
           vars:
             formatted_output: |
-              {% for result in tf_delete_results.results %}
-              Device: {{ result.item }}
-
-              {% set profiles = result.response.deleted_profiles | default([]) %}
-              {% set protections = result.response.deleted_protections | default([]) %}
-              {% set errors = result.failed_items | default([]) %}
-
-              {% if profiles | length > 0 %}
-              Deleted Profiles:
+              **Device: {{ item.item }}**
+              
+              {% set profiles = item.response.deleted_profiles | default([]) %}
+              {% set protections = item.response.deleted_protections | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              
+              **Deleted Profiles ({{ profiles | length }}):**
               {% for prof in profiles %}
-                {% if prof.get('error') %}
-                - {{ prof.profile_name }} | Error: {{ prof.error }}
-                {% else %}
-                - {{ prof.profile_name }} was deleted successfully | Status: {{ prof.response.status | default('deleted') }}
-                {% endif %}
-              {% endfor %}
+              {% if prof.get('error') %}
+              - {{ prof.profile_name }} | ERROR: {{ prof.error }}
               {% else %}
+              - {{ prof.profile_name }} was deleted successfully
+              {% endif %}
+              {% endfor %}
+              {% if profiles | length == 0 %}
               No profiles were deleted.
               {% endif %}
-
-              {% if protections | length > 0 %}
-              Deleted Protections:
+              
+              **Deleted Protections ({{ protections | length }}):**
               {% for prot in protections %}
-                {% if prot.get('error') %}
-                - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) | Error: {{ prot.error }}
-                {% else %}
-                - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) was deleted successfully
-                  | Status: {{ prot.response.status | default('deleted') }}
-                {% endif %}
-              {% endfor %}
+              {% if prot.get('error') %}
+              - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) | ERROR: {{ prot.error }}
               {% else %}
+              - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) was deleted successfully
+              {% endif %}
+              {% endfor %}
+              {% if protections | length == 0 %}
               No protections were deleted.
               {% endif %}
-
+              
+              **Errors Detected:**
               {% if errors | length > 0 %}
-              Errors:
               {% for err in errors %}
               - {{ err }}
               {% endfor %}
               {% else %}
-              No errors.
+              No errors detected.
               {% endif %}
-
-              {% endfor %}
-          ansible.builtin.debug:
+              
+          debug:
+            # Splits the clean multi-line string into a list for clean display
             msg: "{{ formatted_output.split('\n') }}"
-
+          loop: "{{ tf_delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+          
         # Apply policy updates if needed
         - name: Apply policy updates per device
           update_policies:

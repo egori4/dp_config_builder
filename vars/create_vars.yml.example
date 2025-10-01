@@ -353,7 +353,7 @@ create_tf_protections:
     tcp_finack: "enable"            # TCP FIN-ACK flag handling
     tcp_pshack: "enable"            # TCP PSH-ACK flag handling
     threshold_pps: "5000"           # Optional: rate limit in packets per second
-    threshold_bps: "0"              # Optional: rate limit in bits per second
+    threshold_kbps: "0"              # Optional: rate limit in kilo bits per second
     packet_report: "enable"         # enable, disable
     threshold_unit: "pps"           # kbps, pps
     attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
@@ -371,12 +371,26 @@ create_tf_protections:
     tcp_finack: "enable"
     tcp_pshack: "enable"
     threshold_pps: "5000"
-    threshold_bps: "0"
+    threshold_kbps: "0"
     packet_report: "enable"         # enable, disable
-    threshold_unit: "pps"           # empty, kbps, pps
+    threshold_unit: "pps"           # kbps, pps
     attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
 
-  
+### Minimal parameter to create Traffic filter
+create_tf_profiles:
+  - profile_name: "TF_PROFILE_1"
+    action: "report_only"           # report_only, block_and_report
+  - profile_name: "TF_PROFILE_2"
+    action: "block_and_report"      # report_only, block_and_report
+
+create_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    protocol: "tcp"
+    threshold_pps: "5000"
+    threshold_unit: "pps"
+    attack_tracking_type: "per_destination"
+ 
   
 ########################## Security Policy Configuration ##########################
 

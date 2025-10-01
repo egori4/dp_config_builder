@@ -14,6 +14,8 @@
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
           loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
           when: not (skip_device_lock | default(false))
 
         - name: Edit Traffic Filter profiles and protections
@@ -26,64 +28,111 @@
           loop_control:
             label: "Device: {{ item }}"
           register: traffic_filter_results
-          ignore_errors: true
 
+        - name: Fail if any device reported edit errors (stop the run)
+          ansible.builtin.fail:
+            msg: |
+              Traffic Filter edit failed on device {{ item.item }}.
+              Errors:
+              {{ (item.response.errors | default([])) | join('\n') }}
+          loop: "{{ traffic_filter_results.results | default([]) }}"
+          loop_control:
+            label: "Device: {{ item.item if item is defined else 'unknown' }}"
+          when: >
+            (item is defined) and (
+              (item.failed | default(false))
+              or ((item.response.errors | default([])) | length > 0)
+              or ((item.response.edited_profiles | default([]) | selectattr('status','equalto','failed') | list | length) > 0)
+              or ((item.response.edited_protections | default([]) | selectattr('status','equalto','failed') | list | length) > 0)
+            )
+
+        # --- RESTRUCTURED DISPLAY TASK (User-Friendly Results) ---
         - name: Display Traffic Filter results (user-friendly)
           vars:
             output_lines: |
+              **Device: {{ item.item }}**
               {% set profiles = item.response.edited_profiles | default([]) %}
               {% set protections = item.response.edited_protections | default([]) %}
               {% set errors = item.response.errors | default([]) %}
 
-              **Device: {{ item.item }}**
-
-              {% if profiles | length > 0 %}
               **Traffic Filter Profiles Edited ({{ profiles | length }}):**
               {% for prof in profiles %}
               - **Profile Name:** {{ prof.profile_name }}
               {% if prof.user_friendly is defined %}
-              {% for k, v in prof.user_friendly.items() %}
-              -   {{ k | replace('_', ' ') | capitalize }}: {{ v }}
+              {% for k, v in prof.user_friendly.items() if k != 'profile_name' %}
+                - {{ k | replace('_', ' ') | capitalize }}: {{ v }}
               {% endfor %}
               {% endif %}
               {% if prof.error is defined %}
               - **Error:** {{ prof.error }}
               {% endif %}
               {% endfor %}
-              {% else %}
+              {% if profiles | length == 0 %}
               No profiles were edited.
               {% endif %}
 
-              {% if protections | length > 0 %}
               **Traffic Filter Protections Edited ({{ protections | length }}):**
               {% for prot in protections %}
-              - **Protection Name:** {{ prot.protection_name }} (Profile: {{ prot.user_friendly.filter_profile_name | default(prot.profile_name) }})
+              - **Protection Name:** {{ prot.protection_name }} (Profile: {{ prot.user_friendly.profile_name | default(prot.profile_name) }})
               {% if prot.user_friendly is defined %}
-              {% for k, v in prot.user_friendly.items() %}
-              -   {{ k | replace('_', ' ') | capitalize }}: {{ v }}
+              {% for k, v in prot.user_friendly.items() if k not in ['profile_name', 'protection_name'] %}
+                - {{ k | replace('_', ' ') | capitalize }}: {{ v }}
               {% endfor %}
               {% endif %}
               {% if prot.error is defined %}
               - **Error:** {{ prot.error }}
               {% endif %}
               {% endfor %}
-              {% else %}
+              {% if protections | length == 0 %}
               No protections were edited.
               {% endif %}
 
-              {% if errors | length > 0 %}
               **Errors Detected:**
+              {% if errors | length > 0 %}
               {% for err in errors %}
               - {{ err }}
               {% endfor %}
               {% else %}
               No device-level errors detected.
-              {% endif %}
+              {% endif %}  
           ansible.builtin.debug:
             msg: "{{ output_lines.split('\n') }}"
-          loop: "{{ traffic_filter_results.results }}"
+          loop: "{{ traffic_filter_results.results | default([]) }}"
           loop_control:
             label: "Device: {{ item.item }}"
+
+        # --- NEW DISPLAY TASK (API Details for Debugging) ---
+        - name: Display API Transaction Details (DEBUG)
+          when: item.response.debug_info is defined and item.response.debug_info | length > 0
+          vars:
+            api_debug_output: |
+              {% for info in item.response.debug_info %}
+              --------------------------------------------------
+              **API TRANSACTION:** {{ loop.index }}
+              **METHOD:** {{ info.method | default('N/A') }}
+              **URI:** {{ info.uri | default('N/A') }}
+              **Response Code:** {{ info.response_code | default('N/A') }}
+              {% if info.body is defined %}
+              **BODY:**
+              {{ info.body | to_nice_json(indent=4) }}
+              {% endif %}
+              **Response Body (Partial/Raw):**
+              {% if info.response_body is defined %}
+              {{ info.response_body | to_nice_json(indent=4) }}
+              {% else %}
+              N/A or not logged.
+              {% endif %}
+              {% endfor %}
+
+          ansible.builtin.debug:
+            msg: |
+              ==================================================
+              API DEBUG INFO FOR DEVICE: {{ item.item }}
+              {{ api_debug_output }}
+              ==================================================     
+          loop: "{{ traffic_filter_results.results | default([]) }}"
+          loop_control:
+            label: "Device API Debug: {{ item.item }}"
 
         - name: Apply policy updates per device
           update_policies:
@@ -94,8 +143,8 @@
             label: "Applying policies: {{ item }}"
           when:
             - not (skip_policy_updates | default(false))
-            - tf_edit_results is defined
-            - tf_edit_results.changed | default(false)
+            - traffic_filter_results is defined
+            - traffic_filter_results.changed | default(false)
 
       always:
         - name: Unlock device(s)

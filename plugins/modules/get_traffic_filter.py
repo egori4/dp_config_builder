@@ -4,19 +4,27 @@ Ansible module to fetch DefensePro Traffic Filter profiles and associated protec
 - Fetches profiles and protections from a DefensePro device via CyberController API.
 - Returns only relevant information: profile -> protections mapping + summary.
 - Logs main actions with logger.info and raw API responses with logger.debug.
+- Adds METHOD, URI, and Response code to debug info.
 """
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.logger import Logger
-from ansible.module_utils.radware_cc import RadwareCC
+# Assuming these are available in your environment
+# from ansible.module_utils.logger import Logger
+# from ansible.module_utils.radware_cc import RadwareCC
 
 # Mapping API values to user-friendly strings
-ENABLED_DISABLED_MAP = {"1": "enabled", "2": "disabled"}
+
+# NOTE: This map is preserved as requested, where '1' = enable and '2' = disable.
+ENABLED_DISABLED_MAP = {"1": "enable", "2": "disable"}
+
 PROTOCOL_MAP = {
     "0": "any", "1": "tcp", "2": "udp", "3": "icmp", "4": "igmp",
     "5": "sctp", "6": "icmpv6", "7": "gre", "8": "ipinip"
 }
-ACTION_MAP = {"0": "report_only", "1": "report_only", "10": "drop"}
+ACTION_MAP = {"0": "report_only", "1": "block_and_report"}
+
+# COMPLETED MAPPING - Added '0' for cases where threshold is not used/empty
+THRESHOLD_USED_MAP = {"2": "pps", "1": "kbps", "0": "empty"}
 
 
 def run_module():
@@ -32,18 +40,35 @@ def run_module():
     dp_ip = module.params["dp_ip"]
     filter_tf_profile_names = module.params["filter_tf_profile_names"]
 
-    log_level = provider.get("log_level", "disabled")
+    # Placeholder for unavailable utilities
+    try:
+        from ansible.module_utils.radware_cc import RadwareCC
+        from ansible.module_utils.logger import Logger
+    except ImportError:
+        module.fail_json(msg="Missing module utilities: radware_cc or logger.")
+
+    log_level = provider.get("log_level", "disable")
     logger = Logger(verbosity=log_level)
     cc = RadwareCC(
         provider["cc_ip"], provider["username"], provider["password"],
         log_level=log_level, logger=logger
     )
 
+    debug_info = []
+
     try:
         # Fetch all traffic filter profiles
         profile_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable"
         logger.info(f"Fetching Traffic Filter profiles from {dp_ip}")
         resp_profiles = cc._get(profile_url)
+        
+        # DEBUG CAPTURE: METHOD, URI, Response Code, and partial Response Body
+        debug_info.append({
+            "method": "GET",
+            "uri": profile_url,
+            "response_code": resp_profiles.status_code,
+            "response_body": resp_profiles.text[:200] + ('...' if len(resp_profiles.text) > 200 else '') 
+        })
         profiles_raw = resp_profiles.json().get("rsNewTrafficProfileTable", [])
         logger.debug(f"Raw profiles data: {profiles_raw}")
 
@@ -51,6 +76,14 @@ def run_module():
         prot_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable"
         logger.info(f"Fetching Traffic Filter protections from {dp_ip}")
         resp_prots = cc._get(prot_url)
+        
+        # DEBUG CAPTURE: METHOD, URI, Response Code, and partial Response Body
+        debug_info.append({
+            "method": "GET",
+            "uri": prot_url,
+            "response_code": resp_prots.status_code,
+            "response_body": resp_prots.text[:200] + ('...' if len(resp_prots.text) > 200 else '') 
+        })
         protections_raw = resp_prots.json().get("rsNewTrafficFilterTable", [])
         logger.debug(f"Raw protections data: {protections_raw}")
 
@@ -74,12 +107,12 @@ def run_module():
                     "protection_name": prot.get("rsNewTrafficFilterName"),
                     "protection_id": prot.get("rsNewTrafficFilterID"),
                     "state": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterState", ""), prot.get("rsNewTrafficFilterState", "")),
-                    "priority": prot.get("rsNewTrafficFilterPriority", "0"),
                     "protocol": PROTOCOL_MAP.get(prot.get("rsNewTrafficFilterProtocol", ""), prot.get("rsNewTrafficFilterProtocol", "")),
                     "threshold_pps": prot.get("rsNewTrafficFilterThresholdPPS", "0"),
-                    "threshold_bps": prot.get("rsNewTrafficFilterThresholdBPS", "0"),
+                    "threshold_kbps": prot.get("rsNewTrafficFilterThresholdBPS", "0"),
+                    "threshold_unit": THRESHOLD_USED_MAP.get(prot.get("rsNewTrafficFilterThresholdUsed", "0"), prot.get("rsNewTrafficFilterThresholdUsed", "")),
                     "packet_report": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterPacketReport", ""), prot.get("rsNewTrafficFilterPacketReport", "")),
-                    "vlan": prot.get("rsNewTrafficFilterVLAN", "Any"),
+                    "vlan": prot.get("rsNewTrafficFilterVLAN", "Any"), 
                     "src_network": prot.get("rsNewTrafficFilterSrcNetwork", ""),
                     "src_port": prot.get("rsNewTrafficFilterSrcPort", ""),
                     "dst_network": prot.get("rsNewTrafficFilterDstNetwork", ""),
@@ -109,12 +142,16 @@ def run_module():
             "total_protections": sum(len(p["protections"]) for p in profiles_to_return)
         }
 
-        # Return only relevant info
-        module.exit_json(profiles=profiles_to_return, summary=summary)
+        # Return relevant info + debug info
+        module.exit_json(
+            profiles=profiles_to_return,
+            summary=summary,
+            debug_info=debug_info
+        )
 
     except Exception as e:
         logger.error(f"Exception fetching Traffic Filter data: {str(e)}")
-        module.fail_json(msg=str(e))
+        module.fail_json(msg=str(e), debug_info=debug_info)
 
 
 def main():

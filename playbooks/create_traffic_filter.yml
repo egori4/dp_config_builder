@@ -7,7 +7,8 @@
     - ../vars/create_vars.yml
 
   tasks:
-    - block:
+    - name: Create and apply Traffic Filter configuration
+      block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
@@ -26,52 +27,65 @@
             label: "Device: {{ item }}"
           register: tf_create_results
 
+        # --- USER-FRIENDLY DISPLAY TASK ---
         - name: Display Traffic Filter creation results
           vars:
             formatted_output: |
-              Device: {{ item.item }}
-              {% if ansible_check_mode %}
-              PREVIEW MODE - Operations that would be performed
-              {% elif item.failed | default(false) %}
-              Error occurred:
-                - {{ item.msg | default('Unknown error') }}
-              {% else %}
+              **Device: {{ item.item }}**
+
               EXECUTION RESULTS:
 
-                {% if item.response.created_profiles | length > 0 %}
-                Traffic Filter Profiles created successfully:
-                {% for prof in item.response.created_profiles %}
-                  - {{ prof.profile_name }}
-                    Parameters:
-                    {% for k, v in prof.user_friendly.items() if k != 'profile_name' and v is not none %}
-                      - {{ k }}: {{ v }}
-                    {% endfor %}
-                {% endfor %}
-                {% endif %}
+              **Traffic Filter Profiles created successfully:**
+              {{ item.response.pretty_profiles }}
 
-                {% if item.response.created_protections | length > 0 %}
-                Traffic Filter Protections created successfully:
-                {% for prot in item.response.created_protections %}
-                  - {{ prot.protection_name }} (Profile: {{ prot.profile_name }})
-                    Parameters:
-                    {% for k, v in prot.user_friendly.items() if k not in ['profile_name', 'protection_name'] and v is not none %}
-                      - {{ k }}: {{ v }}
-                    {% endfor %}
-                {% endfor %}
-                {% endif %}
+              **Traffic Filter Protections created successfully:**
+              {{ item.response.pretty_protections }}
 
-                {% if item.response.errors | length > 0 %}
-                Errors:
-                {% for err in item.response.errors %}
-                  - {{ err }}
-                {% endfor %}
-                {% endif %}
+              **Errors Detected:**
+              {% if item.response.errors | length > 0 %}
+              - {{ item.response.errors | join('\n- ') }}
+              {% else %}
+              No errors detected.
               {% endif %}
-          ansible.builtin.debug:
+          debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ tf_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+
+        # --- NEW API DEBUG DISPLAY TASK ---
+        - name: Display API Transaction Details (DEBUG)
+          when: item.response.debug_info is defined and item.response.debug_info | length > 0
+          vars:
+            api_debug_output: |
+              {% for info in item.response.debug_info %}
+              --------------------------------------------------
+              **API TRANSACTION:** {{ loop.index }}
+              **METHOD:** {{ info.method | default('N/A') }}
+              **URI:** {{ info.uri | default('N/A') }}
+              **Response Code:** {{ info.response_code | default('N/A') }}
+              {% if info.body is defined %}
+              **BODY:**
+              {{ info.body | to_nice_json(indent=4) }}
+              {% endif %}
+              **Response Body (Partial/Raw):**
+              {% if info.response_body is defined %}
+              {{ info.response_body | to_nice_json(indent=4) }}
+              {% else %}
+              N/A or not logged.
+              {% endif %}
+              {% endfor %}
+
+          ansible.builtin.debug:
+            msg: |
+              ==================================================
+              API DEBUG INFO FOR DEVICE: {{ item.item }}
+              {{ api_debug_output }}
+              ==================================================
+              
+          loop: "{{ tf_create_results.results }}"
+          loop_control:
+            label: "Device API Debug: {{ item.item }}"
 
         - name: Apply policy updates per device
           update_policies:

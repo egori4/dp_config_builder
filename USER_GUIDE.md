@@ -1251,7 +1251,7 @@ create_tf_protections:
     tcp_finack: "enable"            # enable, disable
     tcp_pshack: "disable"           # enable, disable
     threshold_pps: "5000"           # packet per second threshold
-    threshold_bps: "0"              # bits per second threshold
+    threshold_kbps: "0"              # kilo bits per second threshold
     packet_report: "enable"         # enable, disable
     threshold_unit: "pps"           # kbps, pps
     attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
@@ -1274,7 +1274,7 @@ edit_tf_protections:
     tcp_finack: "disable"
     tcp_pshack: "enable"
     threshold_pps: 0
-    threshold_bps: 10000
+    threshold_kbps: 10000
     threshold_unit: "kbps"         # options: pps, kbps
     packet_report: "enable"       # enable/disable
     attack_tracking_type: "all"  # options: all, per_source, per_destination, per_source_and_destination, track_returning_traffic
@@ -1320,7 +1320,7 @@ delete_traffic_filters:
 *** action ***: Optional – report_only or block_and_report (default: report_only).
 *** Thresholds ***:
 # threshold_pps: Packets per second limit.
-# threshold_bps: Bits per second limit.
+# threshold_kbps: Bits per second limit.
 # threshold_unit: Unit for threshold (pps/kbps).
 *** attack_tracking_type ***: Optional – all, per_source, per_destination, etc.
 *** TCP flags ***: Optional – enable/disable per flag (syn, ack, rst, synack, finack, pshack).
