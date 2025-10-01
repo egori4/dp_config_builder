@@ -264,7 +264,6 @@ create_ssl_objects:
     ip_address: "155.1.102.9"                    # Mandatory
     Port: 443                                    # Optional – default: 443
     add_certificate: ""                          # Optional – certificate name to add 
-    remove_certificate: ""                       # Optional – certificate name to remove
     front_sslv3: "disable"                       # Options: enable, disable
     front_tls1.0: "disable"                      # Options: enable, disable
     front_tls1.1: "disable"                      # Options: enable, disable

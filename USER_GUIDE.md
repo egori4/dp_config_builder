@@ -1030,7 +1030,6 @@ create_ssl_objects:
     ip_address: "155.1.102.7"          # MANDATORY: Device IP
     Port: 443                           # OPTIONAL: Port (default: 443)
     add_certificate: "radware"         # OPTIONAL: Certificate to add
-    remove_certificate: ""             # OPTIONAL: Certificate to remove
     front_sslv3: "disable"             # OPTIONAL: enable, disable (default: disable)
     front_tls1.0: "disable"            # OPTIONAL: enable, disable (default: disable)
     front_tls1.1: "enable"             # OPTIONAL: enable, disable (default: enable)
@@ -1076,6 +1075,7 @@ edit_ssl_objects:
     bk_user_cipher: ""                 # OPTIONAL: User-defined cipher
     bk_end_port: 443                   # OPTIONAL: Backend port (default: 443)
   ```
+# The certificate API supports only one operation per call: you can either add a certificate or remove one, but not both simultaneously.
 
 ### Get SSL Object
 # Get all SSL Object from devices
