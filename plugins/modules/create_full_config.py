@@ -1,4 +1,4 @@
-# plugins/modules/create_security_policy.py
+# plugins/modules/create_full_config.py
 """
 Unified Ansible module to create DefensePro security policies with profile bindings via Radware CyberController API.
 
