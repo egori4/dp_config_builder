@@ -1,0 +1,98 @@
+---
+- name: Delete Traffic Filter profiles and protections
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - name: Delete traffic filter block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          when: not (skip_device_lock | default(false))
+
+        # Delete Traffic Filter profiles & protections
+        - name: Delete traffic filter profiles/protections
+          delete_traffic_filter:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            traffic_filters: "{{ delete_traffic_filters }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: tf_delete_results
+          ignore_errors: true
+
+        - name: Display Traffic Filter deletion results
+          vars:
+            formatted_output: |
+              **Device: {{ item.item }}**
+              {% set profiles = item.response.deleted_profiles | default([]) %}
+              {% set protections = item.response.deleted_protections | default([]) %}
+              {% set errors = item.response.errors | default([]) %}
+              **Deleted Profiles ({{ profiles | length }}):**
+              {% for prof in profiles %}
+              {% if prof.get('error') %}
+              - {{ prof.profile_name }} | ERROR: {{ prof.error }}
+              {% else %}
+              - {{ prof.profile_name }} was deleted successfully
+              {% endif %}
+              {% endfor %}
+              {% if profiles | length == 0 %}
+              No profiles were deleted.
+              {% endif %}
+              **Deleted Protections ({{ protections | length }}):**
+              {% for prot in protections %}
+              {% if prot.get('error') %}
+              - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) | ERROR: {{ prot.error }}
+              {% else %}
+              - {{ prot.protection_name }} (Profile: {{ prot.profile_name }}) was deleted successfully
+              {% endif %}
+              {% endfor %}
+              {% if protections | length == 0 %}
+              No protections were deleted.
+              {% endif %}
+              **Errors Detected:**
+              {% if errors | length > 0 %}
+              {% for err in errors %}
+              - {{ err }}
+              {% endfor %}
+              {% else %}
+              No errors detected.
+              {% endif %}
+
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ tf_delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - tf_delete_results is defined
+            - tf_delete_results.changed | default(false)
+
+      always:
+        # Unlock devices
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          when: not (skip_device_lock | default(false))

@@ -129,8 +129,20 @@ ansible-playbook playbooks/edit_ssl_object.yml
 # Delete SSL objects
 ansible-playbook playbooks/delete_ssl_object.yml
 
+# Get all Traffic Filter from devices
+ansible-playbook playbooks/get_traffic_filter.yml
+
+# Create new Traffic Filter
+ansible-playbook playbooks/create_traffic_filter.yml
+
+# Edit existing Traffic Filter
+ansible-playbook playbooks/edit_traffic_filter.yml
+
+# Delete Traffic Filter
+ansible-playbook playbooks/delete_traffic_filter.yml
+
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
@@ -452,8 +464,36 @@ nano vars/delete_vars.yml
 ansible-playbook --check playbooks/delete_https_profile.yml
 ansible-playbook playbooks/delete_https_profile.yml
 ```
+### Workflow 14 : Create New Traffic Filter
 
-### Workflow 14: Create Security Policies with Profile Bindings
+# 1.Define your Traffic Filter
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansble-playbook --check playbooks/create_traffic_filter.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_traffic_filter.yml
+```
+### Workflow 14b : Get Traffic Filter
+```bash
+ansible-playbook playbooks/get_traffic_filter.yml
+```
+### Workflow 14c : Delete Traffic Filter
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_traffic_filter.yml
+ansible-playbook playbooks/delete_traffic_filter.yml
+```
+
+### Workflow 15: Create Security Policies with Profile Bindings (Full Configuration)
+
+The `create_full_config.yml` playbook provides comprehensive orchestration for DefensePro security configuration. It creates all or defined profiles including security policies with profile bindings.
+
+**Configuration Approach:**
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -462,17 +502,21 @@ nano vars/create_vars.yml
 # Edit the security_policy_config section:
 security_policy_config:
   create_network_classes: true    # Create network classes first
-  create_cl_profiles: true        # Create CL profiles next  
+  create_cl_profiles: true        # Create connection limit profiles  
+  create_out_of_state_profiles: true  # Create OOS profiles
+  create_bdos_profiles: true      # Create BDoS profiles
+  create_dns_profiles: true       # Create DNS profiles
+  create_https_profiles: true     # Create HTTPS profiles
   create_security_policies: true  # Create security policies last
 
 # 2. Configure your security policies
-# Add policies to the security_policies section with profile bindings
+# Add policies to the create_security_policies section with profile bindings
 
 # 3. Test orchestration plan (preview mode)
-ansible-playbook --check playbooks/create_security_policy.yml
+ansible-playbook --check playbooks/create_full_config.yml
 
 # 4. Execute full orchestration
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 ```
 
 **Security Policy Features**:
@@ -486,7 +530,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 15: Apply DefensePro Policy Updates
+### Workflow 16: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -494,7 +538,7 @@ security_policy_config:
   apply_policies_after_creation: true  # Automatically apply policies after creation
 
 # 2. Run orchestration - policies will be applied automatically
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Option B: Manual policy updates (standalone)
 # 1. Configure target devices in update_vars.yml
@@ -510,7 +554,7 @@ ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.3
 **Policy Update Features**:
 - **Automatic integration**: Policies applied automatically during orchestration
 - **Manual control**: Standalone playbook for manual policy updates using `vars/update_vars.yml`
-- **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
+- **Conditional execution**: Orchestration playbook "create_full_config.yml" skip policy updates when controlled centrally
 - **Safety confirmation**: Optional interactive prompts to prevent accidental updates
 - **Per-device processing**: Updates applied individually with proper locking
 
@@ -833,7 +877,7 @@ bdos_profiles:
 *** Advanced controls ***: Includes burst attack detection, suppression threshold, footprint strictness, and advanced UDP detection.
 *** Control flags ***: create_bdos_profiles can be toggled independently to enable/disable orchestration.
 
-#### Create DNS Profiles  ####
+### Create DNS Profiles  ####
 ```yaml
 # Define DNS profiles to create on each device
 # Configure DNS profiles in `vars/create_vars.yml`:
@@ -1109,10 +1153,7 @@ Notes for SSL Objects
 # front_tls1.2
 # front_tls1.3
 *** Cipher Controls (Frontend) ***: Optional – Enable/disable cipher support.
-# cipher_suite
-# front_user_cipher
 *** Backend Decryption ***: Optional – Enable/disable backend SSL decryption.
-# bk_end_decrypt
 *** Backend Protocols ***: Optional – Enable/disable SSL/TLS versions on the backend.
 # bk_end_sslv3
 # bk_end_tls1.0
@@ -1191,6 +1232,108 @@ delete_https_profiles:
   - "https_profile_1"
   - "https_profile_2"                  # Show all profiles (default)
 ```
+
+### Create Traffic Filter ###
+```yaml
+# List of Traffic Filter profiles and protections to create per device
+# Each item contains tf_profiles and tf_protections lists
+# tf_profiles: list of profiles to create
+# tf_protections: list of protections under the profiles
+
+create_tf_profiles:
+  - profile_name: "TF_PROFILE_1"
+    action: "report_only"           # report_only, block_and_report
+  - profile_name: "TF_PROFILE_2"
+    action: "block_and_report"
+
+create_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"                # enable, disable (Default: enable)
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp
+    tcp_syn: "enable"               # enable, disable
+    tcp_ack: "enable"               # enable, disable
+    tcp_rst: "disable"              # enable, disable
+    tcp_synack: "enable"            # enable, disable
+    tcp_finack: "enable"            # enable, disable
+    tcp_pshack: "disable"           # enable, disable
+    threshold_pps: "5000"           # packet per second threshold
+    threshold_kbps: "0"              # kilo bits per second threshold
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # kbps, pps
+    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+
+```
+### Editing Traffic Filter (Partial Updates)
+```yaml
+# Minimal Traffic Filter protections for testing
+edit_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"              # enable/disable
+    match_criteria: "match"       # options: match, not-match
+    protocol: "tcp"               # options: any, tcp, udp, icmp, igmp, sctp, icmpv6, gre, ipinip
+    tcp_syn: "enable"
+    tcp_ack: "enable"
+    tcp_rst: "disable"
+    tcp_synack: "enable"
+    tcp_finack: "disable"
+    tcp_pshack: "enable"
+    threshold_pps: 0
+    threshold_kbps: 10000
+    threshold_unit: "kbps"         # options: pps, kbps
+    packet_report: "enable"       # enable/disable
+    attack_tracking_type: "all"  # options: all, per_source, per_destination, per_source_and_destination, track_returning_traffic
+
+
+```
+
+### Get Traffic Filter
+```yaml
+# Filter by specific Traffic Filter profile names, or leave empty list for all profiles
+filter_tf_profile_names: ["TF_PROFILE_1", "TF_PROFILE_2"]
+
+# Examples:
+# filter_tf_profile_names: ["TF_PROFILE_1"]           # Show only one profile
+# filter_tf_profile_names: ["TF_PROFILE_1","TF_PROFILE_2"]  # Show multiple profiles
+# filter_tf_profile_names: []  
+
+```
+
+### Delete Traffic Filter
+
+```yaml
+# Structure must match what the module expects: "profiles" and "protections"
+
+delete_traffic_filters:
+  profiles:
+    - name: "TF_PROFILE_1"
+    - name: "TF_PROFILE_2"
+
+  protections:
+    - profile_name: "TF_PROFILE_1"
+      name: "TF_PROT_1"
+    - profile_name: "TF_PROFILE_2"
+      name: "TF_PROT_2"                # Show all profiles (default)
+
+  # you can delete multiple profiles and protections in one run.
+  # either you can delete just protections, or both.
+```
+### Notes for Traffic Filter Profiles
+
+*** profile_name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: Optional – report_only or block_and_report (default: report_only).
+*** Thresholds ***:
+# threshold_pps: Packets per second limit.
+# threshold_kbps: Bits per second limit.
+# threshold_unit: Unit for threshold (pps/kbps).
+*** attack_tracking_type ***: Optional – all, per_source, per_destination, etc.
+*** TCP flags ***: Optional – enable/disable per flag (syn, ack, rst, synack, finack, pshack).
+*** packet_report ***: Optional – enable/disable packet logging.
+
 
 ### Security Policy Configuration
 
