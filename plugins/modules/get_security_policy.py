@@ -11,7 +11,7 @@ from ansible.module_utils.basic import AnsibleModule
 def format_security_policy_for_display(raw_policy_data):
     """
     Convert raw security policy API data to user-friendly format using the same
-    field mappings as create_security_policy.py for consistency.
+    field mappings as create_full_config.py for consistency.
     """
     
     # Reverse mappings from API fields to user-friendly names
