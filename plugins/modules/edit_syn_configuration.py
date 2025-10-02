@@ -5,8 +5,8 @@ Unified Ansible module to edit DefensePro SYN protections and attach protections
 Features:
 - Edits existing SYN protections (partial updates supported).
 - Attaches protections to SYN profiles (multi-attach supported).
-- Provides clean, user-friendly debug info and logging.
-- Avoids clutter in output (e.g., no "Parameters: None" if nothing to show).
+- Provides clean, structured debug info including METHOD, URI, Response Code, and response data.
+- Removed packet_report support as requested.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -15,8 +15,6 @@ from ansible.module_utils.logger import Logger
 
 
 def run_module():
-    PACKET_REPORT_MAP = {"enable": 1, "disable": 2}
-
     module_args = dict(
         provider=dict(type="dict", required=True),
         dp_ip=dict(type="str", required=True),
@@ -50,7 +48,7 @@ def run_module():
         # Step 1: Edit SYN protections
         # ---------------------------
         for prot in edit_syn_protections:
-            prot_result = dict(changed=False, response={}, debug_info={})
+            prot_result = dict(changed=False, response={}, debug_info={}, parameters={})
             body = {}
 
             prot_index = prot.get("index")
@@ -59,16 +57,16 @@ def run_module():
                 result["results"].append(prot_result)
                 continue
 
+            # Only include provided parameters
             if "activation_threshold" in prot:
                 body["rsIDSSYNAttackActivationThreshold"] = prot["activation_threshold"]
+                prot_result["parameters"]["activation_threshold"] = prot["activation_threshold"]
             if "termination_threshold" in prot:
                 body["rsIDSSYNAttackTerminationThreshold"] = prot["termination_threshold"]
+                prot_result["parameters"]["termination_threshold"] = prot["termination_threshold"]
             if "app_port_group" in prot:
                 body["rsIDSSYNDestinationAppPortGroup"] = prot["app_port_group"]
-            if "packet_report" in prot:
-                body["rsIDSSYNAttackPacketReport"] = PACKET_REPORT_MAP.get(
-                    prot["packet_report"], 2
-                )
+                prot_result["parameters"]["app_port_group"] = prot["app_port_group"]
 
             if not body:
                 prot_result["debug_info"] = {"error": "No parameters provided to update"}
@@ -77,7 +75,7 @@ def run_module():
 
             path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/{prot_index}"
             url = f"https://{provider['cc_ip']}{path}"
-            prot_result["debug_info"] = {"method": "PUT", "url": url, "body": body}
+            prot_result["debug_info"].update({"method": "PUT", "uri": url, "body": body})
 
             logger.info(f"Editing SYN protection {prot_index} on device {dp_ip}")
             logger.debug(f"PUT URL: {url}, body: {body}")
@@ -86,15 +84,14 @@ def run_module():
                 if not module.check_mode:
                     resp = cc._put(url, json=body)
                     prot_result["response"] = resp.json()
+                    prot_result["debug_info"]["status_code"] = resp.status_code
                     prot_result["changed"] = True
                     any_changed = True
                     logger.info(f"Edited SYN protection {prot_index} successfully")
                     logger.debug(f"Response: {prot_result['response']}")
             except Exception as e:
                 prot_result["debug_info"]["error"] = str(e)
-                logger.error(
-                    f"Failed to edit SYN protection {prot_index}: {str(e)}"
-                )
+                logger.error(f"Failed to edit SYN protection {prot_index}: {str(e)}")
 
             result["results"].append(prot_result)
             debug_info["protections"].append(prot_result["debug_info"])
@@ -107,9 +104,7 @@ def run_module():
             protections = profile.get("protections", [])
 
             if not profile_name:
-                result["results"].append(
-                    {"debug_info": {"error": "Profile name is missing"}}
-                )
+                result["results"].append({"debug_info": {"error": "Profile name is missing"}})
                 continue
 
             if not protections:
@@ -119,7 +114,7 @@ def run_module():
                 continue
 
             for protection_name in protections:
-                prof_result = dict(changed=False, response={}, debug_info={})
+                prof_result = dict(changed=False, response={}, debug_info={}, parameters={})
                 body = {
                     "rsIDSSynProfilesName": profile_name,
                     "rsIDSSynProfileServiceName": protection_name,
@@ -127,7 +122,7 @@ def run_module():
 
                 path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}"
                 url = f"https://{provider['cc_ip']}{path}"
-                prof_result["debug_info"] = {"method": "POST", "url": url, "body": body}
+                prof_result["debug_info"].update({"method": "POST", "uri": url, "body": body})
 
                 logger.info(
                     f"Attaching protection {protection_name} to SYN profile {profile_name} on device {dp_ip}"
@@ -138,11 +133,10 @@ def run_module():
                     if not module.check_mode:
                         resp = cc._post(url, json=body)
                         prof_result["response"] = resp.json()
+                        prof_result["debug_info"]["status_code"] = resp.status_code
                         prof_result["changed"] = True
                         any_changed = True
-                        logger.info(
-                            f"Attached protection {protection_name} to profile {profile_name}"
-                        )
+                        logger.info(f"Attached protection {protection_name} to profile {profile_name}")
                         logger.debug(f"Response: {prof_result['response']}")
                 except Exception as e:
                     prof_result["debug_info"]["error"] = str(e)

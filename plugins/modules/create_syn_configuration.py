@@ -3,7 +3,7 @@
 Unified Ansible module to manage DefensePro SYN protections and profiles.
 
 - Handles both SYN protection creation and SYN profile creation.
-- Provides structured results and full debug details (METHOD, URI, Response Code).
+- Provides structured results and full debug details (METHOD, URI, Response Code, Request Body, Response Data).
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -46,10 +46,6 @@ def run_module():
         created_profiles = []
 
         if not module.check_mode:
-            # -------------------------------
-            # Step 1: Create SYN protections
-            # -------------------------------
-            PACKET_REPORT_MAP = {"enable": 1, "disable": 2}
 
             for protection in syn_protections:
                 protection_name = protection['name']
@@ -58,8 +54,7 @@ def run_module():
                     "rsIDSSYNAttackName": protection_name,
                     "rsIDSSYNAttackActivationThreshold": protection.get("activation_threshold", 1000),
                     "rsIDSSYNAttackTerminationThreshold": protection.get("termination_threshold", 500),
-                    "rsIDSSYNDestinationAppPortGroup": protection.get("app_port_group", ""),
-                    "rsIDSSYNAttackPacketReport": PACKET_REPORT_MAP.get(protection.get("packet_report", "disable"), 2)
+                    "rsIDSSYNDestinationAppPortGroup": protection.get("app_port_group", "")
                 }
 
                 path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/{index}"
@@ -80,9 +75,8 @@ def run_module():
                         "activation_threshold": body["rsIDSSYNAttackActivationThreshold"],
                         "termination_threshold": body["rsIDSSYNAttackTerminationThreshold"],
                         "app_port_group": body["rsIDSSYNDestinationAppPortGroup"],
-                        "packet_report": protection.get("packet_report", "disable"),
                     },
-                    'request': {"method": "POST", "uri": url},
+                    'request': {"method": "POST", "uri": url, "body": body},
                     'response_code': resp.status_code,
                     'raw_response': data
                 })
@@ -92,15 +86,14 @@ def run_module():
                     "name": protection_name,
                     "method": "POST",
                     "uri": url,
-                    "status_code": resp.status_code
+                    "request_body": body,
+                    "status_code": resp.status_code,
+                    "response": data
                 })
 
                 changes_made = True
                 refresh_device_state(cc, dp_ip, provider, logger)
 
-            # -------------------------------
-            # Step 2: Create SYN profiles
-            # -------------------------------
             FIELD_MAP = {"profile_type": "rsIDSSynProfileType"}
             VALUE_MAP = {"profile_type": {"syn_protection": 4}}
 
@@ -109,8 +102,10 @@ def run_module():
                 protections = profile.get('protections', [])
 
                 for protection_name in protections:
-                    body = {"rsIDSSynProfilesName": profile_name,
-                            "rsIDSSynProfileServiceName": protection_name}
+                    body = {
+                        "rsIDSSynProfilesName": profile_name,
+                        "rsIDSSynProfileServiceName": protection_name
+                    }
 
                     # Map human-friendly profile parameters
                     if "params" in profile:
@@ -134,7 +129,7 @@ def run_module():
                         'profile_name': profile_name,
                         'protection_name': protection_name,
                         'parameters': profile.get("params", {}),
-                        'request': {"method": "POST", "uri": url},
+                        'request': {"method": "POST", "uri": url, "body": body},
                         'response_code': resp.status_code,
                         'raw_response': data
                     })
@@ -145,7 +140,9 @@ def run_module():
                         "protection": protection_name,
                         "method": "POST",
                         "uri": url,
-                        "status_code": resp.status_code
+                        "request_body": body,
+                        "status_code": resp.status_code,
+                        "response": data
                     })
 
                     changes_made = True

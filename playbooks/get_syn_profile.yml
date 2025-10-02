@@ -17,7 +17,7 @@
         label: "Device: {{ item }}"
       register: syn_profiles_result
 
-    - name: Display SYN profiles and protections (formatted, aligned)
+    - name: Display SYN profiles and protections
       vars:
         formatted_output: |
           Device: {{ item.item }}
@@ -37,7 +37,6 @@
                 protection_id: {{ prot.protection_id }}
                 activation_threshold: {{ prot.activation_threshold }}
                 termination_threshold: {{ prot.termination_threshold }}
-                packet_report: {{ prot.packet_report }}
                 app_port_group: {{ prot.app_port_group }}
             {% endfor %}
             {% else %}

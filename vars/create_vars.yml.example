@@ -267,7 +267,6 @@ create_syn_protections:
     activation_threshold: "3500"             # SYN activation threshold (packets/sec) - string value
     termination_threshold: "2500"            # SYN termination threshold (packets/sec) - string value
     app_port_group: "http"                   # Application port group (http, https, smtp, dns, ftp, imap) or "" for all ports
-    packet_report: "enable"                  # Packet reporting: enable, disable (optional)
 
 # Define SYN profiles and attach protections
 create_syn_profiles:
@@ -285,7 +284,6 @@ create_syn_profiles:
     activation_threshold: "4000"
     termination_threshold: "3000"
     app_port_group: "https"
-    packet_report: "disable"
 
   # Example: Create minimal SYN protection with only mandatory parameters
   # - name: "Basic SYN Prot"       # Only provide name + thresholds

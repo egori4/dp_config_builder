@@ -306,12 +306,10 @@ edit_syn_protections:
     activation_threshold: 3500             # SYN attack activation threshold 
     termination_threshold: 2500            # SYN attack termination threshold 
     app_port_group: "http"                 # Application port group - lowercase (http, https, etc.)
-    packet_report: "enable"                # Packet reporting: enable, disable
   - index: 500051
     activation_threshold: 4000
     termination_threshold: 3000
-    app_port_group: "https"
-    packet_report: "disable"               
+    app_port_group: "https"             
     
 edit_syn_profiles:
   - name: "SYN_PROFILE_1"

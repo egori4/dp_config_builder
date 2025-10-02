@@ -31,30 +31,6 @@
           vars:
             formatted_output: |
               Device: {{ item.item }}
-              {% if item.response.preview_mode | default(false) %}
-              PREVIEW MODE - Operations that would be performed:
-              {% set planned_ops = item.response.planned_operations | default([]) %}
-              {% if planned_ops %}
-              SYN Configurations ({{ planned_ops | length }} planned):
-              {% for op in planned_ops %}
-                - {{ op.description }}
-              {% endfor %}
-              {% else %}
-              No SYN protections/profiles configured for creation.
-              {% endif %}
-              {% elif ansible_check_mode %}
-              PREVIEW MODE - Operations that would be performed:
-              SYN Configurations (
-                {{ item.debug_info.input.protections_count | default(0) }} protections
-                + {{ item.debug_info.input.profiles_count | default(0) }} profiles
-              ):
-              {% if item.debug_info.input.protections_count | default(0) > 0 %}
-                - {{ item.debug_info.input.protections_count }} protection(s) would be created
-              {% endif %}
-              {% if item.debug_info.input.profiles_count | default(0) > 0 %}
-                - {{ item.debug_info.input.profiles_count }} profile(s) would be created
-              {% endif %}
-              {% else %}
               EXECUTION RESULTS:
               {% if item.failed | default(false) %}
               Error occurred during SYN creation:
@@ -70,7 +46,6 @@
                     Activation Threshold: {{ prot.parameters.activation_threshold }}
                     Termination Threshold: {{ prot.parameters.termination_threshold }}
                     App Port Group: {{ prot.parameters.app_port_group }}
-                    Packet Report: {{ prot.parameters.packet_report }}
               {% endfor %}
               {% endif %}
               {% if item.response.profiles | length > 0 %}
@@ -78,17 +53,10 @@
               {% for prof in item.response.profiles %}
                 - Profile Name: {{ prof.profile_name }}
                   Attached Protection: {{ prof.protection_name }}
-                  {% if prof.parameters %}
-                  Parameters:
-                  {% for k, v in prof.parameters.items() %}
-                    - {{ k }}: {{ v }}
-                  {% endfor %}
-                  {% endif %}
               {% endfor %}
               {% endif %}
               {% else %}
               No SYN protections/profiles were created.
-              {% endif %}
               {% endif %}
           ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
