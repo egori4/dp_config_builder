@@ -142,6 +142,25 @@ delete_https_profiles:
 # - The playbook will delete all combinations of dp_ip × https_profile_deletions
 # - Deletion is permanent – ensure you have backups or exported configurations if needed
 
+########################## Traffic Filter Deletions ##########################
+
+# delete_vars.yml
+# Structure must match what the module expects: "profiles" and "protections"
+
+delete_traffic_filters:
+  profiles:
+    - name: "TF_PROFILE_1"
+    - name: "TF_PROFILE_2"
+
+  protections:
+    - profile_name: "TF_PROFILE_1"
+      name: "TF_PROT_1"
+    - profile_name: "TF_PROFILE_2"
+      name: "TF_PROT_2"
+    
+  # you can delete multiple profiles and protections in one run.
+  # either you can delete just protections, or both.
+  
 ########################## Security Policy Deletions ########################
 # Define security policies to delete
 # Two deletion modes supported:
@@ -165,3 +184,4 @@ delete_security_policies:
 # - deletion_mode: OPTIONAL - Controls deletion behavior:
 #   * "policy_only" (default): Simple DELETE on policy endpoint
 #   * "policy_and_profiles": Uses complex deletion endpoint that may clean up profiles
+
