@@ -7,7 +7,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def pretty_deleted_protections(protections):
-    """Return nicely formatted string of deleted protections."""
     lines = []
     for prot in protections:
         profile_name = prot.get("profile_name")
@@ -18,7 +17,6 @@ def pretty_deleted_protections(protections):
 
 
 def pretty_deleted_profiles(profiles):
-    """Return nicely formatted string of deleted profiles."""
     lines = []
     for prof in profiles:
         profile_name = prof.get("profile_name")
@@ -34,7 +32,7 @@ def run_module():
         traffic_filters=dict(type="dict", required=False, default={}),
     )
 
-    result = dict(changed=False, response={}, debug_info={}, errors=[])
+    result = dict(changed=False, response={}, debug_info=[], errors=[])
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     provider = module.params["provider"]
@@ -44,12 +42,6 @@ def run_module():
     profiles = traffic_filters.get("profiles", [])
     protections = traffic_filters.get("protections", [])
 
-    debug_info = {
-        "dp_ip": dp_ip,
-        "profiles_count": len(profiles),
-        "protections_count": len(protections),
-    }
-
     try:
         from ansible.module_utils.logger import Logger
         from ansible.module_utils.radware_cc import RadwareCC
@@ -58,27 +50,22 @@ def run_module():
         logger = Logger(verbosity=log_level)
 
         cc = RadwareCC(
-            provider["cc_ip"],
-            provider["username"],
-            provider["password"],
-            log_level=log_level,
-            logger=logger,
+            provider["cc_ip"], provider["username"], provider["password"],
+            log_level=log_level, logger=logger,
         )
 
         deleted_profiles = []
         deleted_protections = []
         changes_made = False
         errors = []
+        debug_info = []
 
         if module.check_mode:
             preview_ops = {"profiles": profiles, "protections": protections}
             result.update(
                 {
                     "changed": bool(profiles or protections),
-                    "response": {
-                        "preview_mode": True,
-                        "planned_operations": preview_ops,
-                    },
+                    "response": {"preview_mode": True, "planned_operations": preview_ops},
                 }
             )
             module.exit_json(**result)
@@ -99,10 +86,18 @@ def run_module():
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
                 logger.info(f"Deleting Traffic Filter protection '{protection_name}' under profile '{profile_name}'")
                 resp = cc._delete(url)
-                data = resp.json() if hasattr(resp, "json") else {"status": resp.status_code}
-                logger.debug(f"Delete protection response: {data}")
+
+                debug_entry = {
+                    "method": "DELETE",
+                    "uri": url,
+                    "response_code": resp.status_code,
+                    "response_body_truncated": resp.text[:200] + ('...' if len(resp.text) > 200 else ''),
+                    "response_json": resp.json() if resp.text else {}
+                }
+                debug_info.append(debug_entry)
+
                 deleted_protections.append(
-                    {"profile_name": profile_name, "protection_name": protection_name, "status": "success", "response": data}
+                    {"profile_name": profile_name, "protection_name": protection_name, "status": "success", "response": debug_entry}
                 )
                 changes_made = True
             except Exception as e:
@@ -126,9 +121,17 @@ def run_module():
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
                 logger.info(f"Deleting Traffic Filter profile '{profile_name}'")
                 resp = cc._delete(url)
-                data = resp.json() if hasattr(resp, "json") else {"status": resp.status_code}
-                logger.debug(f"Delete profile response: {data}")
-                deleted_profiles.append({"profile_name": profile_name, "status": "success", "response": data})
+
+                debug_entry = {
+                    "method": "DELETE",
+                    "uri": url,
+                    "response_code": resp.status_code,
+                    "response_body_truncated": resp.text[:200] + ('...' if len(resp.text) > 200 else ''),
+                    "response_json": resp.json() if resp.text else {}
+                }
+                debug_info.append(debug_entry)
+
+                deleted_profiles.append({"profile_name": profile_name, "status": "success", "response": debug_entry})
                 changes_made = True
             except Exception as e:
                 err_msg = f"Failed to delete profile {profile_name}: {str(e)}"

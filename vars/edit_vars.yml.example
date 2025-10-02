@@ -345,26 +345,26 @@ edit_https_profiles:
 # Traffic Filter profiles
 edit_tf_profiles:
   - profile_name: "TF_PROFILE_1"
-    action: "report_only"      # options: report_only, block_and_report
+    action: "report_only"      # options: report_only, block_and_report (Default: report_only)
 
 # Traffic Filter protections
 edit_tf_protections:
   - profile_name: "TF_PROFILE_1"
     protection_name: "TF_PROT_1"
     status: "enable"                # enable, disable (Default: enable)
-    match_criteria: "match"         # match, not-match
-    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
-    tcp_syn: "enable"               # TCP SYN flag handling
-    tcp_ack: "enable"               # TCP ACK flag handling
-    tcp_rst: "enable"               # TCP RST flag handling
-    tcp_synack: "enable"            # TCP SYN-ACK flag handling
-    tcp_finack: "enable"            # TCP FIN-ACK flag handling
-    tcp_pshack: "enable"            # TCP PSH-ACK flag handling
-    threshold_pps: "5000"           # Optional: rate limit in packets per second
+    match_criteria: "match"         # match, not-match (Default: match)
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc. (Default: any)
+    tcp_syn: "enable"               # TCP SYN flag handling (Default: enable)
+    tcp_ack: "enable"               # TCP ACK flag handling (Default: enable)
+    tcp_rst: "enable"               # TCP RST flag handling (Default: enable)
+    tcp_synack: "enable"            # TCP SYN-ACK flag handling (Default: enable)
+    tcp_finack: "enable"            # TCP FIN-ACK flag handling (Default: enable)
+    tcp_pshack: "enable"            # TCP PSH-ACK flag handling (Default: enable)
+    threshold_pps: "5000"           # Optional: rate limit in packets per second (Default: 10000)
     threshold_kbps: "0"              # Optional: rate limit in kbps
-    packet_report: "enable"         # enable, disable
-    threshold_unit: "pps"           # kbps, pps
-    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+    packet_report: "enable"         # enable, disable (Default: enable)
+    threshold_unit: "pps"           # kbps, pps (Default: pps)
+    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic (Default: all)
 
 
   - profile_name: "TF_PROFILE_2"

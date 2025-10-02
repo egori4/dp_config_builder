@@ -1,11 +1,5 @@
 """
 Ansible module to fetch DefensePro Traffic Filter profiles and associated protections.
-
-- Fetches profiles and protections from a DefensePro device via CyberController API.
-- Returns only relevant information: profile -> protections mapping + summary.
-- Logs main actions with logger.info and raw API responses with logger.debug.
-- Adds METHOD, URI, and Response code to debug info.
-- Structured output consistent with edit/delete modules.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -16,7 +10,7 @@ PROTOCOL_MAP = {
     "5": "sctp", "6": "icmpv6", "7": "gre", "8": "ipinip"
 }
 ACTION_MAP = {"0": "report_only", "1": "block_and_report"}
-THRESHOLD_USED_MAP = {"2": "pps", "1": "kbps", "0": "empty"}
+THRESHOLD_USED_MAP = {"2": "pps", "1": "kbps"}
 
 
 def run_module():
@@ -55,14 +49,20 @@ def run_module():
         logger.info(f"Fetching Traffic Filter profiles from {dp_ip}")
         resp_profiles = cc._get(profile_url)
 
+        try:
+            profiles_raw = resp_profiles.json().get("rsNewTrafficProfileTable", [])
+        except Exception:
+            profiles_raw = []
+            errors.append(f"Failed to parse profiles JSON from {dp_ip}")
+
         debug_info.append({
             "method": "GET",
             "uri": profile_url,
             "response_code": resp_profiles.status_code,
-            "response_body": resp_profiles.text[:200] + ('...' if len(resp_profiles.text) > 200 else '')
+            "response_body_truncated": resp_profiles.text[:200] + ('...' if len(resp_profiles.text) > 200 else ''),
+            "response_json": resp_profiles.json() if resp_profiles.text else {}
         })
 
-        profiles_raw = resp_profiles.json().get("rsNewTrafficProfileTable", [])
         logger.debug(f"Raw profiles data: {profiles_raw}")
 
         # === Fetch protections ===
@@ -70,14 +70,20 @@ def run_module():
         logger.info(f"Fetching Traffic Filter protections from {dp_ip}")
         resp_prots = cc._get(prot_url)
 
+        try:
+            protections_raw = resp_prots.json().get("rsNewTrafficFilterTable", [])
+        except Exception:
+            protections_raw = []
+            errors.append(f"Failed to parse protections JSON from {dp_ip}")
+
         debug_info.append({
             "method": "GET",
             "uri": prot_url,
             "response_code": resp_prots.status_code,
-            "response_body": resp_prots.text[:200] + ('...' if len(resp_prots.text) > 200 else '')
+            "response_body_truncated": resp_prots.text[:200] + ('...' if len(resp_prots.text) > 200 else ''),
+            "response_json": resp_prots.json() if resp_prots.text else {}
         })
 
-        protections_raw = resp_prots.json().get("rsNewTrafficFilterTable", [])
         logger.debug(f"Raw protections data: {protections_raw}")
 
         # === Build profiles dict ===
@@ -90,7 +96,10 @@ def run_module():
                 profiles[prof_name] = {
                     "profile_name": prof_name,
                     "num_of_rules": int(prof.get("rsNewTrafficProfileNumOfRules", 0)),
-                    "action": ACTION_MAP.get(prof.get("rsNewTrafficProfileAction", ""), prof.get("rsNewTrafficProfileAction", "")),
+                    "action": ACTION_MAP.get(
+                        prof.get("rsNewTrafficProfileAction", ""),
+                        prof.get("rsNewTrafficProfileAction", "")
+                    ),
                     "protections": []
                 }
 
@@ -101,12 +110,24 @@ def run_module():
                 prot_entry = {
                     "protection_name": prot.get("rsNewTrafficFilterName"),
                     "protection_id": prot.get("rsNewTrafficFilterID"),
-                    "state": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterState", ""), prot.get("rsNewTrafficFilterState", "")),
-                    "protocol": PROTOCOL_MAP.get(prot.get("rsNewTrafficFilterProtocol", ""), prot.get("rsNewTrafficFilterProtocol", "")),
+                    "state": ENABLED_DISABLED_MAP.get(
+                        prot.get("rsNewTrafficFilterState", ""),
+                        prot.get("rsNewTrafficFilterState", "")
+                    ),
+                    "protocol": PROTOCOL_MAP.get(
+                        prot.get("rsNewTrafficFilterProtocol", ""),
+                        prot.get("rsNewTrafficFilterProtocol", "")
+                    ),
                     "threshold_pps": prot.get("rsNewTrafficFilterThresholdPPS", "0"),
                     "threshold_kbps": prot.get("rsNewTrafficFilterThresholdBPS", "0"),
-                    "threshold_unit": THRESHOLD_USED_MAP.get(prot.get("rsNewTrafficFilterThresholdUsed", "0"), prot.get("rsNewTrafficFilterThresholdUsed", "")),
-                    "packet_report": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterPacketReport", ""), prot.get("rsNewTrafficFilterPacketReport", "")),
+                    "threshold_unit": THRESHOLD_USED_MAP.get(
+                        prot.get("rsNewTrafficFilterThresholdUsed", "0"),
+                        prot.get("rsNewTrafficFilterThresholdUsed", "")
+                    ),
+                    "packet_report": ENABLED_DISABLED_MAP.get(
+                        prot.get("rsNewTrafficFilterPacketReport", ""),
+                        prot.get("rsNewTrafficFilterPacketReport", "")
+                    ),
                     "vlan": prot.get("rsNewTrafficFilterVLAN", "Any"),
                     "src_network": prot.get("rsNewTrafficFilterSrcNetwork", ""),
                     "src_port": prot.get("rsNewTrafficFilterSrcPort", ""),

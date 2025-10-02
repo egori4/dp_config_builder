@@ -1,27 +1,16 @@
 # plugins/modules/edit_traffic_filter.py
 """
 Unified Ansible module to edit Traffic Filter profiles and protections on DefensePro devices.
-
-Supports:
-- Check mode
-- Logging (info/debug/error)
-- Pretty-print summaries
-- Proper error handling with fail_json if errors exist
-- Fully aligned with create_traffic_filter.py
 """
 
 from ansible.module_utils.basic import AnsibleModule
 
-
 def map_prot_input_to_user_friendly(prot):
-    """Convert protection input to human-readable values."""
     protocol = str(prot.get('protocol', 'any')).lower()
-
     def flag(val):
         if val is None:
             return None
         return "enable" if str(val).lower() in ['enabled', 'enable', '2'] else "disable"
-
     user_friendly = {
         "profile_name": prot.get('profile_name'),
         "protection_name": prot.get('protection_name'),
@@ -40,12 +29,9 @@ def map_prot_input_to_user_friendly(prot):
         "threshold_unit": prot.get('threshold_unit', 'pps'),
         "attack_tracking_type": prot.get('attack_tracking_type', '')
     }
-
     return {k: v for k, v in user_friendly.items() if v is not None}
 
-
 def map_protection_parameters(prot):
-    """Map user-friendly protection params to API values (for PUT payload)."""
     TCP_FLAGS_MAP = {'enable': '1', 'disable': '2'}
     PACKET_REPORT_MAP = {'enable': '1', 'disable': '2'}
     PROTOCOL_MAP = {
@@ -81,16 +67,12 @@ def map_protection_parameters(prot):
         "rsNewTrafficFilterAttackTrackingType": ATTACK_TRACKING_MAP.get(prot.get('attack_tracking_type', 'all'), '0'),
         "rsNewTrafficFilterCustomProtocol": prot.get('custom_protocol', '')
     }
-
     return {k: v for k, v in payload.items() if v is not None}
 
-
 def map_profile_parameters(profile):
-    """Map profile action to API value."""
-    API_ACTION_MAP = {'report_only': '1', 'block_and_report': '0'}
+    API_ACTION_MAP = {'report_only': '0', 'block_and_report': '1'}
     api_action = API_ACTION_MAP.get(profile.get('action', 'report_only'), '1')
     return {"rsNewTrafficProfileName": profile['profile_name'], "rsNewTrafficProfileAction": api_action}
-
 
 def pretty_profiles(profiles):
     if not profiles:
@@ -105,7 +87,6 @@ def pretty_profiles(profiles):
         lines.append("")
     return "\n".join(lines)
 
-
 def pretty_protections(protections):
     if not protections:
         return "  No protections edited."
@@ -118,7 +99,6 @@ def pretty_protections(protections):
                 lines.append(f"    - {key}: {v}")
         lines.append("")
     return "\n".join(lines)
-
 
 def run_module():
     module_args = dict(
@@ -157,7 +137,7 @@ def run_module():
                 preview={'profiles': tf_profiles, 'protections': tf_protections}
             )
 
-        # Edit profiles
+        # --- Edit profiles ---
         for profile in tf_profiles:
             profile_name = profile.get('profile_name')
             if not profile_name:
@@ -168,18 +148,27 @@ def run_module():
             try:
                 payload = map_profile_parameters(profile)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
-
                 logger.info(f"Editing profile: {profile_name} on {dp_ip}")
                 logger.debug(f"Request URL: {url}")
                 logger.debug(f"Request payload: {payload}")
 
                 resp = cc._put(url, json=payload)
+                logger.debug(f"Response code: {resp.status_code}")
+                try:
+                    resp_body = resp.json()
+                    logger.debug(f"Response body: {resp_body}")
+                except Exception:
+                    resp_body = resp.text
+                    logger.debug(f"Raw response body: {resp_body}")
+
                 resp.raise_for_status()
 
                 edited_profiles.append({
                     'profile_name': profile_name,
                     'status': 'success',
                     'params_applied': payload,
+                    'response_code': resp.status_code,
+                    'response_body': resp_body,
                     'user_friendly': {"profile_name": profile_name, "action": profile.get('action', 'report_only')}
                 })
                 changes_made = True
@@ -190,7 +179,7 @@ def run_module():
                 edited_profiles.append({'profile_name': profile_name, 'status': 'failed', 'error': err_msg})
                 errors.append(err_msg)
 
-        # Edit protections
+        # --- Edit protections ---
         for prot in tf_protections:
             profile_name = prot.get('profile_name')
             protection_name = prot.get('protection_name')
@@ -202,12 +191,19 @@ def run_module():
             try:
                 api_payload = map_protection_parameters(prot)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
-
                 logger.info(f"Editing protection: {protection_name} under profile {profile_name} on {dp_ip}")
                 logger.debug(f"Request URL: {url}")
                 logger.debug(f"Request payload: {api_payload}")
 
                 resp = cc._put(url, json=api_payload)
+                logger.debug(f"Response code: {resp.status_code}")
+                try:
+                    resp_body = resp.json()
+                    logger.debug(f"Response body: {resp_body}")
+                except Exception:
+                    resp_body = resp.text
+                    logger.debug(f"Raw response body: {resp_body}")
+
                 resp.raise_for_status()
 
                 edited_protections.append({
@@ -215,6 +211,8 @@ def run_module():
                     'protection_name': protection_name,
                     'status': 'success',
                     'params_applied': api_payload,
+                    'response_code': resp.status_code,
+                    'response_body': resp_body,
                     'user_friendly': map_prot_input_to_user_friendly(prot)
                 })
                 changes_made = True

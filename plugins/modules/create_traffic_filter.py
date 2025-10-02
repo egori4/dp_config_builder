@@ -1,12 +1,6 @@
 # plugins/modules/create_traffic_filter.py
 """
 Unified Ansible module to create Traffic Filter profiles and protections on DefensePro devices.
-
-Supports:
-- Check mode
-- Logging and detailed debug info
-- Properly aligned user-friendly summary of created profiles and protections
-- Descriptive messages if no TF profiles/protections are configured
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -74,7 +68,8 @@ def map_protection_parameters(prot):
 
 def map_profile_parameters(profile):
     """Map profile action to API value."""
-    api_action = "1" if profile.get('action', 'report_only') == 'report_only' else "0"
+    API_ACTION_MAP = {'report_only': '0', 'block_and_report': '1'}
+    api_action = API_ACTION_MAP.get(profile.get('action', 'report_only'), '1')
     return {"rsNewTrafficProfileName": profile['profile_name'], "rsNewTrafficProfileAction": api_action}
 
 def pretty_profiles(profiles):
@@ -166,10 +161,10 @@ def run_module():
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
 
                 logger.info(f"Creating profile: {profile_name} on {dp_ip}")
-                logger.debug(f"Request URL: {url}")
-                logger.debug(f"Request payload: {payload}")
+                logger.debug(f"REQUEST: Method=POST, URL={url}, Body={payload}")
 
                 resp = cc._post(url, json=payload)
+                logger.debug(f"RESPONSE: Method=POST, URL={url}, Status={resp.status_code}, Body={resp.text}")
                 resp.raise_for_status()
 
                 created_profiles.append({
@@ -177,7 +172,7 @@ def run_module():
                     'status': 'success',
                     'params_applied': payload,
                     'user_friendly': {"profile_name": profile_name,
-                                      "action": "report_only" if payload["rsNewTrafficProfileAction"] == "1" else "block_and_report"}
+                                      "action": "report_only" if payload["rsNewTrafficProfileAction"] == "0" else "block_and_report"}
                 })
                 changes_made = True
                 logger.info(f"Successfully created profile: {profile_name}")
@@ -201,10 +196,10 @@ def run_module():
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
 
                 logger.info(f"Creating protection: {protection_name} under profile {profile_name} on {dp_ip}")
-                logger.debug(f"Request URL: {url}")
-                logger.debug(f"Request payload: {payload}")
+                logger.debug(f"REQUEST: Method=POST, URL={url}, Body={payload}")
 
                 resp = cc._post(url, json=payload)
+                logger.debug(f"RESPONSE: Method=POST, URL={url}, Status={resp.status_code}, Body={resp.text}")
                 resp.raise_for_status()
 
                 created_protections.append({
