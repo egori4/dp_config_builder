@@ -175,6 +175,15 @@ dp_config_builder/
 | `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
 | `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
 
+### Traffic Filter Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_traffic_filter.yml` | Create new Traffic Filter       | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-traffic-filter)  |
+| `edit_traffic_filter.yml`   | Modify existing Traffic Filter   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-traffic-filter)    |
+| `delete_traffic_filter.yml` | Remove Traffic Filter            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-traffic-filter)  |
+| `get_traffic_filter.yml`    | Query current Traffic Filter     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-traffic-filter)     |
+
 ### Security Policy Management
 
 | Playbook | Purpose | Documentation |
@@ -308,6 +317,18 @@ ansible-playbook playbooks/edit_https_profile.yml
 # Delete HTTPS profiles
 ansible-playbook playbooks/delete_https_profile.yml
 
+# Get all Traffic Filter from devices
+ansible-playbook playbooks/get_traffic_filter.yml
+
+# Create new Traffic Filter
+ansible-playbook playbooks/create_traffic_filter.yml
+
+# Edit existing Traffic Filter
+ansible-playbook playbooks/edit_traffic_filter.yml
+
+# Delete Traffic Filter
+ansible-playbook playbooks/delete_traffic_filter.yml
+
 # Security Policy Creation (using vars/create_vars.yml configuration)
 ansible-playbook playbooks/create_full_config.yml
 
@@ -330,6 +351,7 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.10 | 2025-09-30 | Added Protected Traffic Filter functionality |
 | v0.1.9 | 2025-09-26 | Added Protected SSL Object functionality |
 | v0.1.7 | 2025-09-24 | Added HTTPS Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |

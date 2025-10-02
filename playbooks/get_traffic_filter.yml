@@ -1,0 +1,58 @@
+---
+- name: Get Traffic Filter profiles and protections
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - name: Get traffic filter profiles and protections
+      get_traffic_filter:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_tf_profile_names: "{{ filter_tf_profile_names | default([]) }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
+      register: tf_profiles_result
+
+    - name: Display traffic filter profiles and protections
+      vars:
+        # Use a literal block scalar to build the full, clean output string
+        formatted_output: |
+          **Device: {{ item.item }}**
+          {% if item.profiles | length == 0 %}
+          No Traffic Filter profiles found on this device.
+          {% else %}
+          {% for profile in item.profiles %}
+          **Profile Name:** {{ profile.profile_name }}
+          **Action:** {{ profile.action }} | **Rules:** {{ profile.num_of_rules }}
+          {% if profile.protections %}
+          Protections ({{ profile.protections | length }}):
+          {% for prot in profile.protections %}
+          - **Protection Name:** {{ prot.protection_name }} (ID: {{ prot.protection_id }})
+            - Status: {{ prot.state }}
+            - Protocol: {{ prot.protocol }} | Packet Report: {{ prot.packet_report }}
+            - Thresholds:
+              - Unit: {{ prot.threshold_unit }}
+              - PPS: {{ prot.threshold_pps }}
+              - KBPS: {{ prot.threshold_kbps }}
+            - Traffic Match:
+              - Source: {{ prot.src_network }}:{{ prot.src_port }}
+              - Destination: {{ prot.dst_network }}:{{ prot.dst_port }}
+            - TCP Flags:
+            {% for flag in ['tcp_syn','tcp_ack','tcp_rst','tcp_synack','tcp_finack','tcp_pshack'] %}
+              - {{ flag | replace('_',' ') | title }}: {{ prot[flag] }}
+            {% endfor %}
+          {% endfor %}
+          {% else %}
+          Protections: None
+          {% endif %}
+          {% endfor %}
+          {% endif %}
+      ansible.builtin.debug:
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ tf_profiles_result.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"
