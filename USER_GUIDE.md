@@ -142,7 +142,7 @@ ansible-playbook playbooks/edit_traffic_filter.yml
 ansible-playbook playbooks/delete_traffic_filter.yml
 
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
@@ -489,7 +489,11 @@ ansible-playbook --check playbooks/delete_traffic_filter.yml
 ansible-playbook playbooks/delete_traffic_filter.yml
 ```
 
-### Workflow 15: Create Security Policies with Profile Bindings
+### Workflow 15: Create Security Policies with Profile Bindings (Full Configuration)
+
+The `create_full_config.yml` playbook provides comprehensive orchestration for DefensePro security configuration. It creates all or defined profiles including security policies with profile bindings.
+
+**Configuration Approach:**
 
 ```bash
 # 1. Configure your orchestration settings  
@@ -498,17 +502,21 @@ nano vars/create_vars.yml
 # Edit the security_policy_config section:
 security_policy_config:
   create_network_classes: true    # Create network classes first
-  create_cl_profiles: true        # Create CL profiles next  
+  create_cl_profiles: true        # Create connection limit profiles  
+  create_out_of_state_profiles: true  # Create OOS profiles
+  create_bdos_profiles: true      # Create BDoS profiles
+  create_dns_profiles: true       # Create DNS profiles
+  create_https_profiles: true     # Create HTTPS profiles
   create_security_policies: true  # Create security policies last
 
 # 2. Configure your security policies
-# Add policies to the security_policies section with profile bindings
+# Add policies to the create_security_policies section with profile bindings
 
 # 3. Test orchestration plan (preview mode)
-ansible-playbook --check playbooks/create_security_policy.yml
+ansible-playbook --check playbooks/create_full_config.yml
 
 # 4. Execute full orchestration
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 ```
 
 **Security Policy Features**:
@@ -530,7 +538,7 @@ security_policy_config:
   apply_policies_after_creation: true  # Automatically apply policies after creation
 
 # 2. Run orchestration - policies will be applied automatically
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Option B: Manual policy updates (standalone)
 # 1. Configure target devices in update_vars.yml
@@ -546,7 +554,7 @@ ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.3
 **Policy Update Features**:
 - **Automatic integration**: Policies applied automatically during orchestration
 - **Manual control**: Standalone playbook for manual policy updates using `vars/update_vars.yml`
-- **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
+- **Conditional execution**: Orchestration playbook "create_full_config.yml" skip policy updates when controlled centrally
 - **Safety confirmation**: Optional interactive prompts to prevent accidental updates
 - **Per-device processing**: Updates applied individually with proper locking
 
@@ -1066,7 +1074,6 @@ create_ssl_objects:
     ip_address: "155.1.102.7"          # MANDATORY: Device IP
     Port: 443                           # OPTIONAL: Port (default: 443)
     add_certificate: "radware"         # OPTIONAL: Certificate to add
-    remove_certificate: ""             # OPTIONAL: Certificate to remove
     front_sslv3: "disable"             # OPTIONAL: enable, disable (default: disable)
     front_tls1.0: "disable"            # OPTIONAL: enable, disable (default: disable)
     front_tls1.1: "enable"             # OPTIONAL: enable, disable (default: enable)
@@ -1112,6 +1119,7 @@ edit_ssl_objects:
     bk_user_cipher: ""                 # OPTIONAL: User-defined cipher
     bk_end_port: 443                   # OPTIONAL: Backend port (default: 443)
   ```
+# The certificate API supports only one operation per call: you can either add a certificate or remove one, but not both simultaneously.
 
 ### Get SSL Object
 # Get all SSL Object from devices

@@ -64,6 +64,7 @@ def run_module():
                     "rsProtectedObjEnable": ENABLE_MAP.get(ssl.get('ssl_object_profile', 'enable'), '1'),
                     "rsProtectedObjIpAddr": ip,
                     "rsProtectedObjApplPort": port,
+                    "rsProtectedObjDefaultSNICertificate": ssl.get('sni_certificate', ''),
                     "rsProtectedObjAddCertificate": ssl.get('add_certificate', ''),
                     "rsProtectedObjRemoveCertificate": ssl.get('remove_certificate', ''),
                     "rsProtectedObjSSLV3Enable": ENABLE_MAP.get(ssl.get('front_sslv3', 'disable'), '2'),

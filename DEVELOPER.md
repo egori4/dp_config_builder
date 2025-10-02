@@ -119,7 +119,7 @@ ORCHESTRATION LAYER
 │   │   ├── delete_traffic_filter.yml               # Remove Traffic Filter
 │   │   └── get_traffic_filter.yml                  # Query Traffic Filter
 │   ├── 🎯 Security Policy Operations            # Create, edit, and delete security policies with profile bindings
-│   │   ├── create_security_policy.yml           # Create security policies and bind profiles
+│   │   ├── create_full_config.yml           # Create security policies and bind profiles
 │   │   ├── edit_security_policy.yml             # Modify security policies and profile bindings
 │   │   └── delete_security_policy.yml           # Remove security policies (with optional profile cleanup)
 │   ├── 📊 Runtime Data (auto-created)
@@ -170,7 +170,7 @@ ORCHESTRATION LAYER
 │   │   │   ├── delete_traffic_filter.py     # Batch deletion with error handling
 │   │   │   └── get_traffic_filter.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
-│   │   │   ├── create_security_policy.py   # Create policies with profile bindings
+│   │   │   ├── create_full_config.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
 │   │   │   └── delete_security_policy.py   # Delete policies (dual deletion modes)
 │   │   └── 🔧 Device Management
@@ -341,10 +341,10 @@ ORCHESTRATION LAYER
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
-     - Creation: `create_security_policy.py` (API call with profile bindings)
+     - Creation: `create_full_config.py` (API call with profile bindings)
      - Editing: `edit_security_policy.py` (partial updates with profile attachment/detachment)
      - Deletion: `delete_security_policy.py` (dual deletion modes with optional profile cleanup)
-     - Orchestration: `create_security_policy.yml` (coordinates profiles creation, and policies)
+     - Orchestration: `create_full_config.yml` (coordinates profiles creation, and policies)
      - Editing: `edit_security_policy.yml` (modifies existing policies with conditional locking)
      - Deletion: `delete_security_policy.yml` (removes policies with flexible cleanup options)
    - **Key Features**:
