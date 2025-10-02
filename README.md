@@ -179,7 +179,7 @@ dp_config_builder/
 
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
-| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
+| `create_full_config.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
 | `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
 | `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
 | `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
@@ -309,7 +309,7 @@ ansible-playbook playbooks/edit_https_profile.yml
 ansible-playbook playbooks/delete_https_profile.yml
 
 # Security Policy Creation (using vars/create_vars.yml configuration)
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Security Policy Editing (using vars/edit_vars.yml configuration)  
 ansible-playbook playbooks/edit_security_policy.yml
