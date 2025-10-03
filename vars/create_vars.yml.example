@@ -302,9 +302,14 @@ create_ssl_objects:
 create_syn_protections:
   # Example: Create new SYN protection for HTTP
   - name: "SYN_PROT_1"                       # Descriptive name (MANDATORY)
-    activation_threshold: "3500"             # SYN activation threshold (packets/sec) - string value
-    termination_threshold: "2500"            # SYN termination threshold (packets/sec) - string value
+    activation_threshold: "3500"             # Optional: SYN activation threshold (packets/sec) - string value
+    termination_threshold: "2500"            # Optional: SYN termination threshold (packets/sec) - string value
     app_port_group: "http"                   # Application port group (http, https, smtp, dns, ftp, imap) or "" for all ports
+
+  - name: "SYN_PROT_2"                       # Descriptive name (MANDATORY)
+    activation_threshold: "3500"             # Optional: SYN activation threshold (packets/sec) - string value
+    termination_threshold: "2500"            # Optional: SYN termination threshold (packets/sec) - string value
+    app_port_group: "http"                   # Application port group (http, https, smtp, dns, ftp, imap) or "" for all ports  
 
 # Define SYN profiles and attach protections
 create_syn_profiles:

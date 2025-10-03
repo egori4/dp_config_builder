@@ -169,6 +169,11 @@ ORCHESTRATION LAYER
 │   │   │   ├── edit_https_profile.py        # Modify existing DNS profiles
 │   │   │   ├── delete_https_profile.py      # Batch deletion with error handling
 │   │   │   └── get_https_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 SYN Profile Modules (v0.1.8+)
+│   │   │   ├── create_syn_configuration.py      # Batch creation with validation
+│   │   │   ├── edit_syn_configuration.py        # Modify existing SYN profiles
+│   │   │   ├── delete_syn_configuration.py      # Batch deletion with error handling
+│   │   │   └── get_syn_configuration.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Traffic Filter Modules (v0.1.10+)
 │   │   │   ├── create_traffic_filter.py      # Batch creation with validation
 │   │   │   ├── edit_traffic_filter.py        # Modify existing Traffic Filter
@@ -331,7 +336,18 @@ ORCHESTRATION LAYER
    - **Modules**: `create_ssl_object.py`, `edit_ssl_object.py`, `delete_ssl_object.py`, `get_ssl_object.py`
    - **Modules**: `create_https_profile.py`, `edit_https_profile.py`, `delete_https_profile.py`, `get_https_profile.py`
 
-9. **Traffic Filter Modules** (`plugins/modules/`)
+9. **SYN Profile Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_syn_configuration.py`, `edit_syn_configuration.py`, `delete_syn_configuration.py`, `get_syn_configuration.py`
+
+10. **Traffic Filter Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -342,7 +358,7 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_traffic_filter.py`, `edit_traffic_filter.py`, `delete_traffic_filter.py`, `get_traffic_filter.py`
 
-10. **Security Policy Modules** (`plugins/modules/`)
+11. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
