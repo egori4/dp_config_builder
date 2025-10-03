@@ -184,6 +184,15 @@ dp_config_builder/
 | `delete_traffic_filter.yml` | Remove Traffic Filter            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-traffic-filter)  |
 | `get_traffic_filter.yml`    | Query current Traffic Filter     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-traffic-filter)     |
 
+### SYN Profile Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_syn_profiles.yml`  | Create new SYN flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-syn-profile)    |
+| `edit_syn_protections.yml` | Modify existing SYN protections         | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-syn-protections) |
+| `delete_syn_profiles.yml`  | Remove SYN profiles and/or protections  | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-syn-profiles)  |
+| `get_syn_profiles.yml`     | Query current SYN profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-syn-profiles)     |
+
+
 ### Security Policy Management
 
 | Playbook | Purpose | Documentation |
@@ -353,7 +362,7 @@ ansible-playbook playbooks/delete_security_policy.yml
 <br>• Optimized/standardized the format of update policies playbook |
 | v0.1.10 | 2025-09-30 | Added Protected Traffic Filter functionality |
 | v0.1.9 | 2025-09-26 | Added Protected SSL Object functionality |
-| v0.1.7 | 2025-09-24 | Added HTTPS Flood functionality |
+| v0.1.8 | 2025-09-24 | Added SYN Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |
 | v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture

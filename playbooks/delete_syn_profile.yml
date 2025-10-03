@@ -1,0 +1,92 @@
+---
+- name: Delete SYN profiles and protections
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/delete_vars.yml
+
+  tasks:
+    - name: Delete SYN profiles and protections block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+
+        - name: Delete SYN Profiles and Protections
+          delete_syn_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            syn_profile_deletions: "{{ syn_profile_deletions | default([]) }}"
+            syn_protection_deletions: "{{ syn_protection_deletions | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: delete_results
+
+        - name: Display deletion results (formatted)
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+
+              EXECUTION RESULTS:
+
+              {% set profile_dels = item.response.deleted_from_profiles | default([]) %}
+              {% set protection_dels = item.response.deleted_protections | default([]) %}
+              {% set failed_ops = item.response.failed_operations | default([]) %}
+
+              {% if profile_dels %}
+              Profile Deletions ({{ profile_dels | length }} completed):
+              {% for del in profile_dels %}
+                - Profile: {{ del.profile_name }}
+                  Protection Removed: {{ del.protection_name }}
+                  Status: {{ del.status }}
+              {% endfor %}
+              {% endif %}
+
+              {% if protection_dels %}
+              Protection Deletions ({{ protection_dels | length }} completed):
+              {% for del in protection_dels %}
+                - Protection: {{ del.protection_name }}
+                  Protection ID: {{ del.protection_id }}
+                  Status: {{ del.status }}
+              {% endfor %}
+              {% endif %}
+
+              {% if failed_ops %}
+              Failed Operations ({{ failed_ops | length }}):
+              {% for fail in failed_ops %}
+                - Object: {{ fail.object_name }}
+                  Status: {{ fail.status }}
+                  Error: {{ fail.error | default('Unknown error') }}
+                  Response body: {{ fail.response_body | default({}) }}
+              {% endfor %}
+              {% endif %}
+
+              SYN Summary:
+                - Total attempted: {{ item.response.summary.total_attempted | default(0) }}
+                - Total deleted: {{ item.response.summary.total_deleted | default(0) }}
+                - Total failed: {{ item.response.summary.total_failed | default(0) }}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ delete_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_policy_updates | default(false))
+          loop_control:
+            label: "Applying policies: {{ item }}"
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"

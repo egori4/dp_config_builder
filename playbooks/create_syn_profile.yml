@@ -1,0 +1,88 @@
+---
+- name: Create SYN protections and profiles
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/create_vars.yml
+
+  tasks:
+    - name: SYN protections and profiles block
+      block:
+        - name: Lock device(s)
+          dp_lock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))
+
+        - name: Configure SYN protections and profiles
+          create_syn_configuration:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            syn_protections: "{{ create_syn_protections | default([]) }}"
+            syn_profiles: "{{ create_syn_profiles | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: syn_create_results
+
+        - name: Display SYN creation results (details + summary)
+          vars:
+            syn_output: |
+              Device: {{ item.item }}
+              {% if item.failed | default(false) %}
+              Error occurred during SYN creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.response.protections | length > 0 or item.response.profiles | length > 0 %}
+              SYN Configurations created successfully:
+              {% if item.response.protections | length > 0 %}
+              Protections ({{ item.response.protections | length }}):
+              {% for prot in item.response.protections %}
+                - Name: {{ prot.name }}
+                  Parameters:
+                    Activation Threshold: {{ prot.parameters.activation_threshold }}
+                    Termination Threshold: {{ prot.parameters.termination_threshold }}
+                    App Port Group: {{ prot.parameters.app_port_group }}
+              {% endfor %}
+              {% endif %}
+              {% if item.response.profiles | length > 0 %}
+              Profiles ({{ item.response.profiles | length }}):
+              {% for prof in item.response.profiles %}
+                - Profile Name: {{ prof.profile_name }}
+                  Attached Protection: {{ prof.protection_name }}
+              {% endfor %}
+              {% endif %}
+              SYN Summary:
+                - Total protections attempted: {{ item.response.summary.total_protections_attempted | default(0) }}
+                - Protections created: {{ item.response.summary.protections_created | default(0) }}
+                - Total profiles attempted: {{ item.response.summary.total_profiles_attempted | default(0) }}
+                - Profiles created: {{ item.response.summary.profiles_created | default(0) }}
+              {% else %}
+              No SYN protections/profiles were created.
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ syn_output.split('\n') }}"
+          loop: "{{ syn_create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Apply policy updates per device
+          update_policies:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Applying policies: {{ item }}"
+          when:
+            - not (skip_policy_updates | default(false))
+            - syn_create_results is defined
+            - syn_create_results.changed | default(false)
+
+      always:
+        - name: Unlock device(s)
+          dp_unlock:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+          loop: "{{ dp_ip }}"
+          when: not (skip_device_lock | default(false))

@@ -113,6 +113,11 @@ ORCHESTRATION LAYER
 │   │   ├── edit_https_profile.yml             # Modify HTTPS protection profiles
 │   │   ├── delete_https_profile.yml           # Remove HTTPS protection profiles
 │   │   └── get_https_profile.yml              # Query HTTPS protection profiles
+│   ├── 🎯 SYN Protection Profile Operations     # Create, edit, delete, and query SYN protection profiles
+│   │   ├── create_syn_profile.yml               # Create SYN protection profiles
+│   │   ├── edit_syn_protection.yml              # Modify SYN protection profiles
+│   │   ├── delete_syn_profile.yml               # Remove SYN protection profiles
+│   │   └── get_syn_profile.yml                  # Query SYN protection profiles
 │   ├── 🎯 Traffic Filter Operations          # Create, edit, delete, and query Traffic Filter
 │   │   ├── create_traffic_filter.yml               # Create Traffic Filter
 │   │   ├── edit_traffic_filter.yml                 # Modify Traffic Filter
@@ -144,14 +149,14 @@ ORCHESTRATION LAYER
 │   │   │   ├── create_bdos_profile.py      # Batch creation with validation
 │   │   │   ├── edit_bdos_profile.py        # Modify existing BDoS profiles
 │   │   │   ├── delete_bdos_profile.py      # Batch deletion with error handling
-│   │   ├── 🔧 DNS Protection Profile Modules (v0.1.6+)
+│   │   ├── 🔧 DNS Protection Profile Modules (v0.1.7+)
 │   │   │   ├── create_dns_profile.py      # Batch creation with validation
 │   │   │   ├── edit_dns_profile.py        # Modify existing DNS profiles
 │   │   │   ├── delete_dns_profile.py      # Batch deletion with error handling
 │   │   │   └── get_dns_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 OOS/Stateful Profile Modules (v0.1.5+)
 │   │   │   ├── create_oos_profile.py      # Batch creation with validation
-│   │   │   ├── edit_oos_profile.py        # Modify existing OOS/Stateful profiles
+│   │   │   ├── edit_oos_profile.py        # Modify existing OOS profiles
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
 │   │   ├── 🔧 SSL Object Modules (v0.1.5+)
@@ -164,6 +169,11 @@ ORCHESTRATION LAYER
 │   │   │   ├── edit_https_profile.py        # Modify existing DNS profiles
 │   │   │   ├── delete_https_profile.py      # Batch deletion with error handling
 │   │   │   └── get_https_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 SYN Profile Modules (v0.1.8+)
+│   │   │   ├── create_syn_configuration.py      # Batch creation with validation
+│   │   │   ├── edit_syn_configuration.py        # Modify existing SYN profiles
+│   │   │   ├── delete_syn_configuration.py      # Batch deletion with error handling
+│   │   │   └── get_syn_configuration.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Traffic Filter Modules (v0.1.10+)
 │   │   │   ├── create_traffic_filter.py      # Batch creation with validation
 │   │   │   ├── edit_traffic_filter.py        # Modify existing Traffic Filter
@@ -326,7 +336,18 @@ ORCHESTRATION LAYER
    - **Modules**: `create_ssl_object.py`, `edit_ssl_object.py`, `delete_ssl_object.py`, `get_ssl_object.py`
    - **Modules**: `create_https_profile.py`, `edit_https_profile.py`, `delete_https_profile.py`, `get_https_profile.py`
 
-9. **Traffic Filter Modules** (`plugins/modules/`)
+9. **SYN Profile Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_syn_configuration.py`, `edit_syn_configuration.py`, `delete_syn_configuration.py`, `get_syn_configuration.py`
+
+10. **Traffic Filter Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -337,7 +358,7 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_traffic_filter.py`, `edit_traffic_filter.py`, `delete_traffic_filter.py`, `get_traffic_filter.py`
 
-10. **Security Policy Modules** (`plugins/modules/`)
+11. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -421,14 +442,6 @@ ORCHESTRATION LAYER
 | **Edit SSL Object**   | PUT    | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
 | **Delete SSL Object** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
 | **Get SSL Object**    | GET    | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
-
-### HTTPs Profile Management
-| Operation | Method | Endpoint |
-|-----------|--------|----------|
-| **Create** | POST | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
-| **Edit** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
-| **Delete** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}` |
-| **Get** | GET | `/mgmt/v2/devices/{dp_ip}/config/itemlist/rsIDSNewHTTPSFloodProfileTable[/{profile_name}` |
 
 ### Traffic Filter Management
 | Operation | Method | Endpoint |
@@ -857,7 +870,7 @@ POST /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
         }
 # Note - If you enable manual trigger , you must disable all query.Also termination thresholds must be less than activation thresholds.
 ```
-##### Edit BDoS Profile 
+##### Edit DNS Profile 
 ```json
 PUT /mgmt/device/byip/10.105.192.32/config/rsDnsProtProfileTable/{profile_name}
 {
@@ -1066,7 +1079,7 @@ Response:
 #API mappings handled internally
 
 ### Delete OOS Profile ###
-```yml
+```yaml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}
 
 oos_profiles:
@@ -1124,6 +1137,178 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_na
 Usage:
 Call edit_ssl_object once per device, passing list of profiles to edit.
 Each ssl object dict must include ssl_object_name (mandatory) and any parameters to change
+
+#### Get SSL Object 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+
+Response:
+{
+    "rsProtectedSslObjTable": [
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEL4PortNumber": "80"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_ssl_object once per device
+#Optional filtering: filter_ssl_object_names: ["server1", "server2"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete SSL Object ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}
+
+delete_ssl_objects:
+  - name: server1
+  - name: server2
+```
+
+### SYN Protections & Profiles ###
+### Create SYN Protection
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
+
+{
+    "rsIDSSYNAttackName": "syn_prot_tcp_limit",
+    "rsIDSSYNAttackActivationThreshold": "3500",
+    "rsIDSSYNAttackTerminationThreshold": "2500",
+    "rsIDSSYNAttackPacketReport": "1",
+    "rsIDSSYNDestinationAppPortGroup": "http"
+}
+```
+### Create SYN Profile
+```json
+POST /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}
+
+{
+    "rsIDSSYNProfileName": "web_syn_profile",
+    "rsIDSSYNProfileAttackName": "syn_prot_tcp_limit"
+}
+```
+### Edit SYN Protections
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{index}
+
+{
+    "rsIDSSYNAttackName": "syn_prot_tcp_limit",
+    "rsIDSSYNAttackActivationThreshold": "4000",
+    "rsIDSSYNAttackTerminationThreshold": "3000",
+    "rsIDSSYNAttackStableThresholdPeriod": "10",
+    "rsIDSSYNAttackPacketReport": "2",
+    "rsIDSSYNAttackSourceType": "3",
+    "rsIDSSYNAttackRisk": "1",
+    "rsIDSSYNVerificationType": "2",
+    "rsIDSSYNDestinationAppPortGroup": "https"
+}
+```
+
+## Usage:
+
+# Call edit_syn_configuration once per device, pass list of protections to edit
+# Each protection dict must include protection_index (mandatory), and any     parameters to change
+
+## All mappings handled internally
+# Index Parameter:
+# Optional: Defaults to 0 if not specified in variables
+# Valid Values: 0 (default) or next available starting from 500001+
+# API Behavior: Index becomes part of the URL path for creation and editing
+
+### Get SYN Profiles Response
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynAttackTable/{protection_id}
+GET /mgmt/device/byip/10.105.192.32/config/rsIDSSynProfilesTable/{profile_name}
+
+Response (mapped and combined):
+{
+    "msg": [
+        "Device: 10.105.192.32",
+        "Profiles and Protections:",
+        "Profile: SYN_PROFILE_1",
+        "Protections:",
+        "  - protection_name: SYN_PROT_1",
+        "    protection_id: 500030",
+        "    activation_threshold: 3500",
+        "    termination_threshold: 2500",
+        "    packet_report: enable",
+        "    app_port_group: http",
+            ]
+        }
+
+```
+
+## Usage:
+# Call get_syn_configuration once per device
+# Optional filtering: filter_syn_profile_names: ["profile1", "profile2"]
+# All API mappings handled internally (reverse of create/edit logic)
+# Returns nested structure: profiles → protections → subsettings
+# Delete SYN Profiles and Protections (delete_syn_configuration)
+# Purpose: Delete SYN protections and profiles with flexible options
+# Module: plugins/modules/delete_syn_configuration.py
+
+## API Endpoints:
+
+### Remove protection from profile:
+```yaml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSSynProfilesTable/{profile_name}/{protection_name}
+```
+
+### Delete protection entirely:
+```yaml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSSynAttackTable/{protection_id}
+```
+# Input Parameters:
+
+# OPTIONAL: Remove protections from profiles (profile auto-deleted when last protection removed)
+```yaml
+syn_profile_deletions:
+  - profile_name: "SYN_PROFILE_1"
+    protections:
+      - "SYN_PROT_1"
+      - "SYN_PROT_2"
+  
+  - profile_name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_X"
+
+# OPTIONAL: Delete protections entirely (protection must not be in any profile)
+# The format supports both names and indexes:
+syn_protection_deletions:
+  - protections_to_delete:
+      - "SYN_PROT_1"    # Delete by name (module looks up index)
+      - "SYN_PROT_2"    # Delete by name
+```
+
+
+### Key Features:
+# Protection cannot be deleted if still associated with any profile
+# Both sections are optional – define based on your needs
+# Order: profile deletions processed first, then protection deletions
+# Format: Single list supporting both names (strings) and indexes (integers)
+# Smart processing: Module fetches current protections only when string names are used
+# Enhanced validation: Check mode validates both names and indexes against device state
+
+
+
 ###  Create HTTPS Profile 
 ```json
 POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
@@ -1186,51 +1371,6 @@ DELETE /mgmt/device/byip/{dp_ip}/config/rsIDSNewHTTPSFloodProfileTable/{profile_
 delete_https_profiles:
   - name: "http_profile_1"            
   - name: "http_profile_2"
-```
-
-#### Get SSL Object 
-```json
-GET /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
-
-Response:
-{
-    "rsProtectedSslObjTable": [
-        {
-            "rsProtectedObjName": "server1",
-            "rsProtectedObjEnable": "1",
-            "rsProtectedObjIpAddr": "155.1.102.7",
-            "rsProtectedObjApplPort": "443",
-            "rsProtectedObjAddCertificate": "",
-            "rsProtectedObjRemoveCertificate": "",
-            "rsProtectedObjSSLV3Enable": "2",
-            "rsProtectedObjTLS10Enable": "2",
-            "rsProtectedObjTLS11Enable": "1",
-            "rsProtectedObjTLS12Enable": "1",
-            "rsProtectedObjTLS13Enable": "1",
-            "rsBEDecryptionEnable": "1",
-            "rsBEProtectedObjSSLV3Enable": "2",
-            "rsBEProtectedObjTLS10Enable": "2",
-            "rsBEProtectedObjTLS11Enable": "1",
-            "rsBEProtectedObjTLS12Enable": "1",
-            "rsBEProtectedObjTLS13Enable": "1",
-            "rsBEL4PortNumber": "80"
-        }
-    ]
-}
-```
-#Usage:-
-#Call get_ssl_object once per device
-#Optional filtering: filter_ssl_object_names: ["server1", "server2"]
-#Returns nested structure: profiles -> settings
-#API mappings handled internally
-
-### Delete SSL Object ###
-```yml
-DELETE /mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}
-
-delete_ssl_objects:
-  - name: server1
-  - name: server2
 ```
 
 ###  Create TF Profile 
