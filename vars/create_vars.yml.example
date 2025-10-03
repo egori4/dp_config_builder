@@ -332,16 +332,16 @@ create_tf_protections:
     status: "enable"                # enable, disable (Default: enable)
     match_criteria: "match"         # match, not-match (Default:match)
     protocol: "tcp"                 # any, tcp, udp, icmp, etc. (Default:any)
+    threshold_pps: "5000"           # Optional: rate limit in packets per second (deafult :10000)
+    threshold_kbps: "0"              # Optional: rate limit in kilo bits per second
+    threshold_unit: "pps"           # kbps, pps (Default:pps)
     tcp_syn: "enable"               # TCP SYN flag handling (Default:enable)
     tcp_ack: "enable"               # TCP ACK flag handling (Default:enable)
     tcp_rst: "enable"               # TCP RST flag handling (Default:enable)
     tcp_synack: "enable"            # TCP SYN-ACK flag handling (Default:enable)
     tcp_finack: "enable"            # TCP FIN-ACK flag handling (Default:enable)
     tcp_pshack: "enable"            # TCP PSH-ACK flag handling (Default:enable)
-    threshold_pps: "5000"           # Optional: rate limit in packets per second (deafult :10000)
-    threshold_kbps: "0"              # Optional: rate limit in kilo bits per second
     packet_report: "enable"         # enable, disable (Default:enable)
-    threshold_unit: "pps"           # kbps, pps (Default:pps)
     attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic (Default:all)
 
 
@@ -350,16 +350,18 @@ create_tf_protections:
     status: "enable"             
     match_criteria: "match"         # match, not-match
     protocol: "tcp"                 # any, tcp, udp, icmp, etc.
+    threshold_pps: "5000"
+    threshold_kbps: "0"
+    threshold_unit: "pps"           # kbps, pps
     tcp_syn: "enable"
     tcp_ack: "enable"
     tcp_rst: "enable"
     tcp_synack: "enable"
     tcp_finack: "enable"
     tcp_pshack: "enable"
-    threshold_pps: "5000"
-    threshold_kbps: "0"
+
     packet_report: "enable"         # enable, disable
-    threshold_unit: "pps"           # kbps, pps
+
     attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
 
 ## Minimal configuration to create protection
