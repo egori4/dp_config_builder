@@ -27,9 +27,9 @@
             label: "Device: {{ item }}"
           register: syn_create_results
 
-        - name: Display SYN creation details
+        - name: Display SYN creation results (details + summary)
           vars:
-            detailed_output: |
+            syn_output: |
               Device: {{ item.item }}
               {% if item.failed | default(false) %}
               Error occurred during SYN creation:
@@ -40,7 +40,6 @@
               Protections ({{ item.response.protections | length }}):
               {% for prot in item.response.protections %}
                 - Name: {{ prot.name }}
-                  Index: {{ prot.index }}
                   Parameters:
                     Activation Threshold: {{ prot.parameters.activation_threshold }}
                     Termination Threshold: {{ prot.parameters.termination_threshold }}
@@ -54,27 +53,16 @@
                   Attached Protection: {{ prof.protection_name }}
               {% endfor %}
               {% endif %}
-              {% else %}
-              No SYN protections/profiles were created.
-              {% endif %}
-          ansible.builtin.debug:
-            msg: "{{ detailed_output.split('\n') }}"
-          loop: "{{ syn_create_results.results }}"
-          loop_control:
-            label: "Device: {{ item.item }}"
-
-        - name: Display SYN creation summary
-          vars:
-            summary_output: |
-              Device: {{ item.item }}
-              EXECUTION RESULTS:
               SYN Summary:
                 - Total protections attempted: {{ item.response.summary.total_protections_attempted | default(0) }}
                 - Protections created: {{ item.response.summary.protections_created | default(0) }}
                 - Total profiles attempted: {{ item.response.summary.total_profiles_attempted | default(0) }}
                 - Profiles created: {{ item.response.summary.profiles_created | default(0) }}
+              {% else %}
+              No SYN protections/profiles were created.
+              {% endif %}
           ansible.builtin.debug:
-            msg: "{{ summary_output.split('\n') }}"
+            msg: "{{ syn_output.split('\n') }}"
           loop: "{{ syn_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"

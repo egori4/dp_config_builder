@@ -30,6 +30,9 @@ def run_module():
     from ansible.module_utils.logger import Logger
     logger = Logger(verbosity=log_level)
 
+    # Log input parameters
+    logger.debug(f"Module input: dp_ip={dp_ip}, protections_count={len(syn_protections)}, profiles_count={len(syn_profiles)}")
+
     debug_info['input'] = {
         'dp_ip': dp_ip,
         'protections_count': len(syn_protections),
@@ -50,7 +53,6 @@ def run_module():
             # Create SYN protections
             for protection in syn_protections:
                 protection_name = protection['name']
-                index = protection.get('index', 0)
                 body = {
                     "rsIDSSYNAttackName": protection_name,
                     "rsIDSSYNAttackActivationThreshold": protection.get("activation_threshold", 1000),
@@ -58,10 +60,11 @@ def run_module():
                     "rsIDSSYNDestinationAppPortGroup": protection.get("app_port_group", "")
                 }
 
-                path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/{index}"
+                path = f"/mgmt/device/byip/{dp_ip}/config/rsIDSSYNAttackTable/0"
                 url = f"https://{provider['cc_ip']}{path}"
 
-                logger.info(f"Creating SYN protection '{protection_name}' at index {index}")
+                logger.info(f"Creating SYN protection '{protection_name}'")
+                logger.debug(f"SYN protection POST URL: {url}, Body: {body}")
                 resp = cc._post(url, json=body)
 
                 try:
@@ -69,9 +72,12 @@ def run_module():
                 except Exception:
                     data = {"raw_text": resp.text}
 
+                # Log response
+                logger.debug(f"SYN protection '{protection_name}' response: {data}")
+
+                # Append protection without 'index' in response
                 created_protections.append({
                     'name': protection_name,
-                    'index': index,
                     'parameters': {
                         "activation_threshold": body["rsIDSSYNAttackActivationThreshold"],
                         "termination_threshold": body["rsIDSSYNAttackTerminationThreshold"],
@@ -119,12 +125,15 @@ def run_module():
                     url = f"https://{provider['cc_ip']}{path}"
 
                     logger.info(f"Creating SYN profile '{profile_name}' with protection '{protection_name}'")
+                    logger.debug(f"SYN profile POST URL: {url}, Body: {body}")
                     resp = cc._post(url, json=body)
 
                     try:
                         data = resp.json()
                     except Exception:
                         data = {"raw_text": resp.text}
+
+                    logger.debug(f"SYN profile '{profile_name}' response: {data}")
 
                     created_profiles.append({
                         'profile_name': profile_name,
@@ -165,6 +174,8 @@ def run_module():
             }
         }
 
+        # Log final summary
+        logger.debug(f"Module execution summary: {result['response']['summary']}")
         debug_info['summary'] = result['response']['summary']
 
     except Exception as e:
