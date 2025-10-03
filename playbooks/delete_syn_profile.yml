@@ -31,37 +31,14 @@
             formatted_output: |
               Device: {{ item.item }}
 
-              {% if item.response.preview_mode | default(false) %}
-              PREVIEW MODE - Operations that would be performed:
-              {% set profile_ops = item.response.profile_operations | default([]) %}
-              {% set protection_ops = item.response.protection_operations | default([]) %}
-
-              {% if profile_ops %}
-              Profile Operations ({{ profile_ops | length }} planned):
-              {% for op in profile_ops %}
-                - {{ op.description }}
-              {% endfor %}
-              {% endif %}
-
-              {% if protection_ops %}
-              Protection Deletions ({{ protection_ops | length }} planned):
-              {% for op in protection_ops %}
-                - {{ op.description }}
-              {% endfor %}
-              {% endif %}
-
-              {% if not profile_ops and not protection_ops %}
-              No operations configured for deletion.
-              {% endif %}
-
-              {% else %}
               EXECUTION RESULTS:
+
               {% set profile_dels = item.response.deleted_from_profiles | default([]) %}
               {% set protection_dels = item.response.deleted_protections | default([]) %}
-              {% set errors = item.response.errors | default([]) %}
+              {% set failed_ops = item.response.failed_operations | default([]) %}
 
               {% if profile_dels %}
-              Profile Operations ({{ profile_dels | length }} completed):
+              Profile Deletions ({{ profile_dels | length }} completed):
               {% for del in profile_dels %}
                 - Profile: {{ del.profile_name }}
                   Protection Removed: {{ del.protection_name }}
@@ -78,23 +55,26 @@
               {% endfor %}
               {% endif %}
 
-              {% if errors %}
-              Errors ({{ errors | length }} occurred):
-              {% for error in errors %}
-                - {{ error }}
+              {% if failed_ops %}
+              Failed Operations ({{ failed_ops | length }}):
+              {% for fail in failed_ops %}
+                - Object: {{ fail.object_name }}
+                  Status: {{ fail.status }}
+                  Error: {{ fail.error | default('Unknown error') }}
+                  Response body: {{ fail.response_body | default({}) }}
               {% endfor %}
               {% endif %}
 
-              {% if not profile_dels and not protection_dels and not errors %}
-              No operations performed (no deletions configured).
-              {% endif %}
-
-              {% endif %}
+              SYN Summary:
+                - Total attempted: {{ item.response.summary.total_attempted | default(0) }}
+                - Total deleted: {{ item.response.summary.total_deleted | default(0) }}
+                - Total failed: {{ item.response.summary.total_failed | default(0) }}
           ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
           loop: "{{ delete_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"
+
         - name: Apply policy updates per device
           update_policies:
             provider: "{{ cc }}"
