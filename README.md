@@ -158,6 +158,14 @@ dp_config_builder/
 | `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
 | `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
 
+### SSL Object Management
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_ssl_object.yml` | Create new SSL object(s)      | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-create) |
+| `edit_ssl_object.yml`   | Modify existing SSL object(s) | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-edit)   |
+| `delete_ssl_object.yml` | Remove SSL object(s)          | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-delete) |
+| `get_ssl_object.yml`    | Query current SSL object(s)   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-get)    |
+
 ### HTTPS Profile Management
 
 | Playbook | Purpose | Documentation |
@@ -166,6 +174,15 @@ dp_config_builder/
 | `edit_https_profile.yml`   | Modify existing HTTPS profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-https-profile)    |
 | `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
 | `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
+
+### Traffic Filter Management
+
+| Playbook | Purpose | Documentation |
+|----------|---------|---------------|
+| `create_traffic_filter.yml` | Create new Traffic Filter       | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-traffic-filter)  |
+| `edit_traffic_filter.yml`   | Modify existing Traffic Filter   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-traffic-filter)    |
+| `delete_traffic_filter.yml` | Remove Traffic Filter            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-traffic-filter)  |
+| `get_traffic_filter.yml`    | Query current Traffic Filter     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-traffic-filter)     |
 
 ### SYN Profile Management
 | Playbook | Purpose | Documentation |
@@ -180,7 +197,7 @@ dp_config_builder/
 
 | Playbook | Purpose | Documentation |
 |----------|---------|---------------|
-| `create_security_policy.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
+| `create_full_config.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
 | `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
 | `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
 | `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
@@ -284,8 +301,45 @@ ansible-playbook playbooks/edit_oos_profile.yml
 
 # Delete OOS profiles
 ansible-playbook playbooks/delete_oos_profile.yml
+
+# Get all SSL objects from devices
+ansible-playbook playbooks/get_ssl_object.yml
+
+# Create new SSL objects
+ansible-playbook playbooks/create_ssl_object.yml
+
+# Edit existing SSL objects
+ansible-playbook playbooks/edit_ssl_object.yml
+
+# Delete SSL objects
+ansible-playbook playbooks/delete_ssl_object.yml
+
+# Get all HTTPS profiles from devices
+ansible-playbook playbooks/get_https_profile.yml
+
+# Create new HTTPS profiles
+ansible-playbook playbooks/create_https_profile.yml
+
+# Edit existing HTTPS profiles
+ansible-playbook playbooks/edit_https_profile.yml
+
+# Delete HTTPS profiles
+ansible-playbook playbooks/delete_https_profile.yml
+
+# Get all Traffic Filter from devices
+ansible-playbook playbooks/get_traffic_filter.yml
+
+# Create new Traffic Filter
+ansible-playbook playbooks/create_traffic_filter.yml
+
+# Edit existing Traffic Filter
+ansible-playbook playbooks/edit_traffic_filter.yml
+
+# Delete Traffic Filter
+ansible-playbook playbooks/delete_traffic_filter.yml
+
 # Security Policy Creation (using vars/create_vars.yml configuration)
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Security Policy Editing (using vars/edit_vars.yml configuration)  
 ansible-playbook playbooks/edit_security_policy.yml
@@ -299,13 +353,15 @@ ansible-playbook playbooks/delete_security_policy.yml
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities, formatting log module
+| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities
 <br>• Added update policies playbook
 <br>• Enhanced Policy creation module logic, effectiveness holistically
 <br>• Added conditional Update policies and conditional lock/unlock when creating profiles/policies
 <br>• Updated create security module to send only parameters defined by user
 <br>• Added summary log after creating connection limit profile
 <br>• Optimized/standardized the format of update policies playbook |
+| v0.1.10 | 2025-09-30 | Added Protected Traffic Filter functionality |
+| v0.1.9 | 2025-09-26 | Added Protected SSL Object functionality |
 | v0.1.8 | 2025-09-24 | Added SYN Flood functionality |
 | v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
 | v0.1.5 | 2025-09-18 | Added OOS functionality |

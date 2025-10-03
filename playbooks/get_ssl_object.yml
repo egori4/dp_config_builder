@@ -1,0 +1,55 @@
+---
+- name: Get Specific SSL Objects from DefensePro
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml   # contains dp_ip (list of device IPs) and filter_ssl_object_names
+
+  tasks:
+
+    - name: Fetch SSL objects from each device
+      get_ssl_object:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_ssl_names: "{{ filter_ssl_object_names }}"
+      loop: "{{ dp_ip }}"
+      register: ssl_fetch_results
+      loop_control:
+        label: "Device: {{ item }}"
+
+    - name: Build readable SSL object output
+      ansible.builtin.set_fact:
+        ssl_formatted_output: |
+          {% for result in ssl_fetch_results.results %}
+          Device: {{ result.item }}
+          {% if result.response.formatted_objects %}
+          SSL Objects fetched ({{ result.response.summary.total_entries }} entries):
+          {% for ssl_name, ssl_entries in result.response.formatted_objects.items() %}
+
+            SSL Object: {{ ssl_name }}
+            --------------------------------------------------
+            {% for entry in ssl_entries %}
+              Configuration:
+              {% for k, v in entry.items() %}
+                {{ "%-35s %s" | format(k, v) }}
+              {% endfor %}
+            {% endfor %}
+            --------------------------------------------------
+
+          {% endfor %}
+
+          Summary:
+            - Total entries: {{ result.response.summary.total_entries }}
+            - Unique SSL objects: {{ result.response.summary.unique_ssl_objects }}
+            - SSL names: {{ result.response.summary.ssl_names | join(', ') }}
+            - Filter applied: {{ result.response.summary.filtered }}
+          {% else %}
+          No SSL objects found.
+          {% endif %}
+
+          {% endfor %}
+
+    - name: Display SSL objects
+      ansible.builtin.debug:
+        msg: "{{ ssl_formatted_output.split('\n') }}"

@@ -117,6 +117,30 @@ ansible-playbook playbooks/edit_dns_profile.yml
 # Delete DNS profiles
 ansible-playbook playbooks/delete_dns_profile.yml
 
+# Get all SSL objects from devices
+ansible-playbook playbooks/get_ssl_object.yml
+
+# Create new SSL objects
+ansible-playbook playbooks/create_ssl_object.yml
+
+# Edit existing SSL objects
+ansible-playbook playbooks/edit_ssl_object.yml
+
+# Delete SSL objects
+ansible-playbook playbooks/delete_ssl_object.yml
+
+# Get all Traffic Filter from devices
+ansible-playbook playbooks/get_traffic_filter.yml
+
+# Create new Traffic Filter
+ansible-playbook playbooks/create_traffic_filter.yml
+
+# Edit existing Traffic Filter
+ansible-playbook playbooks/edit_traffic_filter.yml
+
+# Delete Traffic Filter
+ansible-playbook playbooks/delete_traffic_filter.yml
+
 # Create SYN protections and profiles (uses create_syn_profile module)
 ansible-playbook playbooks/create_syn_profiles.yml
 
@@ -130,7 +154,7 @@ ansible-playbook playbooks/get_syn_profiles.yml
 ansible-playbook playbooks/delete_syn_profiles.yml
 
 # Create security policies with orchestration (includes network classes, CL profiles, and policies)
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Edit existing security policies (partial updates and profile management)
 ansible-playbook playbooks/edit_security_policy.yml
@@ -397,7 +421,38 @@ ansible-playbook --check playbooks/delete_oos_profile.yml
 ansible-playbook playbooks/delete_oos_profile.yml
 ```
 
-### Workflow 12 : Create New HTTPS Profiles
+### Workflow 12 : Create New  SSL Object
+
+# 1.Define your SSL Object
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansible-playbook --check playbooks/create_ssl_object.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_ssl_object.yml
+```
+### Workflow 12a : Get SSL Object
+```bash
+ansible-playbook playbooks/get_ssl_object.yml
+```
+### Workflow 12b : Delete SSL Object
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_ssl_object.yml
+ansible-playbook playbooks/delete_ssl_object.yml
+```
+### Workflow 12c :Edit Existing SSL Object
+```bash
+nano vars/edit_vars.yml
+ansible-playbook --check playbooks/edit_ssl_object.yml
+ansible-playbook playbooks/edit_ssl_object.yml
+```
+
+### Workflow 13 : Create New HTTPS Profiles
 
 # 1.Define your HTTPS profiles
 ```bash
@@ -411,19 +466,47 @@ ansible-playbook --check playbooks/create_https_profile.yml
 ```bash
 ansible-playbook playbooks/create_https_profile.yml
 ```
-### Workflow 12b : Get HTTPS Profile
+### Workflow 13b : Get HTTPS Profile
 ```bash
 ansible-playbook playbooks/get_https_profile.yml
 ```
-### Workflow 12c : Delete HTTPS Profile
+### Workflow 13c : Delete HTTPS Profile
 ```bash
 nano vars/delete_vars.yml
 ansible-playbook --check playbooks/delete_https_profile.yml
 ansible-playbook playbooks/delete_https_profile.yml
 ```
 
-### Workflow 13: Create Security Policies with Profile Bindings
+### Workflow 14 : Create New Traffic Filter
 
+# 1.Define your Traffic Filter
+```bash
+nano vars/create_vars.yml
+```
+# 2. Test first (dry run)
+```bash
+ansble-playbook --check playbooks/create_traffic_filter.yml
+```
+# 3.Apply configuration
+```bash
+ansible-playbook playbooks/create_traffic_filter.yml
+```
+### Workflow 14b : Get Traffic Filter
+```bash
+ansible-playbook playbooks/get_traffic_filter.yml
+```
+### Workflow 14c : Delete Traffic Filter
+```bash
+nano vars/delete_vars.yml
+ansible-playbook --check playbooks/delete_traffic_filter.yml
+ansible-playbook playbooks/delete_traffic_filter.yml
+```
+
+### Workflow 15: Create Security Policies with Profile Bindings (Full Configuration)
+
+The `create_full_config.yml` playbook provides comprehensive orchestration for DefensePro security configuration. It creates all or defined profiles including security policies with profile bindings.
+
+**Configuration Approach:**
 ```bash
 # 1. Configure your orchestration settings  
 nano vars/create_vars.yml
@@ -431,17 +514,21 @@ nano vars/create_vars.yml
 # Edit the security_policy_config section:
 security_policy_config:
   create_network_classes: true    # Create network classes first
-  create_cl_profiles: true        # Create CL profiles next  
+  create_cl_profiles: true        # Create connection limit profiles  
+  create_out_of_state_profiles: true  # Create OOS profiles
+  create_bdos_profiles: true      # Create BDoS profiles
+  create_dns_profiles: true       # Create DNS profiles
+  create_https_profiles: true     # Create HTTPS profiles
   create_security_policies: true  # Create security policies last
 
 # 2. Configure your security policies
-# Add policies to the security_policies section with profile bindings
+# Add policies to the create_security_policies section with profile bindings
 
 # 3. Test orchestration plan (preview mode)
-ansible-playbook --check playbooks/create_security_policy.yml
+ansible-playbook --check playbooks/create_full_config.yml
 
 # 4. Execute full orchestration
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 ```
 
 **Security Policy Features**:
@@ -455,7 +542,7 @@ ansible-playbook playbooks/create_security_policy.yml
 - **Policies only**: Disable network and profile creation, use existing resources
 - **Partial creation**: Mix and match what gets created vs. using existing resources
 
-### Workflow 14: Apply DefensePro Policy Updates
+### Workflow 16: Apply DefensePro Policy Updates
 ```bash
 # Option A: Automatic policy updates (during orchestration)
 # 1. Enable automatic policy application in create_vars.yml
@@ -463,7 +550,7 @@ security_policy_config:
   apply_policies_after_creation: true  # Automatically apply policies after creation
 
 # 2. Run orchestration - policies will be applied automatically
-ansible-playbook playbooks/create_security_policy.yml
+ansible-playbook playbooks/create_full_config.yml
 
 # Option B: Manual policy updates (standalone)
 # 1. Configure target devices in update_vars.yml
@@ -479,7 +566,7 @@ ansible-playbook playbooks/update_policies.yml -e "target_devices=['10.105.192.3
 **Policy Update Features**:
 - **Automatic integration**: Policies applied automatically during orchestration
 - **Manual control**: Standalone playbook for manual policy updates using `vars/update_vars.yml`
-- **Conditional execution**: Orchestration playbook "create_security_policy.yml" skip policy updates when controlled centrally
+- **Conditional execution**: Orchestration playbook "create_full_config.yml" skip policy updates when controlled centrally
 - **Safety confirmation**: Optional interactive prompts to prevent accidental updates
 - **Per-device processing**: Updates applied individually with proper locking
 
@@ -953,9 +1040,9 @@ oos_profiles:
 ```
 
 ### Get OOS Profiles
-```yaml
 # Get all OOS profiles from devices
 # No configuration needed - just run the playbook
+```yaml
 ansible-playbook playbooks/get_oos_profile.yml
 
 oos_profiles:
@@ -988,6 +1075,113 @@ oos_profiles:
     idle_state_bandwidth_threshold: threshold for idle state.
     idle_state_timer: seconds for idle timeout.
     Control flags: Use to enable/disable each stage independently.
+
+### Create SSL Object ###
+# Define ssl object to create on each device
+# Configure ssl object in `vars/create_vars.yml`:
+```yml
+create_ssl_objects:
+  - ssl_object_name: "server1"         # MANDATORY: SSL object name
+    ssl_object_profile: "enable"       # OPTIONAL: enable, disable (default: enable)
+    ip_address: "155.1.102.7"          # MANDATORY: Device IP
+    Port: 443                           # OPTIONAL: Port (default: 443)
+    add_certificate: "radware"         # OPTIONAL: Certificate to add
+    front_sslv3: "disable"             # OPTIONAL: enable, disable (default: disable)
+    front_tls1.0: "disable"            # OPTIONAL: enable, disable (default: disable)
+    front_tls1.1: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.2: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.3: "enable"             # OPTIONAL: enable, disable (default: enable)
+    cipher_suite: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_user_cipher: ""              # OPTIONAL: User-defined cipher
+    bk_end_decrypt: "enable"           # OPTIONAL: enable, disable (default: enable)
+    bk_end_sslv3: "disable"            # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.0: "disable"           # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.1: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.2: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.3: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_cipher: "enable"                # OPTIONAL: enable, disable (default: enable)
+    bk_user_cipher: ""                 # OPTIONAL: User-defined cipher
+    bk_end_port: 443                   # OPTIONAL: Backend port (default: 443)
+```
+### Edit SSL Object ###
+# Edit existing DNS profiles - ONLY specify what you want to change
+# Edit ssl object in `vars/edit_vars.yml`:
+```yml
+edit_ssl_objects:
+  - ssl_object_name: "server1"         # MANDATORY: SSL object name
+    ssl_object_profile: "enable"       # OPTIONAL: enable, disable (default: enable)
+    ip_address: "155.1.102.7"          # MANDATORY: Device IP
+    Port: 443                           # OPTIONAL: Port (default: 443)
+    add_certificate: "radware"         # OPTIONAL: Certificate to add
+    remove_certificate: ""             # OPTIONAL: Certificate to remove
+    front_sslv3: "disable"             # OPTIONAL: enable, disable (default: disable)
+    front_tls1.0: "disable"            # OPTIONAL: enable, disable (default: disable)
+    front_tls1.1: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.2: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_tls1.3: "enable"             # OPTIONAL: enable, disable (default: enable)
+    cipher_suite: "enable"             # OPTIONAL: enable, disable (default: enable)
+    front_user_cipher: ""              # OPTIONAL: User-defined cipher
+    bk_end_decrypt: "enable"           # OPTIONAL: enable, disable (default: enable)
+    bk_end_sslv3: "disable"            # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.0: "disable"           # OPTIONAL: enable, disable (default: disable)
+    bk_end_tls1.1: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.2: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_end_tls1.3: "enable"            # OPTIONAL: enable, disable (default: enable)
+    bk_cipher: "enable"                # OPTIONAL: enable, disable (default: enable)
+    bk_user_cipher: ""                 # OPTIONAL: User-defined cipher
+    bk_end_port: 443                   # OPTIONAL: Backend port (default: 443)
+  ```
+# The certificate API supports only one operation per call: you can either add a certificate or remove one, but not both simultaneously.
+
+### Get SSL Object
+# Get all SSL Object from devices
+# No configuration needed - just run the playbook
+ansible-playbook playbooks/get_ssl_object.yml
+```yaml
+filter_ssl_object_names: ["server1", "server2"]
+
+```
+
+### Delete OOS Profiles
+
+# Delete ssl object by name
+```yaml
+delete_ssl_objects:
+  - name: server1
+  - name: server2
+```
+Notes for SSL Objects
+
+*** ssl_object_name ***: MANDATORY – Unique name for the SSL object.
+*** ssl_object_profile ***: Optional – enable or disable the SSL object (default: enable).
+*** IP_Address ***: MANDATORY – The IP address for the SSL object.
+*** Port ***: Optional – Port number (default: 443).
+*** add_certificate ***: Optional – Name of certificate to add.
+*** remove_certificate ***: Optional – Name of certificate to remove.
+*** Frontend Protocols ***: Optional – Enable/disable SSL/TLS versions on the frontend.
+# front_sslv3
+# front_tls1.0
+# front_tls1.1
+# front_tls1.2
+# front_tls1.3
+*** Cipher Controls (Frontend) ***: Optional – Enable/disable cipher support.
+*** Backend Decryption ***: Optional – Enable/disable backend SSL decryption.
+*** Backend Protocols ***: Optional – Enable/disable SSL/TLS versions on the backend.
+# bk_end_sslv3
+# bk_end_tls1.0
+# bk_end_tls1.1
+# bk_end_tls1.2
+# bk_end_tls1.3
+*** Cipher Controls (Backend) ***: Optional – Enable/disable cipher support.
+# bk_cipher
+# bk_user_cipher
+*** bk_end_port ***: Optional – Backend port number (default: same as frontend port).
+
+# Notes:
+# Frontend and backend protocol/cipher flags can be used independently to enable/disable stages.
+# Certificates must exist on the device before adding to SSL objects.
+# Ensure IP address and port are correct; invalid values will result in API errors.
+
 
 ### Create HTTPS Profiles ###
 ```yaml
@@ -1050,6 +1244,108 @@ delete_https_profiles:
   - "https_profile_1"
   - "https_profile_2"                  # Show all profiles (default)
 ```
+
+### Create Traffic Filter ###
+```yaml
+# List of Traffic Filter profiles and protections to create per device
+# Each item contains tf_profiles and tf_protections lists
+# tf_profiles: list of profiles to create
+# tf_protections: list of protections under the profiles
+
+create_tf_profiles:
+  - profile_name: "TF_PROFILE_1"
+    action: "report_only"           # report_only, block_and_report
+  - profile_name: "TF_PROFILE_2"
+    action: "block_and_report"
+
+create_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"                # enable, disable (Default: enable)
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp
+    tcp_syn: "enable"               # enable, disable
+    tcp_ack: "enable"               # enable, disable
+    tcp_rst: "disable"              # enable, disable
+    tcp_synack: "enable"            # enable, disable
+    tcp_finack: "enable"            # enable, disable
+    tcp_pshack: "disable"           # enable, disable
+    threshold_pps: "5000"           # packet per second threshold
+    threshold_kbps: "0"              # kilo bits per second threshold
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # kbps, pps
+    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+
+```
+### Editing Traffic Filter (Partial Updates)
+```yaml
+# Minimal Traffic Filter protections for testing
+edit_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"              # enable/disable
+    match_criteria: "match"       # options: match, not-match
+    protocol: "tcp"               # options: any, tcp, udp, icmp, igmp, sctp, icmpv6, gre, ipinip
+    tcp_syn: "enable"
+    tcp_ack: "enable"
+    tcp_rst: "disable"
+    tcp_synack: "enable"
+    tcp_finack: "disable"
+    tcp_pshack: "enable"
+    threshold_pps: 0
+    threshold_kbps: 10000
+    threshold_unit: "kbps"         # options: pps, kbps
+    packet_report: "enable"       # enable/disable
+    attack_tracking_type: "all"  # options: all, per_source, per_destination, per_source_and_destination, track_returning_traffic
+
+
+```
+
+### Get Traffic Filter
+```yaml
+# Filter by specific Traffic Filter profile names, or leave empty list for all profiles
+filter_tf_profile_names: ["TF_PROFILE_1", "TF_PROFILE_2"]
+
+# Examples:
+# filter_tf_profile_names: ["TF_PROFILE_1"]           # Show only one profile
+# filter_tf_profile_names: ["TF_PROFILE_1","TF_PROFILE_2"]  # Show multiple profiles
+# filter_tf_profile_names: []  
+
+```
+
+### Delete Traffic Filter
+
+```yaml
+# Structure must match what the module expects: "profiles" and "protections"
+
+delete_traffic_filters:
+  profiles:
+    - name: "TF_PROFILE_1"
+    - name: "TF_PROFILE_2"
+
+  protections:
+    - profile_name: "TF_PROFILE_1"
+      name: "TF_PROT_1"
+    - profile_name: "TF_PROFILE_2"
+      name: "TF_PROT_2"                # Show all profiles (default)
+
+  # you can delete multiple profiles and protections in one run.
+  # either you can delete just protections, or both.
+```
+### Notes for Traffic Filter Profiles
+
+*** profile_name ***: MANDATORY – Unique profile name.
+*** state ***: Optional – enable or disable (default: enable).
+*** action ***: Optional – report_only or block_and_report (default: report_only).
+*** Thresholds ***:
+# threshold_pps: Packets per second limit.
+# threshold_kbps: Bits per second limit.
+# threshold_unit: Unit for threshold (pps/kbps).
+*** attack_tracking_type ***: Optional – all, per_source, per_destination, etc.
+*** TCP flags ***: Optional – enable/disable per flag (syn, ack, rst, synack, finack, pshack).
+*** packet_report ***: Optional – enable/disable packet logging.
+
 
 
 

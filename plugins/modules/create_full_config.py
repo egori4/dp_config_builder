@@ -1,4 +1,4 @@
-# plugins/modules/create_security_policy.py
+# plugins/modules/create_full_config.py
 """
 Unified Ansible module to create DefensePro security policies with profile bindings via Radware CyberController API.
 
@@ -51,11 +51,17 @@ def run_module():
                         'policy_name': policy.get('policy_name', 'unnamed_policy'),
                         'src_network': policy.get('src_network', 'any'),
                         'dst_network': policy.get('dst_network', 'any'),
-                        'connection_limit_profile': policy.get('connection_limit_profile', '')
+                        'connection_limit_profile': policy.get('connection_limit_profile', ''),
+                        'bdos_profile': policy.get('bdos_profile', ''),
+                        'dns_flood_profile': policy.get('dns_flood_profile', ''),
+                        'https_flood_profile': policy.get('https_flood_profile', ''),
+                        'signature_protection_profile': policy.get('signature_protection_profile', ''),
+                        'ert_attackers_feed_profile': policy.get('ert_attackers_feed_profile', ''),
+                        'geo_feed_profile': policy.get('geo_feed_profile', ''),
+                        'out_of_state_profile': policy.get('out_of_state_profile', '')
                     }
                     for policy in security_policies
                 ]
-                
                 result.update({
                     'changed': True,
                     'response': {
@@ -154,6 +160,13 @@ def run_module():
                                 'dst_network': policy.get('dst_network', 'any'),
                                 'direction': policy.get('direction', 'oneway'),
                                 'connection_limit_profile': policy.get('connection_limit_profile', ''),
+                                'bdos_profile': policy.get('bdos_profile', ''),
+                                'dns_flood_profile': policy.get('dns_flood_profile', ''),
+                                'https_flood_profile': policy.get('https_flood_profile', ''),
+                                'signature_protection_profile': policy.get('signature_protection_profile', ''),
+                                'ert_attackers_feed_profile': policy.get('ert_attackers_feed_profile', ''),
+                                'geo_feed_profile': policy.get('geo_feed_profile', ''),
+                                'out_of_state_profile': policy.get('out_of_state_profile', ''),
                                 'status': 'success'
                             }
                             

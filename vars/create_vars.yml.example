@@ -255,6 +255,44 @@ create_dns_profiles:
 # 1. Create new DNS profiles: Define dns_profiles
 # 2. Use existing DNS profiles only: Skip this section and reference them elsewhere
 
+################################## SSL Object Create Variables ###############################
+
+# Define SSL objects to edit
+create_ssl_objects:
+  - ssl_object_name: "server1"                   # Mandatory: exact SSL object name
+    ssl_object_profile: "enable"                 # Options: enable, disable
+    ip_address: "155.1.102.9"                    # Mandatory
+    Port: 443                                    # Optional – default: 443
+    add_certificate: ""                          # Optional – certificate name to add 
+    front_sslv3: "disable"                       # Options: enable, disable
+    front_tls1.0: "disable"                      # Options: enable, disable
+    front_tls1.1: "disable"                      # Options: enable, disable
+    front_tls1.2: "enable"                       # Options: enable, disable
+    front_tls1.3: "enable"                       # Options: enable, disable
+    bk_end_decrypt: "enable"                      # Options: enable, disable
+    bk_end_sslv3: "disable"                      # Options: enable, disable
+    bk_end_tls1.0: "disable"                     # Options: enable, disable
+    bk_end_tls1.1: "enable"                      # Options: enable, disable
+    bk_end_tls1.2: "enable"                      # Options: enable, disable
+    bk_end_tls1.3: "enable"                      # Options: enable, disable
+    bk_end_port: 80                              # Optional – back-end port
+
+### Notes for SSL Objects:
+# *** ssl_object_name ***: Mandatory –  SSL object name to add 
+# Supported SSL Object Parameters:
+# ssl_object_profile: enable / disable
+# IP_Address: IP of the server
+# Port: TCP port (default: 443)
+# add_certificate / remove_certificate: certificate management
+# front_sslv3, front_tls1.0, front_tls1.1, front_tls1.2, front_tls1.3: enable / disable
+# cipher_suite: enable / disable
+# front_user_cipher: custom front-end cipher string
+# bk_end_decrypt: enable / disable
+# bk_end_sslv3, bk_end_tls1.0, bk_end_tls1.1, bk_end_tls1.2, bk_end_tls1.3: enable / disable
+# bk_cipher: enable / disable
+# bk_user_cipher: custom back-end cipher string
+# bk_end_port: back-end TCP port
+
 ################################## SYN Protections Variables ###############################
 # Define SYN protections to create
 # Each protection must include protection_name (MANDATORY) and required thresholds
@@ -323,6 +361,80 @@ create_https_profiles:
       
   # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work
 
+########################## Traffic Filter Profiles and Protections ##########################
+# Define Traffic Filter profiles to create per device
+# All parameters use user-friendly values that are automatically mapped to API values
+# You can skip creating some profiles/protections by leaving the list empty
+
+# Traffic Filter profiles to create
+create_tf_profiles:
+  - name: "TF_PROFILE_1"
+    params:
+      action: "report_only"          # Options: report_only, block_and_report
+
+  - name: "TF_PROFILE_2"
+    params:
+      action: "block_and_report"     # Options: report_only, block_and_report
+
+########################## Traffic Filter Profiles and Protections ##########################
+# List of Traffic Filter profiles and protections to create per device
+# Each item contains create_tf_profiles and create_tf_protections lists
+# create_tf_profiles: list of profiles to create
+# create_tf_protections: list of protections under the profiles
+
+# Create Traffic Filter Profiles
+
+create_tf_profiles:
+  - profile_name: "TF_PROFILE_1"
+    action: "report_only"           # report_only, block_and_report (Default: repot_only)
+  - profile_name: "TF_PROFILE_2"
+    action: "block_and_report"      # report_only, block_and_report
+
+create_tf_protections:
+  - profile_name: "TF_PROFILE_1"
+    protection_name: "TF_PROT_1"
+    status: "enable"                # enable, disable (Default: enable)
+    match_criteria: "match"         # match, not-match (Default:match)
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc. (Default:any)
+    tcp_syn: "enable"               # TCP SYN flag handling (Default:enable)
+    tcp_ack: "enable"               # TCP ACK flag handling (Default:enable)
+    tcp_rst: "enable"               # TCP RST flag handling (Default:enable)
+    tcp_synack: "enable"            # TCP SYN-ACK flag handling (Default:enable)
+    tcp_finack: "enable"            # TCP FIN-ACK flag handling (Default:enable)
+    tcp_pshack: "enable"            # TCP PSH-ACK flag handling (Default:enable)
+    threshold_pps: "5000"           # Optional: rate limit in packets per second (deafult :10000)
+    threshold_kbps: "0"              # Optional: rate limit in kilo bits per second
+    packet_report: "enable"         # enable, disable (Default:enable)
+    threshold_unit: "pps"           # kbps, pps (Default:pps)
+    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic (Default:all)
+
+
+  - profile_name: "TF_PROFILE_2"
+    protection_name: "TF_PROT_2"
+    status: "enable"             
+    match_criteria: "match"         # match, not-match
+    protocol: "tcp"                 # any, tcp, udp, icmp, etc.
+    tcp_syn: "enable"
+    tcp_ack: "enable"
+    tcp_rst: "enable"
+    tcp_synack: "enable"
+    tcp_finack: "enable"
+    tcp_pshack: "enable"
+    threshold_pps: "5000"
+    threshold_kbps: "0"
+    packet_report: "enable"         # enable, disable
+    threshold_unit: "pps"           # kbps, pps
+    attack_tracking_type: "all"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic
+
+## Minimal configuration to create protection
+  - profile_name: "TF_PROFILE_3"
+    protection_name: "TF_PROT_3"
+    protocol: "tcp"
+    threshold_pps: "5000"
+    threshold_unit: "pps"
+    attack_tracking_type: "per_destination"
+ 
+  
 ########################## Security Policy Configuration ##########################
 
 # Control what gets created during security policy orchestration
@@ -338,7 +450,7 @@ security_policy_config:
   apply_policies_after_creation: true  # Set false to skip automatic policy updates
 
 # Security policies with profile bindings
-security_policies:
+create_security_policies:
   - policy_name: "example_security_policy_1"
     state: "enable"                          # enable, disable
     action: "report_only"                    # block_and_report, report_only
@@ -392,3 +504,4 @@ security_policies:
 # 2. Use security_policy_config to control which components are created
 # 3. Reference profile names from sections above or use existing profiles
 # 4. Empty profile fields ("") will not bind any profile of that type
+

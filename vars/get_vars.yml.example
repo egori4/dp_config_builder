@@ -64,6 +64,14 @@ filter_dns_profile_names: ["dns_profile_10"]
 # - If all entries in dns_profiles are commented out or the list is empty, all dns profiles on the device(s) will be included.
 # - To filter for specific profiles, list them as: - name: "dns_profile_1"
 
+###################### Get SSL Object ##########################
+# vars/get_vars.yml
+# Optional: List of SSL objects to fetch (filtered)
+# If empty or omitted, all SSL objects will be retrieved
+filter_ssl_object_names: ["server1", "server2"]
+
+# filter_ssl_object_names: []  # Fetch all profiles
+# - name: server3   # uncomment/add more as needed
 ###################### Get HTTPS Flood Profile ##########################
 # Filter by specific HTTP profile names, or leave empty list for all profiles
 filter_https_profile_names: ["https_profile_1","https_profile_2"]
@@ -71,6 +79,25 @@ filter_https_profile_names: ["https_profile_1","https_profile_2"]
 # filter_https_profile_names: ["https_profile_1"]  # Show only one profile
 # filter_https_profile_names: ["https_profile_1", "https_profile_2"]  # Show multiple profiles
 # filter_https_profile_names: []  # Show all profiles (default)
+
+###################### Get SYN Profile ##########################
+# get_syn_vars.yml
+# Optional filter to fetch only specific SYN profiles
+# Optional: list of SYN profiles to fetch. Leave empty to get all profiles
+# Optional: filter is not used for SYN profiles because protections are not linked to profiles
+
+# Filter SYN protections (only these names, leave empty for all)
+filter_syn_profile_names: ["SYN_PROFILE_1", "SYN_PROFILE_2"]
+
+###################### Get Traffic Filter Profile ##########################
+# Filter by specific Traffic Filter profile names, or leave empty list for all profiles
+filter_tf_profile_names: ["TF_PROFILE_1", "TF_PROFILE_2"]
+
+# Examples:
+# filter_tf_profile_names: ["TF_PROFILE_1"]           # Show only one profile
+# filter_tf_profile_names: ["TF_PROFILE_1","TF_PROFILE_2"]  # Show multiple profiles
+# filter_tf_profile_names: []                          # Show all profiles (default)
+
 
 ########################## Security Policy Filter variables ##########################
 # Filter by specific security policy names, or leave empty list for all policies
@@ -86,11 +113,3 @@ filter_security_policy_names: []  # Set to list of policy names to filter, or le
 # - This operation is read-only and safe to run anytime
 # - Use this to discover existing security policies before creating, editing, or deleting
 
-###################### Get SYN Profile ##########################
-# get_syn_vars.yml
-# Optional filter to fetch only specific SYN profiles
-# Optional: list of SYN profiles to fetch. Leave empty to get all profiles
-# Optional: filter is not used for SYN profiles because protections are not linked to profiles
-
-# Filter SYN protections (only these names, leave empty for all)
-filter_syn_profile_names: ["SYN_PROFILE_1", "SYN_PROFILE_2"]

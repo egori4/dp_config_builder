@@ -103,18 +103,28 @@ ORCHESTRATION LAYER
 │   │   ├── edit_dns_profile.yml                 # Modify DNS protection profiles
 │   │   ├── delete_dns_profile.yml               # Remove DNS protection profiles
 │   │   └── get_dns_profile.yml                  # Query DNS protection profiles
+│   ├── 🎯 SSL Object Operations                # Create, edit, delete, and query SSL Object
+│   │   ├── create_ssl_object.yml               # Create SSL Object
+│   │   ├── edit_ssl_object.yml                 # Modify SSL Object
+│   │   ├── delete_ssl_object.yml               # Remove SSL Object
+│   │   └── get_ssl_object.yml                  # Query SSL Object
 │   ├── 🎯 HTTPS Profile Operations      # Create, edit, delete, and query HTTPS profiles
-│   │   ├── create_https_profile.yml               # Create HTTPS protection profiles
-│   │   ├── edit_https_profile.yml                 # Modify HTTPS protection profiles
-│   │   ├── delete_https_profile.yml               # Remove HTTPS protection profiles
-│   │   └── get_https_profile.yml                  # Query HTTPS protection profiles
+│   │   ├── create_https_profile.yml           # Create HTTPS protection profiles
+│   │   ├── edit_https_profile.yml             # Modify HTTPS protection profiles
+│   │   ├── delete_https_profile.yml           # Remove HTTPS protection profiles
+│   │   └── get_https_profile.yml              # Query HTTPS protection profiles
 │   ├── 🎯 SYN Protection Profile Operations     # Create, edit, delete, and query SYN protection profiles
 │   │   ├── create_syn_profile.yml               # Create SYN protection profiles
 │   │   ├── edit_syn_protection.yml              # Modify SYN protection profiles
 │   │   ├── delete_syn_profile.yml               # Remove SYN protection profiles
 │   │   └── get_syn_profile.yml                  # Query SYN protection profiles
+│   ├── 🎯 Traffic Filter Operations          # Create, edit, delete, and query Traffic Filter
+│   │   ├── create_traffic_filter.yml               # Create Traffic Filter
+│   │   ├── edit_traffic_filter.yml                 # Modify Traffic Filter
+│   │   ├── delete_traffic_filter.yml               # Remove Traffic Filter
+│   │   └── get_traffic_filter.yml                  # Query Traffic Filter
 │   ├── 🎯 Security Policy Operations            # Create, edit, and delete security policies with profile bindings
-│   │   ├── create_security_policy.yml           # Create security policies and bind profiles
+│   │   ├── create_full_config.yml           # Create security policies and bind profiles
 │   │   ├── edit_security_policy.yml             # Modify security policies and profile bindings
 │   │   └── delete_security_policy.yml           # Remove security policies (with optional profile cleanup)
 │   ├── 📊 Runtime Data (auto-created)
@@ -149,8 +159,23 @@ ORCHESTRATION LAYER
 │   │   │   ├── edit_oos_profile.py        # Modify existing OOS profiles
 │   │   │   ├── delete_oos_profile.py      # Batch deletion with error handling
 │   │   │   └── get_oos_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 SSL Object Modules (v0.1.5+)
+│   │   │    ├── create_ssl_object.py               # Batch creation with validation
+│   │   │    ├── edit_ssl_object.py                 # Modify SSL Object
+│   │   │    ├── delete_ssl_object.py               # Batch deletion with error handling
+│   │   │    └── get_ssl_object.py                  # Enhanced querying with filtering
+│   │   ├── 🔧 HTTPS Profile Modules (v0.1.7+)
+│   │   │   ├── create_https_profile.py      # Batch creation with validation
+│   │   │   ├── edit_https_profile.py        # Modify existing DNS profiles
+│   │   │   ├── delete_https_profile.py      # Batch deletion with error handling
+│   │   │   └── get_https_profile.py         # Enhanced querying with filtering
+│   │   ├── 🔧 Traffic Filter Modules (v0.1.10+)
+│   │   │   ├── create_traffic_filter.py      # Batch creation with validation
+│   │   │   ├── edit_traffic_filter.py        # Modify existing Traffic Filter
+│   │   │   ├── delete_traffic_filter.py     # Batch deletion with error handling
+│   │   │   └── get_traffic_filter.py         # Enhanced querying with filtering
 │   │   ├── 🔧 Security Policy Modules (v0.2.0+)
-│   │   │   ├── create_security_policy.py   # Create policies with profile bindings
+│   │   │   ├── create_full_config.py   # Create policies with profile bindings
 │   │   │   ├── edit_security_policy.py     # Edit policies (partial updates)
 │   │   │   └── delete_security_policy.py   # Delete policies (dual deletion modes)
 │   │   └── 🔧 Device Management
@@ -283,14 +308,48 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_oos_profile.py`, `edit_oos_profile.py`, `delete_oos_profile.py`, `get_oos_profile.py`
 
-8. **Security Policy Modules** (`plugins/modules/`)
+7. **SSL Object Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_ssl_profile.py`, `edit_ssl_profile.py`, `delete_ssl_profile.py`, `get_ssl_profile.py`
+
+8. **HTTPS Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_ssl_object.py`, `edit_ssl_object.py`, `delete_ssl_object.py`, `get_ssl_object.py`
+   - **Modules**: `create_https_profile.py`, `edit_https_profile.py`, `delete_https_profile.py`, `get_https_profile.py`
+
+9. **Traffic Filter Modules** (`plugins/modules/`)
+   - **Enhancement**: All modules follow consistent unified pattern
+   - **Key Features**:
+     - Single device call with batch processing (moved from YAML loops to Python)
+     - Enhanced error handling using `cc._request` methods
+     - Structured `debug_info` and comprehensive logging
+     - Check mode with preview functionality showing exact operations
+     - Formatted output with success/failure indicators
+     - List-based filtering support for get operations
+   - **Modules**: `create_traffic_filter.py`, `edit_traffic_filter.py`, `delete_traffic_filter.py`, `get_traffic_filter.py`
+
+10. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
-     - Creation: `create_security_policy.py` (API call with profile bindings)
+     - Creation: `create_full_config.py` (API call with profile bindings)
      - Editing: `edit_security_policy.py` (partial updates with profile attachment/detachment)
      - Deletion: `delete_security_policy.py` (dual deletion modes with optional profile cleanup)
-     - Orchestration: `create_security_policy.yml` (coordinates profiles creation, and policies)
+     - Orchestration: `create_full_config.yml` (coordinates profiles creation, and policies)
      - Editing: `edit_security_policy.yml` (modifies existing policies with conditional locking)
      - Deletion: `delete_security_policy.yml` (removes policies with flexible cleanup options)
    - **Key Features**:
@@ -359,6 +418,22 @@ ORCHESTRATION LAYER
 | **Edit Profile** | PUT | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Create Profile** | POST | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
 | **Get Profiles** | GET | `/mgmt/device/byip/{dp_ip}/config/rsStatefulProfileTable/{profile_name}` |
+
+### SSL Object Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create SSL Object** | POST   | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Edit SSL Object**   | PUT    | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Delete SSL Object** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+| **Get SSL Object**    | GET    | `/mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}` |
+
+### Traffic Filter Management
+| Operation | Method | Endpoint |
+|-----------|--------|----------|
+| **Create Traffic Filter** | POST   | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
+| **Edit Traffic Filter**   | PUT    | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
+| **Delete Traffic Filter** | DELETE | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
+| **Get Traffic Filter**    | GET    | `/mgmt/device/byip/{dp_ip}/config/rsIDSNewTrafficFilterTable/{profile_name}/{protection_name}` |
 
 ### Security Policy Management
 
@@ -995,6 +1070,102 @@ oos_profiles:
   - "OOS_Profile_5"
   - "OOS_Profile_6"
 ```
+###  Create SSL Object 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEL4PortNumber": "80"
+        }
+```
+##### Edit SSL Object 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEL4PortNumber": "80"
+        }
+```
+Usage:
+Call edit_ssl_object once per device, passing list of profiles to edit.
+Each ssl object dict must include ssl_object_name (mandatory) and any parameters to change
+
+#### Get SSL Object 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name}
+
+Response:
+{
+    "rsProtectedSslObjTable": [
+        {
+            "rsProtectedObjName": "server1",
+            "rsProtectedObjEnable": "1",
+            "rsProtectedObjIpAddr": "155.1.102.7",
+            "rsProtectedObjApplPort": "443",
+            "rsProtectedObjAddCertificate": "",
+            "rsProtectedObjRemoveCertificate": "",
+            "rsProtectedObjSSLV3Enable": "2",
+            "rsProtectedObjTLS10Enable": "2",
+            "rsProtectedObjTLS11Enable": "1",
+            "rsProtectedObjTLS12Enable": "1",
+            "rsProtectedObjTLS13Enable": "1",
+            "rsBEDecryptionEnable": "1",
+            "rsBEProtectedObjSSLV3Enable": "2",
+            "rsBEProtectedObjTLS10Enable": "2",
+            "rsBEProtectedObjTLS11Enable": "1",
+            "rsBEProtectedObjTLS12Enable": "1",
+            "rsBEProtectedObjTLS13Enable": "1",
+            "rsBEL4PortNumber": "80"
+        }
+    ]
+}
+```
+#Usage:-
+#Call get_ssl_object once per device
+#Optional filtering: filter_ssl_object_names: ["server1", "server2"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete SSL Object ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}
+
+delete_ssl_objects:
+  - name: server1
+  - name: server2
+```
 
 ### SYN Protections & Profiles ###
 ### Create SYN Protection
@@ -1186,6 +1357,147 @@ delete_https_profiles:
   - name: "http_profile_2"
 ```
 
+###  Create TF Profile 
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_name}
+        {
+            "rsNewTrafficProfileName": "Test",
+            "rsNewTrafficProfileAction": "1"
+        }
+```
+###  Create TF Protection
+```json
+POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}
+{
+    "rsNewTrafficFilterProfileName": "Test1",
+    "rsNewTrafficFilterName": "test1",
+    "rsNewTrafficFilterMatchCriteria": "1",
+    "rsNewTrafficFilterProtocol": "0",
+    "rsNewTrafficFilterPacketSize": "",
+    "rsNewTrafficFilterTCPFlagsSyn": "2",
+    "rsNewTrafficFilterTCPFlagsAck": "2",
+    "rsNewTrafficFilterTCPFlagsRst": "2",
+    "rsNewTrafficFilterTCPFlagsSynAck": "2",
+    "rsNewTrafficFilterTCPFlagsFinAck": "2",
+    "rsNewTrafficFilterTCPFlagsPshAck": "2",
+    "rsNewTrafficFilterThresholdPPS": "10000",
+    "rsNewTrafficFilterThresholdBPS": "0",
+    "rsNewTrafficFilterPacketReport": "1",
+    "rsNewTrafficFilterThresholdUsed": "2",
+    "rsNewTrafficFilterAttackTrackingType": "0",
+    "rsNewTrafficFilterCustomProtocol": ""
+
+}
+```
+##### Edit Traffic Filter 
+```json
+PUT /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}
+
+{
+    "rsNewTrafficFilterProfileName": "Test1",
+    "rsNewTrafficFilterName": "test1",
+    "rsNewTrafficFilterMatchCriteria": "1",
+    "rsNewTrafficFilterProtocol": "0",
+    "rsNewTrafficFilterPacketSize": "",
+    "rsNewTrafficFilterTCPFlagsSyn": "2",
+    "rsNewTrafficFilterTCPFlagsAck": "2",
+    "rsNewTrafficFilterTCPFlagsRst": "2",
+    "rsNewTrafficFilterTCPFlagsSynAck": "2",
+    "rsNewTrafficFilterTCPFlagsFinAck": "2",
+    "rsNewTrafficFilterTCPFlagsPshAck": "2",
+    "rsNewTrafficFilterThresholdPPS": "10000",
+    "rsNewTrafficFilterThresholdBPS": "0",
+    "rsNewTrafficFilterPacketReport": "1",
+    "rsNewTrafficFilterThresholdUsed": "2",
+    "rsNewTrafficFilterAttackTrackingType": "0",
+    "rsNewTrafficFilterCustomProtocol": ""
+
+}
+
+```
+Usage:
+Call edit_traffic_filter once per device, passing list of profiles to edit.
+Each profile dict must include profile_name (mandatory) and any parameters to change
+
+#### Get TF Profile 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}
+
+Response:
+{
+    "rsNewTrafficFilterTable": [
+        {
+            "rsNewTrafficFilterProfileName": "Test1",
+            "rsNewTrafficFilterName": "test1",
+            "rsNewTrafficFilterID": "700014",
+            "rsNewTrafficFilterState": "1",
+            "rsNewTrafficFilterPriority": "0",
+            "rsNewTrafficFilterMatchCriteria": "1",
+            "rsNewTrafficFilterSrcNetwork": "As in Policy",
+            "rsNewTrafficFilterSrcPort": "Any",
+            "rsNewTrafficFilterDstNetwork": "As in Policy",
+            "rsNewTrafficFilterDstPort": "Any",
+            "rsNewTrafficFilterProtocol": "0",
+            "rsNewTrafficFilterPacketSize": "",
+            "rsNewTrafficFilterTCPFlagsSyn": "2",
+            "rsNewTrafficFilterTCPFlagsAck": "2",
+            "rsNewTrafficFilterTCPFlagsRst": "2",
+            "rsNewTrafficFilterTCPFlagsSynAck": "2",
+            "rsNewTrafficFilterTCPFlagsFinAck": "2",
+            "rsNewTrafficFilterTCPFlagsPshAck": "2",
+            "rsNewTrafficFilterDnsQueryName": "",
+            "rsNewTrafficFilterDnsTypeA": "2",
+            "rsNewTrafficFilterDnsTypeAAAA": "2",
+            "rsNewTrafficFilterDnsTypeMX": "2",
+            "rsNewTrafficFilterDnsTypePTR": "2",
+            "rsNewTrafficFilterDnsTypeCNAME": "2",
+            "rsNewTrafficFilterDnsTypeNS": "2",
+            "rsNewTrafficFilterDnsTypeTXT": "2",
+            "rsNewTrafficFilterDnsTypeANY": "2",
+            "rsNewTrafficFilterDnsTypeSOA": "2",
+            "rsNewTrafficFilterThresholdPPS": "20000",
+            "rsNewTrafficFilterThresholdBPS": "0",
+            "rsNewTrafficFilterPacketReport": "1",
+            "rsNewTrafficFilterThresholdUsed": "2",
+            "rsNewTrafficFilterTTL": "",
+            "rsNewTrafficFilterSequenceNum": "",
+            "rsNewTrafficFilterFragId": "",
+            "rsNewTrafficFilterFragOffset": "",
+            "rsNewTrafficFilterAttackTrackingType": "0",
+            "rsNewTrafficFilterRegex": "",
+            "rsNewTrafficFilterTOS": "",
+            "rsNewTrafficFilterVLAN": "Any",
+            "rsNewTrafficFilterCustomProtocol": "",
+            "rsNewTrafficFilterSrcSubPrefixIPv4": "32",
+            "rsNewTrafficFilterSrcSubPrefixIPv6": "128",
+            "rsNewTrafficFilterDstSubPrefixIPv4": "32",
+            "rsNewTrafficFilterDstSubPrefixIPv6": "128"
+        }
+    ]
+}
+
+```
+#Usage:-
+#Call get_traffic_filter once per device
+#Optional filtering: filter_tf_profile_names: ["TF_PROFILE_1", "TF_PROFILE_2"]
+#Returns nested structure: profiles -> settings
+#API mappings handled internally
+
+### Delete TF Profile ###
+```yml
+DELETE /mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}/{protection_name}
+
+delete_traffic_filters:
+  profiles:
+    - name: "TF_PROFILE_1"
+    - name: "TF_PROFILE_2"
+
+  protections:
+    - profile_name: "TF_PROFILE_1"
+      name: "TF_PROT_1"
+    - profile_name: "TF_PROFILE_2"
+      name: "TF_PROT_2"
+```
 ### Edit Security Policy
 ```python
 # Request - Partial update (only specified parameters are changed)
