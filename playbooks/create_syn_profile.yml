@@ -27,11 +27,10 @@
             label: "Device: {{ item }}"
           register: syn_create_results
 
-        - name: Display SYN creation results (formatted)
+        - name: Display SYN creation details
           vars:
-            formatted_output: |
+            detailed_output: |
               Device: {{ item.item }}
-              EXECUTION RESULTS:
               {% if item.failed | default(false) %}
               Error occurred during SYN creation:
                 - {{ item.msg | default('Unknown error') }}
@@ -59,7 +58,23 @@
               No SYN protections/profiles were created.
               {% endif %}
           ansible.builtin.debug:
-            msg: "{{ formatted_output.split('\n') }}"
+            msg: "{{ detailed_output.split('\n') }}"
+          loop: "{{ syn_create_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+
+        - name: Display SYN creation summary
+          vars:
+            summary_output: |
+              Device: {{ item.item }}
+              EXECUTION RESULTS:
+              SYN Summary:
+                - Total protections attempted: {{ item.response.summary.total_protections_attempted | default(0) }}
+                - Protections created: {{ item.response.summary.protections_created | default(0) }}
+                - Total profiles attempted: {{ item.response.summary.total_profiles_attempted | default(0) }}
+                - Profiles created: {{ item.response.summary.profiles_created | default(0) }}
+          ansible.builtin.debug:
+            msg: "{{ summary_output.split('\n') }}"
           loop: "{{ syn_create_results.results }}"
           loop_control:
             label: "Device: {{ item.item }}"

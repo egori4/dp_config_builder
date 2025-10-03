@@ -3,7 +3,7 @@
 Unified Ansible module to manage DefensePro SYN protections and profiles.
 
 - Handles both SYN protection creation and SYN profile creation.
-- Provides structured results and full debug details (METHOD, URI, Response Code, Request Body, Response Data).
+- Provides structured results, summary, and full debug details.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -47,6 +47,7 @@ def run_module():
 
         if not module.check_mode:
 
+            # Create SYN protections
             for protection in syn_protections:
                 protection_name = protection['name']
                 index = protection.get('index', 0)
@@ -94,6 +95,7 @@ def run_module():
                 changes_made = True
                 refresh_device_state(cc, dp_ip, provider, logger)
 
+            # Create SYN profiles
             FIELD_MAP = {"profile_type": "rsIDSSynProfileType"}
             VALUE_MAP = {"profile_type": {"syn_protection": 4}}
 
@@ -107,7 +109,6 @@ def run_module():
                         "rsIDSSynProfileServiceName": protection_name
                     }
 
-                    # Map human-friendly profile parameters
                     if "params" in profile:
                         for k, v in profile["params"].items():
                             api_key = FIELD_MAP.get(k, k)
@@ -148,16 +149,23 @@ def run_module():
                     changes_made = True
                     refresh_device_state(cc, dp_ip, provider, logger)
 
+        protections_created_count = len(created_protections)
+        profiles_created_count = len(created_profiles)
+
         result['changed'] = changes_made
         result['response'] = {
             'protections': created_protections,
-            'profiles': created_profiles
+            'profiles': created_profiles,
+            'summary': {
+                'total_protections_attempted': protections_created_count,
+                'total_profiles_attempted': profiles_created_count,
+                'protections_created': protections_created_count,
+                'profiles_created': profiles_created_count,
+                'operations_completed': changes_made
+            }
         }
-        debug_info['summary'] = {
-            'protections_created': len(created_protections),
-            'profiles_created': len(created_profiles),
-            'operations_completed': changes_made
-        }
+
+        debug_info['summary'] = result['response']['summary']
 
     except Exception as e:
         logger.error(f"Exception: {str(e)}")
