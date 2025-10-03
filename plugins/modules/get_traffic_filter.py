@@ -55,15 +55,8 @@ def run_module():
             profiles_raw = []
             errors.append(f"Failed to parse profiles JSON from {dp_ip}")
 
-        debug_info.append({
-            "method": "GET",
-            "uri": profile_url,
-            "response_code": resp_profiles.status_code,
-            "response_body_truncated": resp_profiles.text[:200] + ('...' if len(resp_profiles.text) > 200 else ''),
-            "response_json": resp_profiles.json() if resp_profiles.text else {}
-        })
-
-        logger.debug(f"Raw profiles data: {profiles_raw}")
+        # Simplified debug log aligned with other modules
+        logger.debug(f"Fetched {len(profiles_raw)} Traffic Filter profiles from {dp_ip}")
 
         # === Fetch protections ===
         prot_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable"
@@ -76,15 +69,8 @@ def run_module():
             protections_raw = []
             errors.append(f"Failed to parse protections JSON from {dp_ip}")
 
-        debug_info.append({
-            "method": "GET",
-            "uri": prot_url,
-            "response_code": resp_prots.status_code,
-            "response_body_truncated": resp_prots.text[:200] + ('...' if len(resp_prots.text) > 200 else ''),
-            "response_json": resp_prots.json() if resp_prots.text else {}
-        })
-
-        logger.debug(f"Raw protections data: {protections_raw}")
+        # Simplified debug log aligned with other modules
+        logger.debug(f"Fetched {len(protections_raw)} Traffic Filter protections from {dp_ip}")
 
         # === Build profiles dict ===
         profiles = {}
@@ -165,6 +151,9 @@ def run_module():
                 "errors": errors,
             }
         )
+
+        # Simplified final debug
+        logger.debug(f"Traffic Filter fetch summary for {dp_ip}: {summary}")
 
     except Exception as e:
         logger.error(f"Exception fetching Traffic Filter data: {str(e)}")

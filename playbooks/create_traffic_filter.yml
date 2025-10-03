@@ -40,7 +40,7 @@
               EXECUTION RESULTS:
 
               {% if create_tf_profiles is not defined and create_tf_protections is not defined %}
-                there is no variable
+                Traffic filters variables are not defined. No changes made
               {% else %}
                 **Traffic Filter Profiles created successfully:**
                 {{ response.pretty_profiles | default('No profiles created') }}
