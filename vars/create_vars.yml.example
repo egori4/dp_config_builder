@@ -309,7 +309,6 @@ create_https_profiles:
       #challenge_method: "javascript" 
       
   # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work
-  
 
 ########################## Traffic Filter Profiles and Protections ##########################
 # List of Traffic Filter profiles and protections to create per device
@@ -383,6 +382,8 @@ security_policy_config:
   create_bdos_profiles: true       # Set false if BDoS profiles already exist
   create_dns_profiles: true        # Set false if DNS profiles already exist
   create_https_profiles: true      # Set false if HTTPS profiles already exist
+  create_traffic_filter_profiles: true # Set false if Traffic Filter profiles already exist
+  create_ssl_objects: true         # Set false if SSL objects already exist
 
   create_security_policies: true   # Set false to skip policy creation
   apply_policies_after_creation: true  # Set false to skip automatic policy updates
@@ -404,7 +405,7 @@ create_security_policies:
     # syn_protection_profile: ""                         # SYN profile (if available) 
     dns_flood_profile: "dns_profile_10"                 # DNS profile (created above or existing)
     https_flood_profile: "https_profile_1"              # HTTPS profile (created above or existing)
-    # traffic_filters_profile: ""                        # Traffic filter profile (if available)
+    traffic_filters_profile: "TF_PROFILE_1"             # Traffic filter profile (created above or existing)
     signature_protection_profile: "All-DoS-Shield"      # AppSec profile (if available)
     # ert_attackers_feed_profile: ""                     # ERT profile (if available)
     # geo_feed_profile: ""                               # Geo feed profile (if available)
@@ -433,6 +434,7 @@ create_security_policies:
 #   * bdos_profile: Behavioral DoS flood protection profile  
 #   * dns_flood_profile: DNS flood protection profile
 #   * https_flood_profile: HTTPS flood protection profile
+#   * traffic_filters_profile: Traffic filter protection profile
 #   * signature_protection_profile: Application security signatures
 #   * out_of_state_profile: Out-of-state connection handling
 #   * Other profile types available as needed
