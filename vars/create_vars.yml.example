@@ -309,21 +309,7 @@ create_https_profiles:
       #challenge_method: "javascript" 
       
   # Note - SSL Decryption and Encryption should be enabled on the DP for challenge method to work
-
-########################## Traffic Filter Profiles and Protections ##########################
-# Define Traffic Filter profiles to create per device
-# All parameters use user-friendly values that are automatically mapped to API values
-# You can skip creating some profiles/protections by leaving the list empty
-
-# Traffic Filter profiles to create
-create_tf_profiles:
-  - name: "TF_PROFILE_1"
-    params:
-      action: "report_only"          # Options: report_only, block_and_report
-
-  - name: "TF_PROFILE_2"
-    params:
-      action: "block_and_report"     # Options: report_only, block_and_report
+  
 
 ########################## Traffic Filter Profiles and Protections ##########################
 # List of Traffic Filter profiles and protections to create per device
@@ -331,13 +317,14 @@ create_tf_profiles:
 # create_tf_profiles: list of profiles to create
 # create_tf_protections: list of protections under the profiles
 
-# Create Traffic Filter Profiles
 
 create_tf_profiles:
   - profile_name: "TF_PROFILE_1"
     action: "report_only"           # report_only, block_and_report (Default: repot_only)
   - profile_name: "TF_PROFILE_2"
     action: "block_and_report"      # report_only, block_and_report
+  - profile_name: "TF_PROFILE_3"
+    action: "block_and_report"      # report_only, block_and_report  
 
 create_tf_protections:
   - profile_name: "TF_PROFILE_1"

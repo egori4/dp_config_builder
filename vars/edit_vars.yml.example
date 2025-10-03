@@ -341,7 +341,7 @@ edit_https_profiles:
 # vars/edit_vars.yml
 # Corrected Traffic Filter edits
 
-# vars/edit_tf_vars_test.yml
+# vars/edit_vars.yml
 
 # Traffic Filter profiles
 edit_tf_profiles:
