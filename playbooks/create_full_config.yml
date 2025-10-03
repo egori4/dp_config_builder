@@ -380,6 +380,60 @@
             - dns_results is defined
             - dns_results.results is defined
 
+        - name: "Create SSL objects"
+          create_ssl_object:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            ssl_objects: "{{ create_ssl_objects | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: ssl_results
+          when: security_policy_config.create_ssl_objects | default(false)
+
+        - name: "Display SSL object creation results"
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              SSL Object Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.ssl_object_name }} ({{ op.ip_address }}:{{ op.Port }})
+              {% endfor %}
+              {% else %}
+              No SSL objects configured for creation.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              Error occurred during creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.response.created_objects | default([]) | length > 0 %}
+              SSL Objects created successfully:
+              {% for obj in item.response.created_objects %}
+                - {{ obj.ssl_object_name }}
+                  Parameters:
+              {% for key, value in obj.parameters.items() %}
+                    - {{ key }}: {{ value }}
+              {% endfor %}
+              {% endfor %}
+              {% else %}
+              No SSL objects were created.
+              {% endif %}
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ ssl_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+          when:
+            - security_policy_config.create_ssl_objects | default(false)
+            - ssl_results is defined
+            - ssl_results.results is defined
+
         - name: "Configure HTTPS profiles"
           create_https_profile:
             provider: "{{ cc }}"
@@ -437,6 +491,69 @@
             - security_policy_config.create_https_profiles | default(false)
             - https_results is defined
             - https_results.results is defined
+
+        - name: "Configure Traffic Filter profiles and protections"
+          create_traffic_filter:
+            provider: "{{ cc }}"
+            dp_ip: "{{ item }}"
+            tf_profiles: "{{ create_tf_profiles | default([]) }}"
+            tf_protections: "{{ create_tf_protections | default([]) }}"
+          loop: "{{ dp_ip }}"
+          loop_control:
+            label: "Device: {{ item }}"
+          register: tf_results
+          when: security_policy_config.create_traffic_filter_profiles | default(false)
+
+        - name: "Display Traffic Filter profile creation results"
+          vars:
+            formatted_output: |
+              Device: {{ item.item }}
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Planned operations:
+              {% set planned_ops = item.response.planned_operations | default([]) %}
+              {% if planned_ops %}
+              Traffic Filter Creations ({{ planned_ops | length }} planned):
+              {% for op in planned_ops %}
+                - {{ op.profile_name | default(op.protection_name) }}
+                  Parameters:
+                  {% for k, v in op.params.items() %}
+                    - {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              No Traffic Filter profiles/protections configured for creation.
+              {% endif %}
+              {% else %}
+              EXECUTION RESULTS:
+              {% if item.failed | default(false) %}
+              Error occurred during creation:
+                - {{ item.msg | default('Unknown error') }}
+              {% elif item.response.pretty_profiles | default('') or item.response.pretty_protections | default('') %}
+              Traffic Filter Profiles created successfully:
+              {{ item.response.pretty_profiles | default('No profiles created') }}
+              
+              Traffic Filter Protections created successfully:
+              {{ item.response.pretty_protections | default('No protections created') }}
+              {% if item.response.errors | default([]) | length > 0 %}
+              
+              Errors Detected:
+              {% for error in item.response.errors %}
+                - {{ error }}
+              {% endfor %}
+              {% endif %}
+              {% else %}
+              No Traffic Filter profiles/protections were created.
+              {% endif %}
+              {% endif %}
+          ansible.builtin.debug:
+            msg: "{{ formatted_output.split('\n') }}"
+          loop: "{{ tf_results.results }}"
+          loop_control:
+            label: "Device: {{ item.item }}"
+          when:
+            - security_policy_config.create_traffic_filter_profiles | default(false)
+            - tf_results is defined
+            - tf_results.results is defined
 
         - name: "Create DefensePro security policies"
           create_full_config:
