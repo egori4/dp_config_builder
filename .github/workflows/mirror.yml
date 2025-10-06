@@ -58,10 +58,38 @@ jobs:
           BRANCH_NAME="${{ github.event.ref }}"
           echo "Deleting branch: $BRANCH_NAME"
           
-          # Use curl to delete via GitHub API (doesn't need git repo)
-          curl -X DELETE \
+          # Make API call and capture response (silent mode, no progress bars)
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
             -H "Authorization: token ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/Radware/dp_config_builder/git/refs/heads/${BRANCH_NAME}
+            https://api.github.com/repos/Radware/dp_config_builder/git/refs/heads/${BRANCH_NAME})
           
-          echo "Branch deletion request sent"
+          # Extract HTTP status code (last line)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          # Extract response body (everything except last line)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "----------------------------------------"
+          echo "HTTP Status Code: $HTTP_CODE"
+          echo "API Response:"
+          echo "$BODY"
+          echo "----------------------------------------"
+          
+          # Check if successful
+          if [ "$HTTP_CODE" = "204" ]; then
+            echo "✓ Branch successfully deleted from Radware"
+            exit 0
+          elif [ "$HTTP_CODE" = "404" ]; then
+            echo "✓ Branch doesn't exist in Radware (already deleted or never mirrored)"
+            exit 0
+          elif [ "$HTTP_CODE" = "401" ]; then
+            echo "✗ Authentication failed - check MIRROR_TOKEN secret"
+            exit 1
+          elif [ "$HTTP_CODE" = "403" ]; then
+            echo "✗ Permission denied - token lacks required permissions"
+            exit 1
+          else
+            echo "✗ Branch deletion failed with unexpected status code"
+            exit 1
+          fi
