@@ -1,4 +1,5 @@
 name: Mirror to Radware
+
 on:
   push:
     branches:
@@ -6,6 +7,7 @@ on:
   delete:
     branches:
       - '**'
+
 jobs:
   mirror:
     runs-on: ubuntu-latest
@@ -32,22 +34,44 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Mirroring branch: $BRANCH_NAME (excluding .github/workflows)"
           
+          # Verify token exists
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "❌ MIRROR_TOKEN secret not found"
+            exit 1
+          fi
+          
           # Remove workflows from working directory
           rm -rf .github/workflows
+          
+          # Remove .github if empty
           if [ -d .github ] && [ -z "$(ls -A .github)" ]; then
             rm -rf .github
           fi
           
           # Create temp branch
           git checkout -b temp-mirror-$GITHUB_SHA
+          
+          # Stage and commit removal
           git add -A
           git diff --staged --quiet || git commit -m "Exclude workflows for mirror"
           
-          # Push using token
+          # Add remote with better error handling
           git remote add radware https://x-access-token:${GITHUB_TOKEN}@github.com/Radware/dp_config_builder.git
-          git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force
           
-          echo "✓ Branch mirrored successfully"
+          # Test connection before push
+          echo "Testing connection to target repository..."
+          if ! git ls-remote radware >/dev/null 2>&1; then
+            echo "❌ Cannot connect to target repository. Check token permissions."
+            exit 1
+          fi
+          
+          # Push to radware
+          if git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force; then
+            echo "✓ Branch mirrored successfully"
+          else
+            echo "❌ Failed to push to target repository"
+            exit 1
+          fi
           
       - name: Delete branch from radware
         if: github.event_name == 'delete'
