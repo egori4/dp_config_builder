@@ -21,6 +21,7 @@ jobs:
         if: github.event_name == 'push'
           
       - name: Setup SSH
+        if: github.event_name == 'push'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_DEPLOY_KEY }}" > ~/.ssh/deploy_key
@@ -46,9 +47,16 @@ jobs:
           
       - name: Delete branch from radware
         if: github.event_name == 'delete'
+        env:
+          GITHUB_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           BRANCH_NAME="${{ github.event.ref }}"
           echo "Deleting branch: $BRANCH_NAME"
           
-          GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" \
-          git push git@github.com:Radware/dp_config_builder.git --delete ${BRANCH_NAME}
+          # Use curl to delete via GitHub API (doesn't need git repo)
+          curl -X DELETE \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/Radware/dp_config_builder/git/refs/heads/${BRANCH_NAME}
+          
+          echo "Branch deletion request sent"
