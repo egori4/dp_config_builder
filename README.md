@@ -1,380 +1,178 @@
 # DefensePro Configuration Builder
 
-Ansible automation for Radware DefensePro security configuration management.
+**Ansible automation for Radware DefensePro security configuration management**
 
-Automate configuration of DefensePro security profiles, policies, and network settings across multiple devices using Ansible playbooks and custom modules.
+Automate creation, editing, deletion, and querying of DefensePro security profiles, policies, and network settings across multiple devices using Ansible playbooks and custom modules.
 
-## Quick Start
+## 🚀 Quick Start
 
-**For Operators/Users**: See [USER_GUIDE.md](USER_GUIDE.md) for step-by-step instructions
+- **👥 For Users/Operators**: See [USER_GUIDE.md](USER_GUIDE.md) for step-by-step workflows and examples
+- **🔧 For Developers**: See [DEVELOPER.md](DEVELOPER.md) for technical architecture and API documentation
 
-**For Developers**: See [DEVELOPER.md](DEVELOPER.md) for technical architecture and API details
+## 📋 Prerequisites
 
-## Prerequisites
+Complete these setup steps before using any playbooks:
 
-Before using the DefensePro Configuration Builder, you need to set up the basic Ansible environment:
-
-### 1. Create Ansible Configuration
+### 1. Create Configuration Files
 ```bash
-# Copy the example Ansible configuration
+# Copy Ansible configuration templates
 cp ansible_example.cfg ansible.cfg
-
-# Edit if needed (default settings work for most cases)
-nano ansible.cfg
-```
-
-### 2. Create Inventory File  
-```bash
-# Copy the example inventory
 cp inventory_example.ini inventory.ini
 
-# Edit the inventory (usually no changes needed)
-nano inventory.ini
-```
-
-### 3. Setup Variable Files
-```bash
-# Copy configuration templates
+# Copy variable templates
 cd vars/
 cp cc_example.yml cc.yml                    # CyberController connection settings
-cp create_vars.yml.example create_vars.yml  # For creating resources  
-cp edit_vars.yml.example edit_vars.yml      # For editing resources
-cp delete_vars.yml.example delete_vars.yml  # For deleting resources
-cp get_vars.yml.example get_vars.yml        # For querying resources
-cp update_vars_example.yml update_vars.yml  # For policy updates
-
-# Edit connection settings
-nano cc.yml  # Add your CyberController IP, username, password
-
-# Edit other vars files referenced above as needed
+cp create_vars.yml.example create_vars.yml  # Creation variables
+cp edit_vars.yml.example edit_vars.yml      # Editing variables
+cp delete_vars.yml.example delete_vars.yml  # Deletion variables
+cp get_vars.yml.example get_vars.yml        # Query variables
+cp update_vars_example.yml update_vars.yml  # Policy update variables
 ```
 
-### 4. Verify Setup
+### 2. Configure Connection Settings
 ```bash
+# Edit CyberController connection details
+nano vars/cc.yml
+```
+Add your CyberController IP, username, and password.
 
-# Test inventory configuration  
+### 3. Verify Setup
+```bash
+# Test Ansible configuration
 ansible-inventory --list
+```
 
-## Repository Structure
+## 🎯 What This Automates
+
+### Core DefensePro Management
+- **Network Classes**: Create, edit, delete, and query network classifications
+- **Security Profiles**: Manage Connection Limit, BDoS, DNS, HTTPS, OOS, SSL Objects, Traffic Filter profiles
+- **Security Policies**: Orchestrated policy creation with profile bindings
+- **Device Management**: Automated locking, configuration, and policy updates
+
+### Key Features
+- **Multi-device support**: Configure multiple DefensePro devices simultaneously
+- **Conditional execution**: Enable/disable specific configuration stages
+- **Preview mode**: Dry-run support with `--check` flag
+- **Error handling**: Comprehensive error collection and reporting
+- **Partial updates**: Edit only specified parameters, leave others unchanged
+- **Profile orchestration**: Unified workflow for profiles and policy creation
+
+## 📁 Repository Structure
 
 ```
 dp_config_builder/
-├── README.md                 # Project overview and quick start
-├── USER_GUIDE.md            # Step-by-step user instructions  
-├── DEVELOPER.md             # Technical documentation for developers
+├── 📚 Documentation
+│   ├── README.md              # Project overview (this file)
+│   ├── USER_GUIDE.md          # Step-by-step workflows for operators
+│   └── DEVELOPER.md           # Technical architecture for developers
 ├── 
-├── ansible.cfg              # Ansible configuration (create from ansible_example.cfg)
-├── ansible_example.cfg      # Template for Ansible configuration
-├── inventory.ini            # Ansible inventory (create from inventory_example.ini)
-├── inventory_example.ini    # Template for Ansible inventory
+├── ⚙️ Configuration
+│   ├── ansible.cfg            # Ansible runtime settings
+│   ├── inventory.ini          # Ansible hosts configuration  
+│   └── vars/                  # Variable files and templates
+│       ├── cc.yml             # CyberController connection (your settings)
+│       ├── *_vars.yml         # Your configuration files
+│       └── *.example          # Safe templates for copying
 ├── 
-├── playbooks/               # Ansible playbooks for automation
-│   ├── create_*.yml         # Creation playbooks
-│   ├── edit_*.yml           # Editing playbooks  
-│   ├── delete_*.yml         # Deletion playbooks
-│   ├── get_*.yml            # Query/retrieval playbooks
-│   ├── log/                 # Execution logs (auto-created)
-│   └── tmp/                 # Temporary files (auto-created)
-├── 
-├── plugins/                 # Custom Ansible modules and utilities
-│   ├── modules/             # Custom modules 
-│   │   ├── create_*.py      # Creation modules
-│   │   ├── edit_*.py        # Editing modules
-│   │   ├── delete_*.py      # Deletion modules
-│   │   ├── get_*.py         # Query modules
-│   │   └── dp_*.py          # Device lock/unlock utilities
-│   └── module_utils/        # Shared utilities
-│       ├── radware_cc.py    # HTTP client with session management
-│       └── logger.py        # Structured logging utility
-├── 
-├── vars/                    # Configuration files and templates
-│   ├── cc.yml               # CyberController connection (create from cc_example.yml)
-│   ├── cc_example.yml       # Template for CC connection settings
-│   ├── *_vars.yml          # Your configuration files (git-ignored)
-│   └── *_vars.yml.example  # Safe templates (in git)
+├── 🎭 Automation
+│   ├── playbooks/             # Ansible playbooks for operations
+│   │   ├── create_*.yml       # Creation workflows
+│   │   ├── edit_*.yml         # Editing workflows
+│   │   ├── delete_*.yml       # Deletion workflows
+│   │   └── get_*.yml          # Query workflows
+│   └── plugins/               # Custom modules and utilities
+│       ├── modules/           # DefensePro automation modules
+│       └── module_utils/      # Shared utilities (HTTP client, logging)
 └── 
-└── tasks/                   # Reusable task fragments (advanced usage)
-    └── cl_profile_tasks/    # Connection limit profile task components
+└── 🔍 Runtime Data (auto-created)
+    ├── log/                   # Execution logs
+    └── tmp/                   # Session cache and temporary files
 ```
 
-## What This Does
+## 🛠️ Available Operations
 
-- Create, edit, delete, and query DefensePro security profile and policy configurations
-- Manage multiple DefensePro devices simultaneously
+### Network Classes
+- **Create**: `create_network_class.yml` - Define network classifications and IP ranges
+- **Edit**: `edit_network_class.yml` - Modify existing network groups
+- **Delete**: `delete_network_class.yml` - Remove network classifications
+- **Query**: `get_network_class.yml` - Retrieve current network class configurations
 
-## Available Operations
+### Security Profiles
 
-### Network Class Management
+| Profile Type | Create | Edit | Delete | Query |
+|--------------|--------|------|--------|-------|
+| **Connection Limit** | `create_cl_profiles.yml` | `edit_cl_protections.yml` | `delete_cl_profiles.yml` | `get_cl_profiles.yml` |
+| **BDoS Flood** | `create_bdos_profile.yml` | `edit_bdos_profile.yml` | `delete_bdos_profile.yml` | `get_bdos_profile.yml` |
+| **DNS Protection** | `create_dns_profile.yml` | `edit_dns_profile.yml` | `delete_dns_profile.yml` | `get_dns_profile.yml` |
+| **HTTPS Flood** | `create_https_profile.yml` | `edit_https_profile.yml` | `delete_https_profile.yml` | `get_https_profile.yml` |
+| **Out-of-State** | `create_oos_profile.yml` | `edit_oos_profile.yml` | `delete_oos_profile.yml` | `get_oos_profile.yml` |
+| **Traffic Filter** | `create_traffic_filter.yml` | `edit_traffic_filter.yml` | `delete_traffic_filter.yml` | `get_traffic_filter.yml` |
 
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_network_class.yml` | Create new network classes | [USER_GUIDE.md](USER_GUIDE.md#workflow-1-create-new-network-classes) |
-| `edit_network_class.yml` | Modify existing networks | [USER_GUIDE.md](USER_GUIDE.md#workflow-2-modify-existing-networks) |
-| `delete_network_class.yml` | Remove network groups | [USER_GUIDE.md](USER_GUIDE.md#workflow-3-clean-up-networks) |
-| `get_network_class.yml` | Query current state with filtering | [USER_GUIDE.md](USER_GUIDE.md#workflow-6-get-network-classes-with-filtering) |
+### SSL Objects
+- **Create**: `create_ssl_object.yml` - Configure SSL termination and inspection
+- **Edit**: `edit_ssl_object.yml` - Modify SSL object settings
+- **Delete**: `delete_ssl_object.yml` - Remove SSL objects
+- **Query**: `get_ssl_object.yml` - Retrieve SSL object configurations
 
-### Connection Limit Profiles
+### Security Policies & Orchestration
+- **🎯 Full Orchestration**: `create_full_config.yml` - Create profiles and policies with bindings
+- **Edit Policies**: `edit_security_policy.yml` - Modify existing security policies
+- **Delete Policies**: `delete_security_policy.yml` - Remove policies (with optional profile cleanup)
+- **Update Policies**: `update_policies.yml` - Apply configuration changes to devices
 
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_cl_profiles.yml` | Create connection limit profiles and protections | *See create_vars.yml for configuration* |
-| `edit_cl_protections.yml` | Edit existing connection limit protections | *See edit_vars.yml for configuration* |
-| `get_cl_profiles.yml` | Get connection limit profiles and protections (with optional filtering) | *See get_vars.yml for configuration* |
-| `delete_cl_profiles.yml` | Delete connection limit profiles and protections (flexible removal) | *See delete_vars.yml for configuration* |
+## 📚 Documentation Guide
 
-**Connection Limit Protection Features**:
--  **8 configurable parameters** (protocol, threshold, app_port_group, tracking_type, action, packet_report, protection_type, index)
--  **Flexible creation**: All parameters optional except name (sensible defaults provided)
--  **Optional sections**: Both `cl_protections` and `cl_profiles` sections are optional
--  **Partial editing**: Only specify parameters you want to change
--  **Profile querying**: Get all profiles and protections with optional filtering by profile names
--  **Flexible deletion**: Remove protections from profiles OR delete protections entirely
--  **Index control**: Optional index parameter (0 or 450001+, defaults to 0)
--  **Profile management**: Reference existing or newly created protections
+### For Different Users
 
-### OOS Profile Management
+| I am a... | I want to... | Read this... |
+|-----------|--------------|--------------|
+| **Operator/User** | Configure DefensePro devices, run workflows | [USER_GUIDE.md](USER_GUIDE.md) |
+| **Developer** | Understand architecture, extend functionality | [DEVELOPER.md](DEVELOPER.md) |
+| **New User** | Get started quickly | This README + [USER_GUIDE.md](USER_GUIDE.md) |
 
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_oos_profile.yml` | Create new OOS profile        | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11-create-oos-profile)  |
-| `edit_oos_profile.yml`   | Modify existing OOS Profile   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11a-edit-oos-profile)   |
-| `delete_oos_profile.yml` | Remove OOS profile            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11b-delete-oos-profile) |
-| `get_oos_profile.yml`    | Query current OOS Profile     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-11c-get-oos-profile)    |
+## 🏃 Quick Example
 
-
-### BDoS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_bdos_profile.yml` | Create new BDoS flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9-create-bdos-profiles)             |
-| `edit_bdos_profile.yml`   | Modify existing BDoS profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9a-edit-bdos-profiles)               |
-| `delete_bdos_profile.yml` | Remove BDoS profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9b-delete-bdos-profiles)             |
-| `get_bdos_profile.yml`    | Query current BDoS profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-9c-get-bdos-profiles-with-filtering) |
-
-### DNS Profile Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_dns_profile.yml` | Create new dns flood profiles           | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10-create-dns-profile)             |
-| `edit_dns_profile.yml`   | Modify existing dns profiles            | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10a-edit-dns-profile)               |
-| `delete_dns_profile.yml` | Remove dns profiles                     | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10b-delete-dns-profile)             |
-| `get_dns_profile.yml`    | Query current dns profile configuration | [USER\_GUIDE.md](USER_GUIDE.md#workflow-10c-get-dns-profile) |
-
-### SSL Object Management
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_ssl_object.yml` | Create new SSL object(s)      | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-create) |
-| `edit_ssl_object.yml`   | Modify existing SSL object(s) | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-edit)   |
-| `delete_ssl_object.yml` | Remove SSL object(s)          | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-delete) |
-| `get_ssl_object.yml`    | Query current SSL object(s)   | [USER\_GUIDE.md](USER_GUIDE.md#workflow-ssl-get)    |
-
-### HTTPS Profile Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_https_profile.yml` | Create new HTTPS profile        | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-https-profile)  |
-| `edit_https_profile.yml`   | Modify existing HTTPS profile   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-https-profile)    |
-| `delete_https_profile.yml` | Remove HTTPS profile            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-https-profile)  |
-| `get_https_profile.yml`    | Query current HTTPS profile     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-https-profile)     |
-
-### Traffic Filter Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_traffic_filter.yml` | Create new Traffic Filter       | [USER_GUIDE.md](USER_GUIDE.md#workflow-create-traffic-filter)  |
-| `edit_traffic_filter.yml`   | Modify existing Traffic Filter   | [USER_GUIDE.md](USER_GUIDE.md#workflow-edit-traffic-filter)    |
-| `delete_traffic_filter.yml` | Remove Traffic Filter            | [USER_GUIDE.md](USER_GUIDE.md#workflow-delete-traffic-filter)  |
-| `get_traffic_filter.yml`    | Query current Traffic Filter     | [USER_GUIDE.md](USER_GUIDE.md#workflow-get-traffic-filter)     |
-
-### Security Policy Management
-
-| Playbook | Purpose | Documentation |
-|----------|---------|---------------|
-| `create_full_config.yml` | **ORCHESTRATOR**: Create security policies with profile bindings | [USER_GUIDE.md](USER_GUIDE.md#workflow-12-create-security-policies-with-profile-bindings) |
-| `edit_security_policy.yml` | Edit existing security policies (partial updates and profile management) | [USER_GUIDE.md](USER_GUIDE.md#editing-security-policies) |
-| `delete_security_policy.yml` | Delete security policies with optional profile cleanup | [USER_GUIDE.md](USER_GUIDE.md#deleting-security-policies) |
-| `update_policies.yml` | Apply DefensePro configuration updates (policy updates) | [USER_GUIDE.md](USER_GUIDE.md#workflow-11-apply-defensepro-policy-updates) |
-
-**Security Policy Features**:
-- **Unified orchestration**: Single playbook creates profiles and security policies
-- **Policy editing**: Modify existing policies with partial updates and profile management
-- **Policy deletion**: Remove policies with dual deletion modes (policy-only vs policy+profiles)
-- **Profile binding**: Bind different protection profile types to security policies
-- **Profile management**: Attach/detach profiles using names or empty strings
-- **Flexible control**: Individual control flags for each creation stage
-- **Conditional execution**: Centralized device locking and policy updates during orchestration
-- **Minimal parameters**: Only policy name required - DefensePro provides sensible defaults
-- **Partial updates**: For editing, only specify parameters to change - others remain unchanged
-- **Safe deletion**: Default policy-only deletion preserves profiles for other policies
-- **Advanced cleanup**: Optional policy+profiles deletion for comprehensive cleanup
-- **Comprehensive configuration**: Full policy parameters when needed (source, destination, direction, priority, actions)
-- **Error handling**: Detailed error reporting and validation
-- **Preview mode**: Check mode support to preview planned operations
-- **Existing profile support**: Use existing profiles without recreating them
-
-**Section Optionality**:
-- **Protections only**: Define `cl_protections`, skip `cl_profiles`
-- **Profiles only**: Skip `cl_protections`, use existing protection names in `cl_profiles`
-- **Both sections**: Create new protections and profiles together
-
-**Parameter Status**:
-- **MANDATORY**: `name` (create), `protection_index` (edit)
-- **OPTIONAL**: All other parameters have defaults and can be omitted
-
-
-
-## Documentation by Audience
-
-### I'm an Operator/User
-- **Goal**: Get things done quickly and safely
-- **Read**: [USER_GUIDE.md](USER_GUIDE.md)
-- **Includes**: Setup, workflows, troubleshooting, best practices
-
-### I'm a Developer
-- **Goal**: Understand architecture, extend functionality
-- **Read**: [DEVELOPER.md](DEVELOPER.md)
-- **Includes**: API references, module patterns, testing, contributing
-
-## Super Quick Example
-
-**Note**: Complete the [Prerequisites](#prerequisites) first, then:
+After completing [Prerequisites](#-prerequisites):
 
 ```bash
-# Network Classes Example
-cd vars/
-cp create_vars.yml.example create_vars.yml
-```
-# Edit create_vars.yml with your networks and devices
+# 1. Configure your environment
+nano vars/create_vars.yml  # Add your device IPs and desired configuration
+
+# 2. Test with dry-run
+ansible-playbook playbooks/create_network_class.yml --check
+
+# 3. Execute
 ansible-playbook playbooks/create_network_class.yml
 
-# Connection Limit Profiles Example
-ansible-playbook playbooks/create_cl_profiles.yml
+# 4. Verify results  
+ansible-playbook playbooks/get_network_class.yml
+```
 
-# Edit Connection Limit Protections (uses edit_cl_configuration module)
-ansible-playbook playbooks/edit_cl_protections.yml
+## 🔄 Version History
 
-# Get Connection Limit Profiles (uses get_cl_configuration module)
-ansible-playbook playbooks/get_cl_profiles.yml
+| Version | Date | Key Changes |
+|---------|------|-------------|
+| **v0.2.1** | 2025-10-06 | Updated documentation- new format |
+| **v0.2.0** | 2025-09-12 | Security policy orchestration, profile binding, policy updates |
+| **v0.1.10** | 2025-09-30 | Traffic Filter profile management |
+| **v0.1.9** | 2025-09-26 | SSL Object configuration |
+| **v0.1.7** | 2025-09-24 | HTTPS Flood protection profiles |
+| **v0.1.6** | 2025-09-22 | DNS Flood protection profiles |
+| **v0.1.5** | 2025-09-18 | Out-of-State (OOS) profiles |
+| **v0.1.4** | 2025-08-29 | Connection Limit profiles and protections |
+| **v0.1.3** | 2025-09-19 | BDoS Flood protection profiles |
+| **v0.1.2** | 2025-08-28 | Network class editing, improved variable management |
+| **v0.1.0** | 2025-08-19 | Initial release with network class operations |
 
-# Delete Connection Limit Profiles (uses delete_cl_configuration module)
-ansible-playbook playbooks/delete_cl_profiles.yml
+## 📞 Support & Maintenance
 
-# Create BDoS Profile
-ansible-playbook playbooks/create_bdos_profile.yml
+**Project Maintainer**: Egor Egorov ([@egori4](https://github.com/egori4))  
+**Email**: egore@radware.com  
+**Contributor**: [@rahulku25](https://github.com/rahulku25)
+**Email**: RahulKu@radware.com
 
-# Edit BDoS Profile (uses edit_bdos_profile module)
-ansible-playbook playbooks/edit_bdos_profile.yml
-
-# Get BDoS Profile (uses get_bdos_profile module)
-ansible-playbook playbooks/get_bdos_profile.yml
-
-# Delete BDoS Profile (uses delete_bdos_profile module)
-ansible-playbook playbooks/delete_bdos_profile.yml
-
-# Get all DNS profiles from devices
-ansible-playbook playbooks/get_dns_profile.yml
-
-# Create new DNS profiles
-ansible-playbook playbooks/create_dns_profile.yml
-
-# Edit existing DNS profiles
-ansible-playbook playbooks/edit_dns_profile.yml
-
-# Delete DNS profiles
-ansible-playbook playbooks/delete_dns_profile.yml
-
-# Get all OOS profiles from devices
-ansible-playbook playbooks/get_oos_profile.yml
-
-# Create new OOS profiles
-ansible-playbook playbooks/create_oos_profile.yml
-
-# Edit existing OOS profiles
-ansible-playbook playbooks/edit_oos_profile.yml
-
-# Delete OOS profiles
-ansible-playbook playbooks/delete_oos_profile.yml
-
-# Get all SSL objects from devices
-ansible-playbook playbooks/get_ssl_object.yml
-
-# Create new SSL objects
-ansible-playbook playbooks/create_ssl_object.yml
-
-# Edit existing SSL objects
-ansible-playbook playbooks/edit_ssl_object.yml
-
-# Delete SSL objects
-ansible-playbook playbooks/delete_ssl_object.yml
-
-# Get all HTTPS profiles from devices
-ansible-playbook playbooks/get_https_profile.yml
-
-# Create new HTTPS profiles
-ansible-playbook playbooks/create_https_profile.yml
-
-# Edit existing HTTPS profiles
-ansible-playbook playbooks/edit_https_profile.yml
-
-# Delete HTTPS profiles
-ansible-playbook playbooks/delete_https_profile.yml
-
-# Get all Traffic Filter from devices
-ansible-playbook playbooks/get_traffic_filter.yml
-
-# Create new Traffic Filter
-ansible-playbook playbooks/create_traffic_filter.yml
-
-# Edit existing Traffic Filter
-ansible-playbook playbooks/edit_traffic_filter.yml
-
-# Delete Traffic Filter
-ansible-playbook playbooks/delete_traffic_filter.yml
-
-# Security Policy Creation (using vars/create_vars.yml configuration)
-ansible-playbook playbooks/create_full_config.yml
-
-# Security Policy Editing (using vars/edit_vars.yml configuration)  
-ansible-playbook playbooks/edit_security_policy.yml
-
-# Security Policy Deletion (using vars/delete_vars.yml configuration)
-ansible-playbook playbooks/delete_security_policy.yml
-
-
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| v0.2.0 | 2025-09-12 | Added security policy orchestration with profile binding capabilities
-<br>• Added update policies playbook
-<br>• Enhanced Policy creation module logic, effectiveness holistically
-<br>• Added conditional Update policies and conditional lock/unlock when creating profiles/policies
-<br>• Updated create security module to send only parameters defined by user
-<br>• Added summary log after creating connection limit profile
-<br>• Optimized/standardized the format of update policies playbook |
-| v0.1.10 | 2025-09-30 | Added Protected Traffic Filter functionality |
-| v0.1.9 | 2025-09-26 | Added Protected SSL Object functionality |
-| v0.1.7 | 2025-09-24 | Added HTTPS Flood functionality |
-| v0.1.6 | 2025-09-22 | Added DNS Flood functionality |
-| v0.1.5 | 2025-09-18 | Added OOS functionality |
-| v0.1.4.1 | 2025-09-10 | Updated documentation- added prerequisites and detailed directories structure, architecture
-| v0.1.4 | 2025-08-29 | Added functionality - crate/edit/get/delete connection limit profiles and protections |
-| v0.1.3 |  2025-09-19 | Added BDOS functionality|
-| v0.1.2.1 | 2025-09-08 | Enhanced network classes configuraion - simplified architecture, logging and debugging enhancments, added preview |
-| v0.1.2 | 2025-08-28 | Added edit functionality for network classes, improved variable management, aligned configuration, added documentation |
-| v0.1.1 | 2025-08-19 | Enhanced logging, session management |
-| v0.1.0 | 2025-08-19 | Initial release with network class create/edit/delete/get operations |
-
-## Getting Help
-
-1. Quick Issues: Check [USER_GUIDE.md troubleshooting](USER_GUIDE.md#troubleshooting)
-2. Technical Issues: See [DEVELOPER.md](DEVELOPER.md)
-3. Examples: All `.example` files have detailed comments
-
-## Maintainer & Contact
-
-**Project Maintainer**: [Egor Egorov]  
-**Email**: [egore@radware.com]  
-**GitHub Radware**: [@rdwr-egore](https://github.com/rdwr-egore)
-**GitHub Private**: [@egori4](https://github.com/egori4)
-
-**Contributor**:  [@rahulku25](https://github.com/rahulku25)
+### Getting Help
+1. **Quick Issues**: Check [USER_GUIDE.md](USER_GUIDE.md) troubleshooting section
+2. **Technical Issues**: See [DEVELOPER.md](DEVELOPER.md) architecture documentation  
+3. **Configuration Examples**: All `*.example` files contain detailed comments

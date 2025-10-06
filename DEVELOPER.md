@@ -312,9 +312,9 @@ ORCHESTRATION LAYER
      - Check mode with preview functionality showing exact operations
      - Formatted output with success/failure indicators
      - List-based filtering support for get operations
-   - **Modules**: `create_ssl_profile.py`, `edit_ssl_profile.py`, `delete_ssl_profile.py`, `get_ssl_profile.py`
+   - **Modules**: `create_ssl_object.py`, `edit_ssl_object.py`, `delete_ssl_object.py`, `get_ssl_object.py`
 
-8. **HTTPS Modules** (`plugins/modules/`)
+9. **HTTPS Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -323,10 +323,9 @@ ORCHESTRATION LAYER
      - Check mode with preview functionality showing exact operations
      - Formatted output with success/failure indicators
      - List-based filtering support for get operations
-   - **Modules**: `create_ssl_object.py`, `edit_ssl_object.py`, `delete_ssl_object.py`, `get_ssl_object.py`
    - **Modules**: `create_https_profile.py`, `edit_https_profile.py`, `delete_https_profile.py`, `get_https_profile.py`
 
-9. **Traffic Filter Modules** (`plugins/modules/`)
+10. **Traffic Filter Modules** (`plugins/modules/`)
    - **Enhancement**: All modules follow consistent unified pattern
    - **Key Features**:
      - Single device call with batch processing (moved from YAML loops to Python)
@@ -337,7 +336,7 @@ ORCHESTRATION LAYER
      - List-based filtering support for get operations
    - **Modules**: `create_traffic_filter.py`, `edit_traffic_filter.py`, `delete_traffic_filter.py`, `get_traffic_filter.py`
 
-10. **Security Policy Modules** (`plugins/modules/`)
+11. **Security Policy Modules** (`plugins/modules/`)
    - **Purpose**: Unified orchestration for security policy creation, editing, and deletion with profile management
    - **Features**: Policy creation, policy editing, policy deletion, profile binding, orchestration control
    - **Architecture Highlights**:
@@ -1122,9 +1121,12 @@ PUT /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_na
         }
 ```
 Usage:
-Call edit_ssl_object once per device, passing list of profiles to edit.
-Each ssl object dict must include ssl_object_name (mandatory) and any parameters to change
-###  Create HTTPS Profile 
+Call edit_ssl_object once per device, passing list of SSL objects to edit.
+Each SSL object dict must include ssl_object_name (mandatory) and any parameters to change
+
+#### Get SSL Object 
+```json
+GET /mgmt/device/byip/10.105.192.32/config/rsProtectedSslObjTable/{ssl_object_name} 
 ```json
 POST /mgmt/device/byip/10.105.192.32/config/rsIDSNewHTTPSFloodProfileTable/{profile_name}
         {
@@ -1224,7 +1226,7 @@ Response:
 #Returns nested structure: profiles -> settings
 #API mappings handled internally
 
-### Delete SSL Object ###
+### Delete SSL Object
 ```yml
 DELETE /mgmt/device/byip/{dp_ip}/config/rsProtectedSslObjTable/{ssl_object_name}
 
@@ -1233,7 +1235,7 @@ delete_ssl_objects:
   - name: server2
 ```
 
-###  Create TF Profile 
+### Create HTTPS Profile 
 ```json
 POST /mgmt/device/byip/10.105.192.32/config/rsNewTrafficProfileTable/{profile_name}
         {
