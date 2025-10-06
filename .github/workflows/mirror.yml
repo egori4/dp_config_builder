@@ -32,23 +32,33 @@ jobs:
           git config user.name "GitHub Actions Mirror Bot"
           git config user.email "actions@github.com"
           git config core.sshCommand "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
-      
-      # This step excludes .github/workflows/ from the mirror
-      - name: Mirror branch to radware
+          
+      - name: Mirror branch to radware (excluding workflows)
         if: github.event_name == 'push'
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
-          echo "Mirroring branch: $BRANCH_NAME"
+          echo "Mirroring branch: $BRANCH_NAME (excluding .github/workflows)"
           
-          # Remove .github/workflows from index temporarily (not from disk)
-          git rm -r --cached .github/workflows/ 2>/dev/null || true
+          # Create a clean branch without workflows
+          git checkout -b temp-mirror-$GITHUB_SHA
           
+          # Remove workflows directory
+          rm -rf .github/workflows
+          
+          # If .github is now empty, remove it
+          if [ -d .github ] && [ -z "$(ls -A .github)" ]; then
+            rm -rf .github
+          fi
+          
+          # Commit the removal (only if there are changes)
+          git add -A
+          git diff --staged --quiet || git commit -m "Exclude workflows for mirror"
+          
+          # Add remote and push
           git remote add radware git@github.com:Radware/dp_config_builder.git
+          git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force
           
-          git push radware HEAD:${BRANCH_NAME} --force
-          
-          # Restore .github/workflows to index for next run
-          git reset HEAD .github/workflows/ 2>/dev/null || true
+          echo "✓ Branch mirrored successfully without workflows"
           
       - name: Delete branch from radware
         if: github.event_name == 'delete'
