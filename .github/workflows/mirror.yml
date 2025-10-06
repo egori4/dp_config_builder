@@ -34,22 +34,22 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Mirroring branch: $BRANCH_NAME (excluding .github/workflows)"
           
-          # Create a clean branch without workflows
-          git checkout -b temp-mirror-$GITHUB_SHA
-          
-          # Remove workflows directory
+          # Remove workflows from working directory
           rm -rf .github/workflows
           
-          # If .github is now empty, remove it
+          # Remove .github if empty
           if [ -d .github ] && [ -z "$(ls -A .github)" ]; then
             rm -rf .github
           fi
           
-          # Commit the removal (only if there are changes)
+          # Create temp branch
+          git checkout -b temp-mirror-$GITHUB_SHA
+          
+          # Stage and commit removal
           git add -A
           git diff --staged --quiet || git commit -m "Exclude workflows for mirror"
           
-          # Add remote and push using token
+          # Push to radware
           git remote add radware https://x-access-token:${GITHUB_TOKEN}@github.com/Radware/dp_config_builder.git
           git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force
           
@@ -63,7 +63,6 @@ jobs:
           BRANCH_NAME="${{ github.event.ref }}"
           echo "Deleting branch: $BRANCH_NAME"
           
-          # Use GitHub API for deletion
           RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
             -H "Authorization: token ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
@@ -81,13 +80,13 @@ jobs:
             echo "✓ Branch deleted successfully"
             exit 0
           elif [ "$HTTP_CODE" = "404" ]; then
-            echo "✓ Branch already deleted or doesn't exist"
+            echo "✓ Branch already deleted"
             exit 0
           elif [ "$HTTP_CODE" = "401" ]; then
-            echo "✗ Authentication failed - check MIRROR_TOKEN"
+            echo "✗ Authentication failed"
             exit 1
           elif [ "$HTTP_CODE" = "403" ]; then
-            echo "✗ Permission denied - token lacks permissions"
+            echo "✗ Permission denied"
             exit 1
           else
             echo "✗ Unexpected error (HTTP $HTTP_CODE)"
