@@ -1,6 +1,6 @@
 """
 Unified Ansible module to delete DefensePro Traffic Filter profiles and protections.
-Aligned with edit_traffic_filter for consistent logging, debug info, and summary reporting.
+Aligned with dp_lock and GET modules for consistent logging, debug info, and summary reporting.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -48,7 +48,6 @@ def run_module():
 
         log_level = provider.get("log_level", "disabled")
         logger = Logger(verbosity=log_level)
-
         cc = RadwareCC(
             provider["cc_ip"], provider["username"], provider["password"],
             log_level=log_level, logger=logger,
@@ -162,6 +161,7 @@ def run_module():
         )
 
     except Exception as e:
+        logger.error(f"Exception: {str(e)}")
         module.fail_json(msg=f"Traffic Filter delete failed: {str(e)}", debug_info=debug_info, **result)
 
     module.exit_json(**result)

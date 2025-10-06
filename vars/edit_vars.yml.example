@@ -349,6 +349,8 @@ edit_tf_profiles:
     action: "report_only"      # options: report_only, block_and_report (Default: report_only)
   - profile_name: "TF_PROFILE_2"
     action: "report_only"      # options: report_only, block_and_report (Default: report_only)
+  - profile_name: "TF_PROFILE_3"
+    action: "report_only"           # report_only, block_and_report
 
 # Traffic Filter protections
 edit_tf_protections:
@@ -387,11 +389,6 @@ edit_tf_protections:
     packet_report: "enable"         # enable, disable
     
 ### Minimal parameter to edit Traffic filter
-edit_tf_profiles:
-  - profile_name: "TF_PROFILE_3"
-    action: "report_only"           # report_only, block_and_report
-
-edit_tf_protections:
   - profile_name: "TF_PROFILE_3"
     protection_name: "TF_PROT_3"
     threshold_pps: "5000"
