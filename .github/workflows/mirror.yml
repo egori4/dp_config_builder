@@ -1,4 +1,5 @@
 name: Mirror to Radware
+
 on:
   push:
     branches:
@@ -6,10 +7,15 @@ on:
   delete:
     branches:
       - '**'
+
 jobs:
   mirror:
     runs-on: ubuntu-latest
     name: Mirror branches to radware/dp_config_builder
+    
+    # Minimal permissions for security
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -21,10 +27,25 @@ jobs:
       - name: Setup SSH
         if: github.event_name == 'push'
         run: |
+          # Validate SSH_DEPLOY_KEY exists
+          if [ -z "${{ secrets.SSH_DEPLOY_KEY }}" ]; then
+            echo "❌ SSH_DEPLOY_KEY secret not found"
+            exit 1
+          fi
+          
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          
+          # More secure SSH configuration
+          ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
+          
+          # Test SSH connection
+          if ! ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+            echo "❌ SSH authentication test failed"
+            exit 1
+          fi
+          echo "✓ SSH authentication verified"
           
       - name: Configure Git
         if: github.event_name == 'push'
@@ -39,11 +60,21 @@ jobs:
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Mirroring branch: $BRANCH_NAME (excluding .github/workflows)"
           
+          # Validate branch name
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "❌ Could not determine branch name"
+            exit 1
+          fi
+          
           # Create a clean branch without workflows
           git checkout -b temp-mirror-$GITHUB_SHA
           
-          # Remove workflows directory
+          # Remove workflows directory and other sensitive files
           rm -rf .github/workflows
+          
+          # Remove other files
+          # rm -rf .github/dependabot.yml
+          # rm -rf .github/ISSUE_TEMPLATE
           
           # If .github is now empty, remove it
           if [ -d .github ] && [ -z "$(ls -A .github)" ]; then
@@ -52,26 +83,49 @@ jobs:
           
           # Commit the removal (only if there are changes)
           git add -A
-          git diff --staged --quiet || git commit -m "Exclude workflows for mirror"
+          if ! git diff --staged --quiet; then
+            git commit -m "Exclude workflows for mirror to Radware"
+          else
+            echo "No workflow files to exclude"
+          fi
           
-          # Add remote and push
+          # Add remote and push with error handling
           git remote add radware git@github.com:Radware/dp_config_builder.git
-          git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force
           
-          echo "✓ Branch mirrored successfully without workflows"
+          echo "Pushing to target repository..."
+          if git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force; then
+            echo "✓ Branch '$BRANCH_NAME' mirrored successfully without workflows"
+          else
+            echo "❌ Failed to push branch '$BRANCH_NAME'"
+            exit 1
+          fi
           
       - name: Delete branch from radware
         if: github.event_name == 'delete'
         env:
-          GITHUB_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           BRANCH_NAME="${{ github.event.ref }}"
           echo "Deleting branch: $BRANCH_NAME"
           
+          # Validate inputs
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "❌ Branch name is empty"
+            exit 1
+          fi
+          
+          if [ -z "$MIRROR_TOKEN" ]; then
+            echo "❌ MIRROR_TOKEN secret not found"
+            exit 1
+          fi
+          
           # Make API call and capture response (silent mode, no progress bars)
+          echo "Making deletion request..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
-            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Authorization: token ${MIRROR_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
+            -H "User-Agent: GitHub-Actions-Mirror" \
+            --max-time 30 \
             https://api.github.com/repos/Radware/dp_config_builder/git/refs/heads/${BRANCH_NAME})
           
           # Extract HTTP status code (last line)
@@ -87,19 +141,29 @@ jobs:
           echo "----------------------------------------"
           
           # Check if successful
-          if [ "$HTTP_CODE" = "204" ]; then
-            echo "✓ Branch successfully deleted from Radware"
-            exit 0
-          elif [ "$HTTP_CODE" = "404" ]; then
-            echo "✓ Branch doesn't exist in Radware (already deleted or never mirrored)"
-            exit 0
-          elif [ "$HTTP_CODE" = "401" ]; then
-            echo "✗ Authentication failed - check MIRROR_TOKEN secret"
-            exit 1
-          elif [ "$HTTP_CODE" = "403" ]; then
-            echo "✗ Permission denied - token lacks required permissions"
-            exit 1
-          else
-            echo "✗ Branch deletion failed with unexpected status code"
-            exit 1
-          fi
+          case "$HTTP_CODE" in
+            "204")
+              echo "✓ Branch '$BRANCH_NAME' successfully deleted from Radware"
+              exit 0
+              ;;
+            "404")
+              echo "✓ Branch '$BRANCH_NAME' doesn't exist in Radware (already deleted or never mirrored)"
+              exit 0
+              ;;
+            "401")
+              echo "❌ Authentication failed - check MIRROR_TOKEN secret"
+              exit 1
+              ;;
+            "403")
+              echo "❌ Permission denied - token lacks required permissions"
+              exit 1
+              ;;
+            "422")
+              echo "❌ Invalid branch reference"
+              exit 1
+              ;;
+            *)
+              echo "❌ Branch deletion failed with unexpected status code: $HTTP_CODE"
+              exit 1
+              ;;
+          esac
