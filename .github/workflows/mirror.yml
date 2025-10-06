@@ -1,5 +1,4 @@
 name: Mirror to Radware
-
 on:
   push:
     branches:
@@ -7,149 +6,100 @@ on:
   delete:
     branches:
       - '**'
-
 jobs:
   mirror:
     runs-on: ubuntu-latest
     name: Mirror branches to radware/dp_config_builder
     
-    permissions: {}  # Disable all default permissions
-    
     steps:
       - name: Checkout repository
-        if: github.event_name == 'push'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+        if: github.event_name == 'push'
+          
+      - name: Setup SSH
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
           
       - name: Configure Git
         if: github.event_name == 'push'
-        env:
-          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           git config user.name "GitHub Actions Mirror Bot"
           git config user.email "actions@github.com"
+          git config core.sshCommand "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes"
           
-          # Verify token exists
-          if [ -z "$MIRROR_TOKEN" ]; then
-            echo "❌ MIRROR_TOKEN secret not found in configure step"
-            exit 1
-          fi
-          
-      - name: Mirror branch to radware
+      - name: Mirror branch to radware (excluding workflows)
         if: github.event_name == 'push'
-        env:
-          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          # Completely unset any GitHub default tokens
-          unset GITHUB_TOKEN
-          unset GH_TOKEN
-          
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Mirroring branch: $BRANCH_NAME (excluding .github/workflows)"
           
-          # Verify our custom token exists
-          if [ -z "$MIRROR_TOKEN" ]; then
-            echo "❌ MIRROR_TOKEN secret not found"
-            exit 1
-          fi
+          # Create a clean branch without workflows
+          git checkout -b temp-mirror-$GITHUB_SHA
           
-          # Test token access (without exposing token)
-          echo "Testing repository access..."
-          API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: token $MIRROR_TOKEN" \
-            https://api.github.com/repos/Radware/dp_config_builder)
-          
-          if [ "$API_RESPONSE" != "200" ]; then
-            echo "❌ Repository access test failed (HTTP $API_RESPONSE)"
-            exit 1
-          fi
-          echo "✓ Repository access verified"
-          
-          # Clear any existing git credentials
-          git config --global --unset-all credential.helper || true
-          rm -f ~/.git-credentials || true
-          
-          # Configure git credentials with our token
-          git config --global credential.helper store
-          echo "https://x-access-token:${MIRROR_TOKEN}@github.com" > ~/.git-credentials
-          
-          # Remove workflows from working directory
+          # Remove workflows directory
           rm -rf .github/workflows
           
-          # Remove .github if empty
+          # If .github is now empty, remove it
           if [ -d .github ] && [ -z "$(ls -A .github)" ]; then
             rm -rf .github
           fi
           
-          # Create temp branch
-          git checkout -b temp-mirror-$GITHUB_SHA
-          
-          # Stage and commit removal
+          # Commit the removal (only if there are changes)
           git add -A
           git diff --staged --quiet || git commit -m "Exclude workflows for mirror"
           
-          # Test git connection with our credentials
-          echo "Testing git connection..."
-          if ! git ls-remote https://github.com/Radware/dp_config_builder.git >/dev/null 2>&1; then
-            echo "❌ Git connection test failed"
-            # Debug: try direct token method as fallback
-            echo "Trying direct token authentication..."
-            if ! git ls-remote https://x-access-token:${MIRROR_TOKEN}@github.com/Radware/dp_config_builder.git >/dev/null 2>&1; then
-              echo "❌ Direct token authentication failed"
-              exit 1
-            fi
-            echo "✓ Direct token authentication works, using that method"
-            # Use direct token in remote URL
-            git remote add radware https://x-access-token:${MIRROR_TOKEN}@github.com/Radware/dp_config_builder.git
-          else
-            echo "✓ Git connection verified"
-            # Use credential store method
-            git remote add radware https://github.com/Radware/dp_config_builder.git
-          fi
+          # Add remote and push
+          git remote add radware git@github.com:Radware/dp_config_builder.git
+          git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force
           
-          echo "Pushing to target repository..."
-          if git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force; then
-            echo "✓ Branch mirrored successfully"
-          else
-            echo "❌ Failed to push to target repository"
-            exit 1
-          fi
+          echo "✓ Branch mirrored successfully without workflows"
           
       - name: Delete branch from radware
         if: github.event_name == 'delete'
         env:
-          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           BRANCH_NAME="${{ github.event.ref }}"
           echo "Deleting branch: $BRANCH_NAME"
           
+          # Make API call and capture response (silent mode, no progress bars)
           RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE \
-            -H "Authorization: token ${MIRROR_TOKEN}" \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/Radware/dp_config_builder/git/refs/heads/${BRANCH_NAME})
           
+          # Extract HTTP status code (last line)
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          # Extract response body (everything except last line)
           BODY=$(echo "$RESPONSE" | sed '$d')
           
           echo "----------------------------------------"
-          echo "HTTP Status: $HTTP_CODE"
-          echo "Response: $BODY"
+          echo "HTTP Status Code: $HTTP_CODE"
+          echo "API Response:"
+          echo "$BODY"
           echo "----------------------------------------"
           
+          # Check if successful
           if [ "$HTTP_CODE" = "204" ]; then
-            echo "✓ Branch deleted successfully"
+            echo "✓ Branch successfully deleted from Radware"
             exit 0
           elif [ "$HTTP_CODE" = "404" ]; then
-            echo "✓ Branch already deleted"
+            echo "✓ Branch doesn't exist in Radware (already deleted or never mirrored)"
             exit 0
           elif [ "$HTTP_CODE" = "401" ]; then
-            echo "✗ Authentication failed"
+            echo "✗ Authentication failed - check MIRROR_TOKEN secret"
             exit 1
           elif [ "$HTTP_CODE" = "403" ]; then
-            echo "✗ Permission denied"
+            echo "✗ Permission denied - token lacks required permissions"
             exit 1
           else
-            echo "✗ Unexpected error (HTTP $HTTP_CODE)"
+            echo "✗ Branch deletion failed with unexpected status code"
             exit 1
           fi
