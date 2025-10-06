@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     name: Mirror branches to radware/dp_config_builder
     
+    permissions:
+      contents: read  # Minimal permissions to prevent token conflicts
+    
     steps:
       - name: Checkout repository
         if: github.event_name == 'push'
@@ -22,14 +25,23 @@ jobs:
           
       - name: Configure Git
         if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           git config user.name "GitHub Actions Mirror Bot"
           git config user.email "actions@github.com"
+          
+          # Verify token exists
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "❌ MIRROR_TOKEN secret not found in configure step"
+            exit 1
+          fi
           
       - name: Mirror branch to radware
         if: github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          GH_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           BRANCH_NAME="${GITHUB_REF#refs/heads/}"
           echo "Mirroring branch: $BRANCH_NAME (excluding .github/workflows)"
@@ -39,6 +51,22 @@ jobs:
             echo "❌ MIRROR_TOKEN secret not found"
             exit 1
           fi
+          
+          # Test token access (without exposing token)
+          echo "Testing repository access..."
+          API_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/Radware/dp_config_builder)
+          
+          if [ "$API_RESPONSE" != "200" ]; then
+            echo "❌ Repository access test failed (HTTP $API_RESPONSE)"
+            exit 1
+          fi
+          echo "✓ Repository access verified"
+          
+          # Configure git credentials securely
+          git config --global credential.helper store
+          echo "https://x-access-token:${GITHUB_TOKEN}@github.com" > ~/.git-credentials
           
           # Remove workflows from working directory
           rm -rf .github/workflows
@@ -55,17 +83,18 @@ jobs:
           git add -A
           git diff --staged --quiet || git commit -m "Exclude workflows for mirror"
           
-          # Add remote with better error handling
-          git remote add radware https://x-access-token:${GITHUB_TOKEN}@github.com/Radware/dp_config_builder.git
-          
-          # Test connection before push
-          echo "Testing connection to target repository..."
-          if ! git ls-remote radware >/dev/null 2>&1; then
-            echo "❌ Cannot connect to target repository. Check token permissions."
+          # Test git connection
+          echo "Testing git connection..."
+          if ! git ls-remote https://github.com/Radware/dp_config_builder.git >/dev/null 2>&1; then
+            echo "❌ Git connection test failed"
             exit 1
           fi
+          echo "✓ Git connection verified"
           
-          # Push to radware
+          # Add remote and push
+          git remote add radware https://github.com/Radware/dp_config_builder.git
+          
+          echo "Pushing to target repository..."
           if git push radware temp-mirror-$GITHUB_SHA:${BRANCH_NAME} --force; then
             echo "✓ Branch mirrored successfully"
           else
