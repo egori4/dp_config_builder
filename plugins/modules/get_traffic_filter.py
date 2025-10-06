@@ -1,6 +1,5 @@
 """
 Ansible module to fetch DefensePro Traffic Filter profiles and associated protections.
-Aligned with dp_lock module logging/debug style.
 """
 
 from ansible.module_utils.basic import AnsibleModule
