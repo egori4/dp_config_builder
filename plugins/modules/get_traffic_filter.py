@@ -1,5 +1,6 @@
 """
-Ansible module to fetch DefensePro Traffic Filter profiles and associated protections.
+Ansible module to fetch DefensePro Traffic Filter profiles and associated protections
+with debug, logger, response, and request URL information.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -53,11 +54,12 @@ def run_module():
             "status_code": resp_profiles.status_code,
             "response_json": resp_profiles.json() if hasattr(resp_profiles, 'json') else None
         }
+        logger.debug(f"Profiles GET {profile_url} Status={resp_profiles.status_code}")
 
+        profiles_raw = []
         try:
             profiles_raw = resp_profiles.json().get("rsNewTrafficProfileTable", [])
         except Exception:
-            profiles_raw = []
             result['errors'].append(f"Failed to parse profiles JSON from {dp_ip}")
             logger.error(f"Failed to parse profiles JSON from {dp_ip}")
 
@@ -74,11 +76,12 @@ def run_module():
             "status_code": resp_prots.status_code,
             "response_json": resp_prots.json() if hasattr(resp_prots, 'json') else None
         }
+        logger.debug(f"Protections GET {prot_url} Status={resp_prots.status_code}")
 
+        protections_raw = []
         try:
             protections_raw = resp_prots.json().get("rsNewTrafficFilterTable", [])
         except Exception:
-            protections_raw = []
             result['errors'].append(f"Failed to parse protections JSON from {dp_ip}")
             logger.error(f"Failed to parse protections JSON from {dp_ip}")
 
@@ -90,13 +93,12 @@ def run_module():
             prof_name = prof.get("rsNewTrafficProfileName")
             if not prof_name:
                 continue
-            if prof_name not in profiles:
-                profiles[prof_name] = {
-                    "profile_name": prof_name,
-                    "num_of_rules": int(prof.get("rsNewTrafficProfileNumOfRules", 0)),
-                    "action": ACTION_MAP.get(prof.get("rsNewTrafficProfileAction", ""), prof.get("rsNewTrafficProfileAction", "")),
-                    "protections": []
-                }
+            profiles[prof_name] = {
+                "profile_name": prof_name,
+                "num_of_rules": int(prof.get("rsNewTrafficProfileNumOfRules", 0)),
+                "action": ACTION_MAP.get(prof.get("rsNewTrafficProfileAction", ""), prof.get("rsNewTrafficProfileAction", "")),
+                "protections": []
+            }
 
         # === Add protections to profiles ===
         for prot in protections_raw:
@@ -123,6 +125,8 @@ def run_module():
                     "tcp_synack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsSynAck", ""), prot.get("rsNewTrafficFilterTCPFlagsSynAck", "")),
                     "tcp_finack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsFinAck", ""), prot.get("rsNewTrafficFilterTCPFlagsFinAck", "")),
                     "tcp_pshack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsPshAck", ""), prot.get("rsNewTrafficFilterTCPFlagsPshAck", "")),
+                    "request_url": prot_url,
+                    "response_status": resp_prots.status_code
                 }
                 profiles[prof_name]["protections"].append(prot_entry)
 

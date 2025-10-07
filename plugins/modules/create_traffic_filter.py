@@ -1,6 +1,7 @@
 # plugins/modules/create_traffic_filter.py
 """
 Unified Ansible module to create Traffic Filter profiles and protections on DefensePro devices.
+Supports check mode, logging, and detailed preview output.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -141,11 +142,34 @@ def run_module():
         created_protections = []
         errors = []
 
+        # --- CHECK MODE / PREVIEW ---
         if module.check_mode:
+            preview_profiles = []
+            for profile in tf_profiles:
+                profile_name = profile.get('profile_name', 'unknown')
+                preview_profiles.append({
+                    'profile_name': profile_name,
+                    'user_friendly': {"profile_name": profile_name,
+                                      "action": profile.get('action', 'report_only')}
+                })
+
+            preview_protections = []
+            for prot in tf_protections:
+                profile_name = prot.get('profile_name', 'unknown')
+                protection_name = prot.get('protection_name', 'unknown')
+                preview_protections.append({
+                    'profile_name': profile_name,
+                    'protection_name': protection_name,
+                    'user_friendly': map_prot_input_to_user_friendly(prot)
+                })
+
             module.exit_json(
                 changed=bool(tf_profiles or tf_protections),
-                msg=f"CHECK MODE: Traffic Filter operations that would be performed for device {dp_ip}.",
-                preview={'profiles': tf_profiles, 'protections': tf_protections}
+                preview_mode=True,
+                planned_operations={
+                    'profiles': preview_profiles,
+                    'protections': preview_protections
+                }
             )
 
         # --- CREATE PROFILES ---
@@ -161,10 +185,10 @@ def run_module():
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
 
                 logger.info(f"Creating profile: {profile_name} on {dp_ip}")
-                logger.debug(f"REQUEST: Method=POST, URL={url}, Body={payload}")
+                logger.debug(f"REQUEST: POST {url} {payload}")
 
                 resp = cc._post(url, json=payload)
-                logger.debug(f"RESPONSE: Method=POST, URL={url}, Status={resp.status_code}, Body={resp.text}")
+                logger.debug(f"RESPONSE: POST {url} Status={resp.status_code} Body={resp.text}")
                 resp.raise_for_status()
 
                 created_profiles.append({
@@ -196,10 +220,10 @@ def run_module():
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
 
                 logger.info(f"Creating protection: {protection_name} under profile {profile_name} on {dp_ip}")
-                logger.debug(f"REQUEST: Method=POST, URL={url}, Body={payload}")
+                logger.debug(f"REQUEST: POST {url} {payload}")
 
                 resp = cc._post(url, json=payload)
-                logger.debug(f"RESPONSE: Method=POST, URL={url}, Status={resp.status_code}, Body={resp.text}")
+                logger.debug(f"RESPONSE: POST {url} Status={resp.status_code} Body={resp.text}")
                 resp.raise_for_status()
 
                 created_protections.append({
