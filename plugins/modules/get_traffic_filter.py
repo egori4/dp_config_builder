@@ -1,5 +1,7 @@
+#!/usr/bin/python
 """
-Ansible module to fetch DefensePro Traffic Filter profiles and associated protections.
+Ansible module to fetch DefensePro Traffic Filter profiles and associated protections
+with unified debug, logger, response, and request URL information.
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -20,12 +22,14 @@ def run_module():
         filter_tf_profile_names=dict(type="list", required=False, default=[]),
     )
 
-    result = dict(changed=False, profiles=[], summary={}, debug_info=[], errors=[])
+    result = dict(changed=False, profiles=[], summary={}, debug_info={}, errors=[])
     module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
 
     provider = module.params["provider"]
     dp_ip = module.params["dp_ip"]
     filter_tf_profile_names = module.params["filter_tf_profile_names"]
+
+
 
     try:
         from ansible.module_utils.radware_cc import RadwareCC
@@ -35,59 +39,85 @@ def run_module():
 
     log_level = provider.get("log_level", "disabled")
     logger = Logger(verbosity=log_level)
-    cc = RadwareCC(
-        provider["cc_ip"], provider["username"], provider["password"],
-        log_level=log_level, logger=logger
-    )
+    cc = RadwareCC(provider["cc_ip"], provider["username"], provider["password"],
+                    log_level=log_level, logger=logger)
 
-    debug_info = []
-    errors = []
+    debug_info = {}
 
     try:
-        # === Fetch profiles ===
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter GET ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input filter profile names: {filter_tf_profile_names}")
+
+        # === Fetch Traffic Filter profiles ===
         profile_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable"
         logger.info(f"Fetching Traffic Filter profiles from {dp_ip}")
-        resp_profiles = cc._get(profile_url)
+        debug_info['profiles_request'] = {"method": "GET", "url": profile_url, "body": None}
 
+        resp_profiles = cc._get(profile_url)
+        debug_info['profiles_request'].update({
+            "response_status": resp_profiles.status_code,
+            "response_json": resp_profiles.json() if hasattr(resp_profiles, 'json') else None
+        })
+        logger.debug(f"Method: GET, URL: {profile_url}")
+        logger.debug(f"Response code: {resp_profiles.status_code}")
+        try:
+            profiles_body = resp_profiles.json()
+            logger.debug(f"Response body: {profiles_body}")
+        except Exception:
+            logger.warning(f"Could not decode raw profiles response body from {dp_ip}")
+
+        profiles_raw = []
         try:
             profiles_raw = resp_profiles.json().get("rsNewTrafficProfileTable", [])
         except Exception:
-            profiles_raw = []
-            errors.append(f"Failed to parse profiles JSON from {dp_ip}")
+            result['errors'].append(f"Failed to parse profiles JSON from {dp_ip}")
+            logger.error(f"Failed to parse profiles JSON from {dp_ip}")
 
-        # Simplified debug log aligned with other modules
-        logger.debug(f"Fetched {len(profiles_raw)} Traffic Filter profiles from {dp_ip}")
+        logger.info(f"Fetched {len(profiles_raw)} Traffic Filter profiles from {dp_ip}")
 
-        # === Fetch protections ===
+        # === Fetch Traffic Filter protections ===
         prot_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable"
-        logger.info(f"Fetching Traffic Filter protections from {dp_ip}")
-        resp_prots = cc._get(prot_url)
 
+        logger.info(f"Fetching Traffic Filter protections from {dp_ip}")
+        debug_info['protections_request'] = {"method": "GET", "url": prot_url, "body": None}
+
+        resp_prots = cc._get(prot_url)
+        debug_info['protections_request'].update({
+            "response_status": resp_prots.status_code,
+            "response_json": resp_prots.json() if hasattr(resp_prots, 'json') else None
+        })
+        logger.debug(f"Method: GET, URL: {prot_url}")
+        logger.debug(f"Response code: {resp_prots.status_code}")
+        try:
+            protections_body = resp_prots.json()
+            logger.debug(f"Response body: {protections_body}")
+        except Exception:
+            logger.warning(f"Could not decode raw protections response body from {dp_ip}")
+
+        protections_raw = []
         try:
             protections_raw = resp_prots.json().get("rsNewTrafficFilterTable", [])
         except Exception:
-            protections_raw = []
-            errors.append(f"Failed to parse protections JSON from {dp_ip}")
+            result['errors'].append(f"Failed to parse protections JSON from {dp_ip}")
+            logger.error(f"Failed to parse protections JSON from {dp_ip}")
 
-        # Simplified debug log aligned with other modules
-        logger.debug(f"Fetched {len(protections_raw)} Traffic Filter protections from {dp_ip}")
+        logger.info(f"Fetched {len(protections_raw)} Traffic Filter protections from {dp_ip}")
 
-        # === Build profiles dict ===
+        # === Build profiles dictionary ===
         profiles = {}
         for prof in profiles_raw:
             prof_name = prof.get("rsNewTrafficProfileName")
             if not prof_name:
                 continue
-            if prof_name not in profiles:
-                profiles[prof_name] = {
-                    "profile_name": prof_name,
-                    "num_of_rules": int(prof.get("rsNewTrafficProfileNumOfRules", 0)),
-                    "action": ACTION_MAP.get(
-                        prof.get("rsNewTrafficProfileAction", ""),
-                        prof.get("rsNewTrafficProfileAction", "")
-                    ),
-                    "protections": []
-                }
+            profiles[prof_name] = {
+                "profile_name": prof_name,
+                "num_of_rules": int(prof.get("rsNewTrafficProfileNumOfRules", 0)),
+                "action": ACTION_MAP.get(prof.get("rsNewTrafficProfileAction", ""), prof.get("rsNewTrafficProfileAction", "")),
+                "protections": [],
+                "request_url": profile_url
+            }
 
         # === Add protections to profiles ===
         for prot in protections_raw:
@@ -96,41 +126,31 @@ def run_module():
                 prot_entry = {
                     "protection_name": prot.get("rsNewTrafficFilterName"),
                     "protection_id": prot.get("rsNewTrafficFilterID"),
-                    "state": ENABLED_DISABLED_MAP.get(
-                        prot.get("rsNewTrafficFilterState", ""),
-                        prot.get("rsNewTrafficFilterState", "")
-                    ),
-                    "protocol": PROTOCOL_MAP.get(
-                        prot.get("rsNewTrafficFilterProtocol", ""),
-                        prot.get("rsNewTrafficFilterProtocol", "")
-                    ),
+                    "state": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterState", ""), prot.get("rsNewTrafficFilterState", "")),
+                    "protocol": PROTOCOL_MAP.get(prot.get("rsNewTrafficFilterProtocol", ""), prot.get("rsNewTrafficFilterProtocol", "")),
                     "threshold_pps": prot.get("rsNewTrafficFilterThresholdPPS", "0"),
                     "threshold_kbps": prot.get("rsNewTrafficFilterThresholdBPS", "0"),
-                    "threshold_unit": THRESHOLD_USED_MAP.get(
-                        prot.get("rsNewTrafficFilterThresholdUsed", "0"),
-                        prot.get("rsNewTrafficFilterThresholdUsed", "")
-                    ),
-                    "packet_report": ENABLED_DISABLED_MAP.get(
-                        prot.get("rsNewTrafficFilterPacketReport", ""),
-                        prot.get("rsNewTrafficFilterPacketReport", "")
-                    ),
+                    "threshold_unit": THRESHOLD_USED_MAP.get(prot.get("rsNewTrafficFilterThresholdUsed", "0"), prot.get("rsNewTrafficFilterThresholdUsed", "")),
+                    "packet_report": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterPacketReport", ""), prot.get("rsNewTrafficFilterPacketReport", "")),
                     "vlan": prot.get("rsNewTrafficFilterVLAN", "Any"),
                     "src_network": prot.get("rsNewTrafficFilterSrcNetwork", ""),
                     "src_port": prot.get("rsNewTrafficFilterSrcPort", ""),
                     "dst_network": prot.get("rsNewTrafficFilterDstNetwork", ""),
                     "dst_port": prot.get("rsNewTrafficFilterDstPort", ""),
-                    # TCP flags
                     "tcp_syn": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsSyn", ""), prot.get("rsNewTrafficFilterTCPFlagsSyn", "")),
                     "tcp_ack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsAck", ""), prot.get("rsNewTrafficFilterTCPFlagsAck", "")),
                     "tcp_rst": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsRst", ""), prot.get("rsNewTrafficFilterTCPFlagsRst", "")),
                     "tcp_synack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsSynAck", ""), prot.get("rsNewTrafficFilterTCPFlagsSynAck", "")),
                     "tcp_finack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsFinAck", ""), prot.get("rsNewTrafficFilterTCPFlagsFinAck", "")),
                     "tcp_pshack": ENABLED_DISABLED_MAP.get(prot.get("rsNewTrafficFilterTCPFlagsPshAck", ""), prot.get("rsNewTrafficFilterTCPFlagsPshAck", "")),
+                    "request_url": prot_url,
+                    "response_status": resp_prots.status_code
                 }
                 profiles[prof_name]["protections"].append(prot_entry)
 
-        # === Apply filter if requested ===
+        # === Apply profile filter if provided ===
         all_profiles = list(profiles.values())
+
         if filter_tf_profile_names:
             profiles_to_return = [p for p in all_profiles if p["profile_name"] in filter_tf_profile_names]
             logger.info(f"Filtered profiles to: {filter_tf_profile_names}")
@@ -144,23 +164,18 @@ def run_module():
         }
 
         result.update(
-            {
-                "profiles": profiles_to_return,
-                "summary": summary,
-                "debug_info": debug_info,
-                "errors": errors,
-            }
+            profiles=profiles_to_return,
+            summary=summary,
+            debug_info=debug_info
         )
 
-        # Simplified final debug
-        logger.debug(f"Traffic Filter fetch summary for {dp_ip}: {summary}")
+        logger.info(f"Traffic Filter fetch summary for {dp_ip}: {summary}")
+        module.exit_json(**result)
 
     except Exception as e:
         logger.error(f"Exception fetching Traffic Filter data: {str(e)}")
-        errors.append(str(e))
-        module.fail_json(msg=f"Traffic Filter fetch failed: {str(e)}", debug_info=debug_info, errors=errors)
-
-    module.exit_json(**result)
+        result['errors'].append(str(e))
+        module.fail_json(msg=f"Traffic Filter fetch failed: {str(e)}", **result)
 
 
 def main():

@@ -328,9 +328,9 @@ create_tf_profiles:
 create_tf_protections:
   - profile_name: "TF_PROFILE_1"
     protection_name: "TF_PROT_1"
-    status: "enable"                # enable, disable (Default: enable)
-    match_criteria: "match"         # match, not-match (Default:match)
-    protocol: "tcp"                 # any, tcp, udp, icmp, etc. (Default:any)
+    status: "enable"                # Optional: enable, disable (Default: enable)
+    match_criteria: "match"         # Optional: match, not-match (Default:match)
+    protocol: "tcp"                 # Ottional: any, tcp, udp, icmp, etc. (Default:any)
     threshold_pps: "5000"           # Optional: rate limit in packets per second (deafult :10000)
     threshold_kbps: "0"             # Optional: rate limit in kilo bits per second
     threshold_unit: "pps"           # optional: kbps, pps (Default:pps)
@@ -341,7 +341,7 @@ create_tf_protections:
     tcp_finack: "enable"            # Optional: TCP FIN-ACK flag handling (Default:enable)
     tcp_pshack: "enable"            # optional: TCP PSH-ACK flag handling (Default:enable)
     packet_report: "enable"         # Optional: enable, disable (Default:enable)
-    attack_tracking_type: "per_destination"    # all, per-source, per-destination, per_source_and_destination, track_returning_traffic (Default:all)
+    attack_tracking_type: "per_destination"    # Optional: all, per-source, per-destination, per_source_and_destination, track_returning_traffic (Default:all)
 
 
   - profile_name: "TF_PROFILE_2"
