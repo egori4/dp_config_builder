@@ -29,6 +29,8 @@ def run_module():
     dp_ip = module.params["dp_ip"]
     filter_tf_profile_names = module.params["filter_tf_profile_names"]
 
+
+
     try:
         from ansible.module_utils.radware_cc import RadwareCC
         from ansible.module_utils.logger import Logger
@@ -43,6 +45,11 @@ def run_module():
     debug_info = {}
 
     try:
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter GET ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input filter profile names: {filter_tf_profile_names}")
+
         # === Fetch Traffic Filter profiles ===
         profile_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable"
         logger.info(f"Fetching Traffic Filter profiles from {dp_ip}")
@@ -53,12 +60,11 @@ def run_module():
             "response_status": resp_profiles.status_code,
             "response_json": resp_profiles.json() if hasattr(resp_profiles, 'json') else None
         })
-        logger.debug(f"Profiles GET {profile_url} Status={resp_profiles.status_code}")
-
-        # --- Separate debug line for raw response body (can comment if very large) ---
+        logger.debug(f"Method: GET, URL: {profile_url}")
+        logger.debug(f"Response code: {resp_profiles.status_code}")
         try:
             profiles_body = resp_profiles.json()
-            logger.debug(f"Raw profiles response body from {dp_ip}: {profiles_body}")
+            logger.debug(f"Response body: {profiles_body}")
         except Exception:
             logger.warning(f"Could not decode raw profiles response body from {dp_ip}")
 
@@ -69,10 +75,11 @@ def run_module():
             result['errors'].append(f"Failed to parse profiles JSON from {dp_ip}")
             logger.error(f"Failed to parse profiles JSON from {dp_ip}")
 
-        logger.debug(f"Fetched {len(profiles_raw)} Traffic Filter profiles from {dp_ip}")
+        logger.info(f"Fetched {len(profiles_raw)} Traffic Filter profiles from {dp_ip}")
 
         # === Fetch Traffic Filter protections ===
         prot_url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable"
+
         logger.info(f"Fetching Traffic Filter protections from {dp_ip}")
         debug_info['protections_request'] = {"method": "GET", "url": prot_url, "body": None}
 
@@ -81,12 +88,11 @@ def run_module():
             "response_status": resp_prots.status_code,
             "response_json": resp_prots.json() if hasattr(resp_prots, 'json') else None
         })
-        logger.debug(f"Protections GET {prot_url} Status={resp_prots.status_code}")
-
-        # --- Separate debug line for raw protections response body ---
+        logger.debug(f"Method: GET, URL: {prot_url}")
+        logger.debug(f"Response code: {resp_prots.status_code}")
         try:
             protections_body = resp_prots.json()
-            logger.debug(f"Raw protections response body from {dp_ip}: {protections_body}")
+            logger.debug(f"Response body: {protections_body}")
         except Exception:
             logger.warning(f"Could not decode raw protections response body from {dp_ip}")
 
@@ -97,7 +103,7 @@ def run_module():
             result['errors'].append(f"Failed to parse protections JSON from {dp_ip}")
             logger.error(f"Failed to parse protections JSON from {dp_ip}")
 
-        logger.debug(f"Fetched {len(protections_raw)} Traffic Filter protections from {dp_ip}")
+        logger.info(f"Fetched {len(protections_raw)} Traffic Filter protections from {dp_ip}")
 
         # === Build profiles dictionary ===
         profiles = {}
@@ -144,6 +150,7 @@ def run_module():
 
         # === Apply profile filter if provided ===
         all_profiles = list(profiles.values())
+
         if filter_tf_profile_names:
             profiles_to_return = [p for p in all_profiles if p["profile_name"] in filter_tf_profile_names]
             logger.info(f"Filtered profiles to: {filter_tf_profile_names}")
@@ -162,7 +169,7 @@ def run_module():
             debug_info=debug_info
         )
 
-        logger.debug(f"Traffic Filter fetch summary for {dp_ip}: {summary}")
+        logger.info(f"Traffic Filter fetch summary for {dp_ip}: {summary}")
         module.exit_json(**result)
 
     except Exception as e:

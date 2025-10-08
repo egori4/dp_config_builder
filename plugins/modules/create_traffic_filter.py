@@ -142,8 +142,16 @@ def run_module():
         created_protections = []
         errors = []
 
+
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter CREATE ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input profiles: {tf_profiles}")
+        logger.debug(f"Input protections: {tf_protections}")
+
         # --- CHECK MODE / PREVIEW ---
         if module.check_mode:
+            logger.info("CHECK MODE: Previewing Traffic Filter creation operations.")
             preview_profiles = []
             for profile in tf_profiles:
                 profile_name = profile.get('profile_name', 'unknown')
@@ -163,6 +171,8 @@ def run_module():
                     'user_friendly': map_prot_input_to_user_friendly(prot)
                 })
 
+            logger.debug(f"Planned profile creations: {preview_profiles}")
+            logger.debug(f"Planned protection creations: {preview_protections}")
             module.exit_json(
                 changed=bool(tf_profiles or tf_protections),
                 preview_mode=True,
@@ -184,11 +194,18 @@ def run_module():
                 payload = map_profile_parameters(profile)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
 
-                logger.info(f"Creating profile: {profile_name} on {dp_ip}")
-                logger.debug(f"REQUEST: POST {url} {payload}")
+                logger.info(f"Creating Traffic Filter profile: {profile_name} on {dp_ip}")
+                logger.debug(f"Method: POST, URL: {url}")
+                logger.debug(f"Payload: {payload}")
 
                 resp = cc._post(url, json=payload)
-                logger.debug(f"RESPONSE: POST {url} Status={resp.status_code} Body={resp.text}")
+                logger.debug(f"Response code: {resp.status_code}")
+                try:
+                    resp_body = resp.json()
+                    logger.debug(f"Response body: {resp_body}")
+                except Exception:
+                    resp_body = resp.text
+                    logger.debug(f"Raw response body: {resp_body}")
                 resp.raise_for_status()
 
                 created_profiles.append({
@@ -199,7 +216,7 @@ def run_module():
                                       "action": "report_only" if payload["rsNewTrafficProfileAction"] == "0" else "block_and_report"}
                 })
                 changes_made = True
-                logger.info(f"Successfully created profile: {profile_name}")
+                logger.info(f"Successfully created Traffic Filter profile: {profile_name}")
             except Exception as e:
                 error_msg = f"Profile {profile_name} creation failed: {str(e)}"
                 errors.append(error_msg)
@@ -219,11 +236,18 @@ def run_module():
                 payload = map_protection_parameters(prot)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
 
-                logger.info(f"Creating protection: {protection_name} under profile {profile_name} on {dp_ip}")
-                logger.debug(f"REQUEST: POST {url} {payload}")
+                logger.info(f"Creating Traffic Filter protection: {protection_name} under profile {profile_name} on {dp_ip}")
+                logger.debug(f"Method: POST, URL: {url}")
+                logger.debug(f"Payload: {payload}")
 
                 resp = cc._post(url, json=payload)
-                logger.debug(f"RESPONSE: POST {url} Status={resp.status_code} Body={resp.text}")
+                logger.debug(f"Response code: {resp.status_code}")
+                try:
+                    resp_body = resp.json()
+                    logger.debug(f"Response body: {resp_body}")
+                except Exception:
+                    resp_body = resp.text
+                    logger.debug(f"Raw response body: {resp_body}")
                 resp.raise_for_status()
 
                 created_protections.append({
@@ -234,7 +258,7 @@ def run_module():
                     'user_friendly': map_prot_input_to_user_friendly(prot)
                 })
                 changes_made = True
-                logger.info(f"Successfully created protection: {protection_name} under profile {profile_name}")
+                logger.info(f"Successfully created Traffic Filter protection: {protection_name} under profile {profile_name}")
             except Exception as e:
                 error_msg = f"Protection {protection_name} under {profile_name} failed: {str(e)}"
                 errors.append(error_msg)

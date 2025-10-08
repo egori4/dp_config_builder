@@ -116,21 +116,30 @@ def run_module():
     tf_profiles = module.params['tf_profiles']
     tf_protections = module.params['tf_protections']
 
-    from ansible.module_utils.logger import Logger
-    from ansible.module_utils.radware_cc import RadwareCC
-
-    log_level = provider.get('log_level', 'disabled')
-    logger = Logger(verbosity=log_level)
-    debug_info = {'dp_ip': dp_ip, 'profiles_count': len(tf_profiles), 'protections_count': len(tf_protections)}
-
     try:
+        from ansible.module_utils.logger import Logger
+        from ansible.module_utils.radware_cc import RadwareCC
+
+        log_level = provider.get('log_level', 'disabled')
+        logger = Logger(verbosity=log_level)
+        debug_info = {'dp_ip': dp_ip, 'profiles_count': len(tf_profiles), 'protections_count': len(tf_protections)}
+
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
         changes_made = False
         edited_profiles = []
         edited_protections = []
         errors = []
 
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter EDIT ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input profiles: {tf_profiles}")
+        logger.debug(f"Input protections: {tf_protections}")
+
         if module.check_mode:
+            logger.info("CHECK MODE: Previewing Traffic Filter edit operations.")
+            logger.debug(f"Planned profile edits: {tf_profiles}")
+            logger.debug(f"Planned protection edits: {tf_protections}")
             module.exit_json(
                 changed=bool(tf_profiles or tf_protections),
                 msg=f"CHECK MODE: Traffic Filter edit operations that would be performed for device {dp_ip}.",
@@ -148,9 +157,9 @@ def run_module():
             try:
                 payload = map_profile_parameters(profile)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
-                logger.info(f"Editing profile: {profile_name} on {dp_ip}")
-                logger.debug(f"Request URL: {url}")
-                logger.debug(f"Request payload: {payload}")
+                logger.info(f"Editing Traffic Filter profile: {profile_name} on {dp_ip}")
+                logger.debug(f"Method: PUT, URL: {url}")
+                logger.debug(f"Payload: {payload}")
 
                 resp = cc._put(url, json=payload)
                 logger.debug(f"Response code: {resp.status_code}")
@@ -172,7 +181,7 @@ def run_module():
                     'user_friendly': {"profile_name": profile_name, "action": profile.get('action', 'report_only')}
                 })
                 changes_made = True
-                logger.info(f"Successfully edited profile: {profile_name}")
+                logger.info(f"Successfully edited Traffic Filter profile: {profile_name}")
             except Exception as e:
                 err_msg = f"Error editing profile {profile_name}: {str(e)}"
                 logger.error(err_msg)
@@ -191,9 +200,9 @@ def run_module():
             try:
                 api_payload = map_protection_parameters(prot)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
-                logger.info(f"Editing protection: {protection_name} under profile {profile_name} on {dp_ip}")
-                logger.debug(f"Request URL: {url}")
-                logger.debug(f"Request payload: {api_payload}")
+                logger.info(f"Editing Traffic Filter protection: {protection_name} under profile {profile_name} on {dp_ip}")
+                logger.debug(f"Method: PUT, URL: {url}")
+                logger.debug(f"Payload: {api_payload}")
 
                 resp = cc._put(url, json=api_payload)
                 logger.debug(f"Response code: {resp.status_code}")
@@ -216,7 +225,7 @@ def run_module():
                     'user_friendly': map_prot_input_to_user_friendly(prot)
                 })
                 changes_made = True
-                logger.info(f"Successfully edited protection: {protection_name} under profile {profile_name}")
+                logger.info(f"Successfully edited Traffic Filter protection: {protection_name} under profile {profile_name}")
             except Exception as e:
                 err_msg = f"Error editing protection {protection_name} under profile {profile_name}: {str(e)}"
                 logger.error(err_msg)

@@ -59,13 +59,23 @@ def run_module():
         logger = Logger(verbosity=log_level)
         cc = RadwareCC(provider["cc_ip"], provider["username"], provider["password"], log_level=log_level, logger=logger)
 
+
         deleted_profiles = []
         deleted_protections = []
         changes_made = False
         errors = []
         debug_info = []
 
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter DELETE ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input profiles: {profiles}")
+        logger.debug(f"Input protections: {protections}")
+
         if module.check_mode:
+            logger.info("CHECK MODE: Previewing Traffic Filter delete operations.")
+            logger.debug(f"Planned profile deletions: {profiles}")
+            logger.debug(f"Planned protection deletions: {protections}")
             preview_ops = {"profiles": profiles, "protections": protections}
             result.update(
                 {
@@ -74,6 +84,7 @@ def run_module():
                 }
             )
             module.exit_json(**result)
+
 
         # === Delete protections first ===
         for prot in protections:
@@ -87,7 +98,9 @@ def run_module():
                 continue
             try:
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
-                logger.info(f"Deleting Traffic Filter protection '{protection_name}' under profile '{profile_name}'")
+                logger.info(f"Deleting Traffic Filter protection: {protection_name} under profile {profile_name} on {dp_ip}")
+                logger.debug(f"Method: DELETE, URL: {url}")
+
                 resp = cc._delete(url)
 
                 debug_entry = {
@@ -97,6 +110,8 @@ def run_module():
                     "response_body_truncated": resp.text[:200] + ('...' if len(resp.text) > 200 else ''),
                     "response_json": resp.json() if resp.text else {}
                 }
+                logger.debug(f"Response code: {resp.status_code}")
+                logger.debug(f"Response body: {debug_entry['response_json']}")
                 debug_info.append(debug_entry)
 
                 if resp.status_code >= 400:
@@ -113,6 +128,7 @@ def run_module():
                 deleted_protections.append({"profile_name": profile_name, "protection_name": protection_name, "status": "failed", "error": err_msg})
                 errors.append(err_msg)
 
+
         # === Delete profiles ===
         for profile in profiles:
             profile_name = profile.get("profile_name") or profile.get("name")
@@ -124,7 +140,9 @@ def run_module():
                 continue
             try:
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
-                logger.info(f"Deleting Traffic Filter profile '{profile_name}'")
+                logger.info(f"Deleting Traffic Filter profile: {profile_name} on {dp_ip}")
+                logger.debug(f"Method: DELETE, URL: {url}")
+
                 resp = cc._delete(url)
 
                 debug_entry = {
@@ -134,6 +152,8 @@ def run_module():
                     "response_body_truncated": resp.text[:200] + ('...' if len(resp.text) > 200 else ''),
                     "response_json": resp.json() if resp.text else {}
                 }
+                logger.debug(f"Response code: {resp.status_code}")
+                logger.debug(f"Response body: {debug_entry['response_json']}")
                 debug_info.append(debug_entry)
 
                 if resp.status_code >= 400:
