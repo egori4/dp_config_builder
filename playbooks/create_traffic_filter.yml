@@ -37,23 +37,44 @@
             formatted_output: |
               **Device: {{ item.item }}**
 
+              {% if response.preview_mode | default(false) %}
+              PREVIEW MODE - Operations that would be performed:
+
+              {% set planned_ops = response.planned_operations | default({}) %}
+
+              {% if planned_ops.profiles | default([]) | length > 0 %}
+              Traffic Filter Profiles to be created ({{ planned_ops.profiles | length }}):
+              {% for p in planned_ops.profiles %}
+                - {{ p.profile_name }}
+              {% endfor %}
+              {% else %}
+              No profiles to be created.
+              {% endif %}
+
+              {% if planned_ops.protections | default([]) | length > 0 %}
+              Traffic Filter Protections to be created ({{ planned_ops.protections | length }}):
+              {% for t in planned_ops.protections %}
+                - {{ t.protection_name }} (Profile: {{ t.profile_name }})
+              {% endfor %}
+              {% else %}
+              No protections to be created.
+              {% endif %}
+
+              {% else %}
               EXECUTION RESULTS:
 
-              {% if create_tf_profiles is not defined and create_tf_protections is not defined %}
-                Traffic filters variables are not defined. No changes made
+              **Traffic Filter Profiles created successfully:**
+              {{ response.pretty_profiles | default('No profiles created') }}
+
+              **Traffic Filter Protections created successfully:**
+              {{ response.pretty_protections | default('No protections created') }}
+
+              **Errors Detected:**
+              {% if response.errors | default([]) | length > 0 %}
+              - {{ response.errors | join('\n- ') }}
               {% else %}
-                **Traffic Filter Profiles created successfully:**
-                {{ response.pretty_profiles | default('No profiles created') }}
-
-                **Traffic Filter Protections created successfully:**
-                {{ response.pretty_protections | default('No protections created') }}
-
-                **Errors Detected:**
-                {% if response.errors | length > 0 %}
-                - {{ response.errors | join('\n- ') }}
-                {% else %}
-                No errors detected.
-                {% endif %}
+              No errors detected.
+              {% endif %}
               {% endif %}
           ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"

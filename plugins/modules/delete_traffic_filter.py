@@ -1,6 +1,9 @@
 """
 Unified Ansible module to delete DefensePro Traffic Filter profiles and protections.
-Aligned with edit_traffic_filter for consistent logging, debug info, and summary reporting.
+Now supports proper red/green reporting:
+- All failed → red
+- Partial failures → green with warnings
+- All success → green
 """
 
 from ansible.module_utils.basic import AnsibleModule
@@ -11,8 +14,11 @@ def pretty_deleted_protections(protections):
     for prot in protections:
         profile_name = prot.get("profile_name")
         protection_name = prot.get("protection_name")
-        status = "deleted" if prot.get("status") == "success" else f"failed: {prot.get('error', 'unknown error')}"
-        lines.append(f"  - {protection_name} (Profile: {profile_name}) -> {status}")
+        if prot.get("status") == "success":
+            status = f"{protection_name} (Profile: {profile_name}) was deleted successfully"
+        else:
+            status = f"{protection_name} (Profile: {profile_name}) | ERROR: {prot.get('error', 'unknown error')}"
+        lines.append(f"  - {status}")
     return "\n".join(lines)
 
 
@@ -20,8 +26,11 @@ def pretty_deleted_profiles(profiles):
     lines = []
     for prof in profiles:
         profile_name = prof.get("profile_name")
-        status = "deleted" if prof.get("status") == "success" else f"failed: {prof.get('error', 'unknown error')}"
-        lines.append(f"  - {profile_name} -> {status}")
+        if prof.get("status") == "success":
+            status = f"{profile_name} was deleted successfully"
+        else:
+            status = f"{profile_name} | ERROR: {prof.get('error', 'unknown error')}"
+        lines.append(f"  - {status}")
     return "\n".join(lines)
 
 
@@ -48,11 +57,8 @@ def run_module():
 
         log_level = provider.get("log_level", "disabled")
         logger = Logger(verbosity=log_level)
+        cc = RadwareCC(provider["cc_ip"], provider["username"], provider["password"], log_level=log_level, logger=logger)
 
-        cc = RadwareCC(
-            provider["cc_ip"], provider["username"], provider["password"],
-            log_level=log_level, logger=logger,
-        )
 
         deleted_profiles = []
         deleted_protections = []
@@ -60,7 +66,16 @@ def run_module():
         errors = []
         debug_info = []
 
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter DELETE ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input profiles: {profiles}")
+        logger.debug(f"Input protections: {protections}")
+
         if module.check_mode:
+            logger.info("CHECK MODE: Previewing Traffic Filter delete operations.")
+            logger.debug(f"Planned profile deletions: {profiles}")
+            logger.debug(f"Planned protection deletions: {protections}")
             preview_ops = {"profiles": profiles, "protections": protections}
             result.update(
                 {
@@ -70,6 +85,7 @@ def run_module():
             )
             module.exit_json(**result)
 
+
         # === Delete protections first ===
         for prot in protections:
             profile_name = prot.get("profile_name")
@@ -78,13 +94,13 @@ def run_module():
                 err = "Protection requires 'profile_name' and 'protection_name'"
                 errors.append(err)
                 logger.error(err)
-                deleted_protections.append(
-                    {"profile_name": profile_name, "protection_name": protection_name, "status": "failed", "error": err}
-                )
+                deleted_protections.append({"profile_name": profile_name, "protection_name": protection_name, "status": "failed", "error": err})
                 continue
             try:
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
-                logger.info(f"Deleting Traffic Filter protection '{protection_name}' under profile '{profile_name}'")
+                logger.info(f"Deleting Traffic Filter protection: {protection_name} under profile {profile_name} on {dp_ip}")
+                logger.debug(f"Method: DELETE, URL: {url}")
+
                 resp = cc._delete(url)
 
                 debug_entry = {
@@ -94,19 +110,24 @@ def run_module():
                     "response_body_truncated": resp.text[:200] + ('...' if len(resp.text) > 200 else ''),
                     "response_json": resp.json() if resp.text else {}
                 }
+                logger.debug(f"Response code: {resp.status_code}")
+                logger.debug(f"Response body: {debug_entry['response_json']}")
                 debug_info.append(debug_entry)
 
-                deleted_protections.append(
-                    {"profile_name": profile_name, "protection_name": protection_name, "status": "success", "response": debug_entry}
-                )
-                changes_made = True
+                if resp.status_code >= 400:
+                    err_msg = f"Failed to delete protection {protection_name} under profile {profile_name}. Response: {resp.text}"
+                    logger.error(err_msg)
+                    deleted_protections.append({"profile_name": profile_name, "protection_name": protection_name, "status": "failed", "error": err_msg})
+                    errors.append(err_msg)
+                else:
+                    deleted_protections.append({"profile_name": profile_name, "protection_name": protection_name, "status": "success", "response": debug_entry})
+                    changes_made = True
             except Exception as e:
                 err_msg = f"Failed to delete protection {protection_name} under profile {profile_name}: {str(e)}"
                 logger.error(err_msg)
-                deleted_protections.append(
-                    {"profile_name": profile_name, "protection_name": protection_name, "status": "failed", "error": err_msg}
-                )
+                deleted_protections.append({"profile_name": profile_name, "protection_name": protection_name, "status": "failed", "error": err_msg})
                 errors.append(err_msg)
+
 
         # === Delete profiles ===
         for profile in profiles:
@@ -119,7 +140,9 @@ def run_module():
                 continue
             try:
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
-                logger.info(f"Deleting Traffic Filter profile '{profile_name}'")
+                logger.info(f"Deleting Traffic Filter profile: {profile_name} on {dp_ip}")
+                logger.debug(f"Method: DELETE, URL: {url}")
+
                 resp = cc._delete(url)
 
                 debug_entry = {
@@ -129,39 +152,53 @@ def run_module():
                     "response_body_truncated": resp.text[:200] + ('...' if len(resp.text) > 200 else ''),
                     "response_json": resp.json() if resp.text else {}
                 }
+                logger.debug(f"Response code: {resp.status_code}")
+                logger.debug(f"Response body: {debug_entry['response_json']}")
                 debug_info.append(debug_entry)
 
-                deleted_profiles.append({"profile_name": profile_name, "status": "success", "response": debug_entry})
-                changes_made = True
+                if resp.status_code >= 400:
+                    err_msg = f"Failed to delete profile {profile_name}. Response: {resp.text}"
+                    logger.error(err_msg)
+                    deleted_profiles.append({"profile_name": profile_name, "status": "failed", "error": err_msg})
+                    errors.append(err_msg)
+                else:
+                    deleted_profiles.append({"profile_name": profile_name, "status": "success", "response": debug_entry})
+                    changes_made = True
             except Exception as e:
                 err_msg = f"Failed to delete profile {profile_name}: {str(e)}"
                 logger.error(err_msg)
                 deleted_profiles.append({"profile_name": profile_name, "status": "failed", "error": err_msg})
                 errors.append(err_msg)
 
-        # Final result
-        result.update(
-            {
-                "changed": changes_made,
-                "response": {
-                    "deleted_profiles": deleted_profiles,
-                    "deleted_protections": deleted_protections,
-                    "pretty_profiles": pretty_deleted_profiles(deleted_profiles),
-                    "pretty_protections": pretty_deleted_protections(deleted_protections),
-                    "summary": {
-                        "successful_profiles": len([p for p in deleted_profiles if p["status"] == "success"]),
-                        "successful_protections": len([p for p in deleted_protections if p["status"] == "success"]),
-                        "total_profiles_attempted": len(profiles),
-                        "total_protections_attempted": len(protections),
-                        "errors_count": len(errors),
-                    },
+        # === Final result handling ===
+        result.update({
+            "changed": changes_made,
+            "response": {
+                "deleted_profiles": deleted_profiles,
+                "deleted_protections": deleted_protections,
+                "pretty_profiles": pretty_deleted_profiles(deleted_profiles),
+                "pretty_protections": pretty_deleted_protections(deleted_protections),
+                "summary": {
+                    "successful_profiles": len([p for p in deleted_profiles if p["status"] == "success"]),
+                    "successful_protections": len([p for p in deleted_protections if p["status"] == "success"]),
+                    "total_profiles_attempted": len(profiles),
+                    "total_protections_attempted": len(protections),
+                    "errors_count": len(errors),
                 },
-                "debug_info": debug_info,
-                "errors": errors,
-            }
-        )
+            },
+            "debug_info": debug_info,
+            "errors": errors,
+        })
+
+        # Fail if all failed, warn if partial failure
+        if errors:
+            if not changes_made:
+                module.fail_json(msg=f"All deletions failed. Errors: {'; '.join(errors)}", debug_info=debug_info, **result)
+            else:
+                result['warnings'] = errors
 
     except Exception as e:
+        logger.error(f"Exception: {str(e)}")
         module.fail_json(msg=f"Traffic Filter delete failed: {str(e)}", debug_info=debug_info, **result)
 
     module.exit_json(**result)

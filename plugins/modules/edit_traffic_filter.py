@@ -17,16 +17,16 @@ def map_prot_input_to_user_friendly(prot):
         "status": prot.get('status', 'enable'),
         "match_criteria": prot.get('match_criteria', 'match'),
         "protocol": protocol,
+        "threshold_pps": prot.get('threshold_pps', '10000'),
+        "threshold_kbps": prot.get('threshold_kbps', '0'),
+        "threshold_unit": prot.get('threshold_unit', 'pps'),
+        "packet_report": flag(prot.get('packet_report')),
         "tcp_syn": flag(prot.get('tcp_syn')) if protocol in ['tcp', 'any'] else None,
         "tcp_ack": flag(prot.get('tcp_ack')) if protocol in ['tcp', 'any'] else None,
         "tcp_rst": flag(prot.get('tcp_rst')) if protocol in ['tcp', 'any'] else None,
         "tcp_synack": flag(prot.get('tcp_synack')) if protocol in ['tcp', 'any'] else None,
         "tcp_finack": flag(prot.get('tcp_finack')) if protocol in ['tcp', 'any'] else None,
         "tcp_pshack": flag(prot.get('tcp_pshack')) if protocol in ['tcp', 'any'] else None,
-        "threshold_pps": prot.get('threshold_pps', '10000'),
-        "threshold_bps": prot.get('threshold_bps', '0'),
-        "packet_report": flag(prot.get('packet_report')),
-        "threshold_unit": prot.get('threshold_unit', 'pps'),
         "attack_tracking_type": prot.get('attack_tracking_type', '')
     }
     return {k: v for k, v in user_friendly.items() if v is not None}
@@ -60,7 +60,7 @@ def map_protection_parameters(prot):
         "rsNewTrafficFilterTCPFlagsFinAck": TCP_FLAGS_MAP.get(prot.get('tcp_finack', 'enable'), '1') if protocol in ['tcp', 'any'] else None,
         "rsNewTrafficFilterTCPFlagsPshAck": TCP_FLAGS_MAP.get(prot.get('tcp_pshack', 'enable'), '1') if protocol in ['tcp', 'any'] else None,
         "rsNewTrafficFilterThresholdPPS": str(prot.get('threshold_pps', '10000')),
-        "rsNewTrafficFilterThresholdBPS": str(prot.get('threshold_bps', '0')),
+        "rsNewTrafficFilterThresholdBPS": str(prot.get('threshold_kbps', '0')),
         "rsNewTrafficFilterState": STATUS_MAP.get(prot.get('status', 'enable'), '1'),
         "rsNewTrafficFilterPacketReport": PACKET_REPORT_MAP.get(prot.get('packet_report', 'enable'), '1'),
         "rsNewTrafficFilterThresholdUsed": THRESHOLD_USED_MAP.get(prot.get('threshold_unit', 'pps'), '2'),
@@ -116,21 +116,30 @@ def run_module():
     tf_profiles = module.params['tf_profiles']
     tf_protections = module.params['tf_protections']
 
-    from ansible.module_utils.logger import Logger
-    from ansible.module_utils.radware_cc import RadwareCC
-
-    log_level = provider.get('log_level', 'disabled')
-    logger = Logger(verbosity=log_level)
-    debug_info = {'dp_ip': dp_ip, 'profiles_count': len(tf_profiles), 'protections_count': len(tf_protections)}
-
     try:
+        from ansible.module_utils.logger import Logger
+        from ansible.module_utils.radware_cc import RadwareCC
+
+        log_level = provider.get('log_level', 'disabled')
+        logger = Logger(verbosity=log_level)
+        debug_info = {'dp_ip': dp_ip, 'profiles_count': len(tf_profiles), 'protections_count': len(tf_protections)}
+
         cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
         changes_made = False
         edited_profiles = []
         edited_protections = []
         errors = []
 
+        # === LOGGING HEADER ===
+        logger.info("============== Traffic Filter EDIT ==============")
+        logger.info(f"Device: {dp_ip}")
+        logger.debug(f"Input profiles: {tf_profiles}")
+        logger.debug(f"Input protections: {tf_protections}")
+
         if module.check_mode:
+            logger.info("CHECK MODE: Previewing Traffic Filter edit operations.")
+            logger.debug(f"Planned profile edits: {tf_profiles}")
+            logger.debug(f"Planned protection edits: {tf_protections}")
             module.exit_json(
                 changed=bool(tf_profiles or tf_protections),
                 msg=f"CHECK MODE: Traffic Filter edit operations that would be performed for device {dp_ip}.",
@@ -148,9 +157,9 @@ def run_module():
             try:
                 payload = map_profile_parameters(profile)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
-                logger.info(f"Editing profile: {profile_name} on {dp_ip}")
-                logger.debug(f"Request URL: {url}")
-                logger.debug(f"Request payload: {payload}")
+                logger.info(f"Editing Traffic Filter profile: {profile_name} on {dp_ip}")
+                logger.debug(f"Method: PUT, URL: {url}")
+                logger.debug(f"Payload: {payload}")
 
                 resp = cc._put(url, json=payload)
                 logger.debug(f"Response code: {resp.status_code}")
@@ -172,7 +181,7 @@ def run_module():
                     'user_friendly': {"profile_name": profile_name, "action": profile.get('action', 'report_only')}
                 })
                 changes_made = True
-                logger.info(f"Successfully edited profile: {profile_name}")
+                logger.info(f"Successfully edited Traffic Filter profile: {profile_name}")
             except Exception as e:
                 err_msg = f"Error editing profile {profile_name}: {str(e)}"
                 logger.error(err_msg)
@@ -191,9 +200,9 @@ def run_module():
             try:
                 api_payload = map_protection_parameters(prot)
                 url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
-                logger.info(f"Editing protection: {protection_name} under profile {profile_name} on {dp_ip}")
-                logger.debug(f"Request URL: {url}")
-                logger.debug(f"Request payload: {api_payload}")
+                logger.info(f"Editing Traffic Filter protection: {protection_name} under profile {profile_name} on {dp_ip}")
+                logger.debug(f"Method: PUT, URL: {url}")
+                logger.debug(f"Payload: {api_payload}")
 
                 resp = cc._put(url, json=api_payload)
                 logger.debug(f"Response code: {resp.status_code}")
@@ -216,7 +225,7 @@ def run_module():
                     'user_friendly': map_prot_input_to_user_friendly(prot)
                 })
                 changes_made = True
-                logger.info(f"Successfully edited protection: {protection_name} under profile {profile_name}")
+                logger.info(f"Successfully edited Traffic Filter protection: {protection_name} under profile {profile_name}")
             except Exception as e:
                 err_msg = f"Error editing protection {protection_name} under profile {profile_name}: {str(e)}"
                 logger.error(err_msg)
