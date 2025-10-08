@@ -84,6 +84,7 @@ def run_module():
         'url': url,
         'body': None
       }
+      logger.info("======================================================")
       logger.info(f"Locking device {dp_ip} on cc_ip {cc_ip}")
       logger.debug(f"Request: {debug_info}")
       resp = cc._post(url)

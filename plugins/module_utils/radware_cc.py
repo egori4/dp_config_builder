@@ -51,6 +51,7 @@ class RadwareCC:
         session_file, session_time_file = self._get_session_file()
         # Add separator at the start of a new run
         self.log.info("======================================================")
+        self.log.info("Checking for existing session")
         if os.path.exists(session_file) and os.path.exists(session_time_file):
             try:
                 with open(session_time_file, "r") as tf:

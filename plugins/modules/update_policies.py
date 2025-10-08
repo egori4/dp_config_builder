@@ -59,6 +59,7 @@ def run_module():
             
         else:
             # Actual execution mode
+            logger.info("======================================================")
             logger.info(f"Applying policy updates to DefensePro {dp_ip}")
             
             try:

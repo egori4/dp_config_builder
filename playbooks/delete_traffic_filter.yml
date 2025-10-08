@@ -28,7 +28,7 @@
           loop_control:
             label: "Device: {{ item }}"
           register: tf_delete_results
-          ignore_errors: true
+          #ignore_errors: true
 
         - name: Display Traffic Filter deletion results
           vars:
