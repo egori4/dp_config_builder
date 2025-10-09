@@ -1,10 +1,11 @@
 # plugins/modules/create_traffic_filter.py
 """
 Unified Ansible module to create Traffic Filter profiles and protections on DefensePro devices.
-Supports check mode, logging, and detailed preview output.
+Supports check mode (preview mode), logging, detailed error handling, and debug info output.
 """
 
 from ansible.module_utils.basic import AnsibleModule
+
 
 def map_prot_input_to_user_friendly(prot):
     """Convert protection input to human-readable values."""
@@ -13,7 +14,7 @@ def map_prot_input_to_user_friendly(prot):
     def flag(val):
         if val is None:
             return None
-        return "enable" if str(val).lower() in ['enabled', 'enable', '2'] else "disable"
+        return "enable" if str(val).lower() in ['enabled', 'enable', '1'] else "disable"
 
     user_friendly = {
         "profile_name": prot.get('profile_name'),
@@ -34,15 +35,14 @@ def map_prot_input_to_user_friendly(prot):
     }
     return {k: v for k, v in user_friendly.items() if v is not None}
 
+
 def map_protection_parameters(prot):
     """Map user-friendly values to API values for Traffic Filter protections."""
     TCP_FLAGS_MAP = {'enable': '1', 'disable': '2'}
     PACKET_REPORT_MAP = {'enable': '1', 'disable': '2'}
-    PROTOCOL_MAP = {'any': '0', 'tcp': '1', 'udp': '2', 'icmp': '3', 'igmp': '4',
-                    'sctp': '5', 'icmpv6': '6', 'gre': '7', 'ipinip': '8'}
+    PROTOCOL_MAP = {'any': '0', 'tcp': '1', 'udp': '2', 'icmp': '3', 'igmp': '4', 'sctp': '5', 'icmpv6': '6', 'gre': '7', 'ipinip': '8'}
     THRESHOLD_USED_MAP = {'kbps': '1', 'pps': '2'}
-    ATTACK_TRACKING_MAP = {'all': '0', 'per_source': '2', 'per_destination': '3',
-                           'per_source_and_destination': '4', 'track_returning_traffic': '5'}
+    ATTACK_TRACKING_MAP = {'all': '0', 'per_source': '2', 'per_destination': '3', 'per_source_and_destination': '4', 'track_returning_traffic': '5'}
     MATCH_CRITERIA_MAP = {'match': '1', 'not-match': '2'}
     STATUS_MAP = {'enable': '1', 'disable': '2'}
 
@@ -67,37 +67,13 @@ def map_protection_parameters(prot):
     }
     return payload
 
+
 def map_profile_parameters(profile):
     """Map profile action to API value."""
     API_ACTION_MAP = {'report_only': '0', 'block_and_report': '1'}
-    api_action = API_ACTION_MAP.get(profile.get('action', 'report_only'), '1')
+    api_action = API_ACTION_MAP.get(profile.get('action', 'report_only'), '0')
     return {"rsNewTrafficProfileName": profile['profile_name'], "rsNewTrafficProfileAction": api_action}
 
-def pretty_profiles(profiles):
-    if not profiles:
-        return "  No profiles created."
-    lines = []
-    for prof in profiles:
-        lines.append(f"  - Profile Name: {prof['profile_name']}")
-        for k, v in prof['user_friendly'].items():
-            if k != 'profile_name':
-                key = k.replace('_', ' ').capitalize()
-                lines.append(f"    - {key}: {v}")
-        lines.append("")
-    return "\n".join(lines)
-
-def pretty_protections(protections):
-    if not protections:
-        return "  No protections created."
-    lines = []
-    for prot in protections:
-        lines.append(f"  - Protection Name: {prot['protection_name']} (Profile: {prot['profile_name']})")
-        for k, v in prot['user_friendly'].items():
-            if k not in ['profile_name', 'protection_name']:
-                key = k.replace('_', ' ').capitalize()
-                lines.append(f"    - {key}: {v}")
-        lines.append("")
-    return "\n".join(lines)
 
 def run_module():
     module_args = dict(
@@ -116,153 +92,114 @@ def run_module():
     tf_profiles = module.params['tf_profiles']
     tf_protections = module.params['tf_protections']
 
+    from ansible.module_utils.logger import Logger
+    from ansible.module_utils.radware_cc import RadwareCC
+
+    log_level = provider.get('log_level', 'disabled')
+    logger = Logger(verbosity=log_level)
+    cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'], log_level=log_level, logger=logger)
+
     debug_info['input'] = {
         'dp_ip': dp_ip,
         'profiles_count': len(tf_profiles),
         'protections_count': len(tf_protections)
     }
 
-    if not tf_profiles and not tf_protections:
-        module.exit_json(
-            changed=False,
-            msg=f"No Traffic Filter profiles or protections configured for device {dp_ip}."
-        )
+    created_profiles = []
+    created_protections = []
+    errors = []
+    changes_made = False
 
     try:
-        from ansible.module_utils.radware_cc import RadwareCC
-        from ansible.module_utils.logger import Logger
-
-        log_level = provider.get('log_level', 'disabled')
-        logger = Logger(verbosity=log_level)
-        cc = RadwareCC(provider['cc_ip'], provider['username'], provider['password'],
-                       log_level=log_level, logger=logger)
-
-        changes_made = False
-        created_profiles = []
-        created_protections = []
-        errors = []
-
-
-        # === LOGGING HEADER ===
-        logger.info("============== Traffic Filter CREATE ==============")
-        logger.info(f"Device: {dp_ip}")
-        logger.debug(f"Input profiles: {tf_profiles}")
-        logger.debug(f"Input protections: {tf_protections}")
-
-        # --- CHECK MODE / PREVIEW ---
+        # === CHECK MODE / PREVIEW ===
         if module.check_mode:
-            logger.info("CHECK MODE: Previewing Traffic Filter creation operations.")
-            preview_profiles = []
-            for profile in tf_profiles:
-                profile_name = profile.get('profile_name', 'unknown')
-                preview_profiles.append({
-                    'profile_name': profile_name,
-                    'user_friendly': {"profile_name": profile_name,
-                                      "action": profile.get('action', 'report_only')}
-                })
-
-            preview_protections = []
+            planned_ops = []
+            for prof in tf_profiles:
+                planned_ops.append({'type': 'profile', 'params': prof})
             for prot in tf_protections:
-                profile_name = prot.get('profile_name', 'unknown')
-                protection_name = prot.get('protection_name', 'unknown')
-                preview_protections.append({
-                    'profile_name': profile_name,
-                    'protection_name': protection_name,
-                    'user_friendly': map_prot_input_to_user_friendly(prot)
-                })
+                planned_ops.append({'type': 'protection', 'params': prot})
 
-            logger.debug(f"Planned profile creations: {preview_profiles}")
-            logger.debug(f"Planned protection creations: {preview_protections}")
-            module.exit_json(
-                changed=bool(tf_profiles or tf_protections),
-                preview_mode=True,
-                planned_operations={
-                    'profiles': preview_profiles,
-                    'protections': preview_protections
+            result.update({
+                'changed': bool(planned_ops),
+                'response': {
+                    'preview_mode': True,
+                    'planned_operations': planned_ops,
+                    'message': 'No Traffic Filter operations to perform' if not planned_ops else ''
                 }
-            )
+            })
+            module.exit_json(**result)
 
-        # --- CREATE PROFILES ---
+        # === CREATE PROFILES ===
         for profile in tf_profiles:
-            profile_name = profile.get('profile_name')
-            if not profile_name:
-                errors.append("Profile name missing")
-                logger.error(f"Profile creation skipped: name missing on device {dp_ip}")
+            name = profile.get('profile_name')
+            if not name:
+                err = "Missing profile_name in profile definition"
+                errors.append(err)
+                logger.error(err)
                 continue
 
+            payload = map_profile_parameters(profile)
+            url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{name}"
+
+            logger.info(f"Creating Traffic Filter profile {name} on {dp_ip}")
+            logger.debug(f"POST URL: {url}")
+            logger.debug(f"POST body: {payload}")
+
             try:
-                payload = map_profile_parameters(profile)
-                url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficProfileTable/{profile_name}"
-
-                logger.info(f"Creating Traffic Filter profile: {profile_name} on {dp_ip}")
-                logger.debug(f"Method: POST, URL: {url}")
-                logger.debug(f"Payload: {payload}")
-
                 resp = cc._post(url, json=payload)
-                logger.debug(f"Response code: {resp.status_code}")
-                try:
-                    resp_body = resp.json()
-                    logger.debug(f"Response body: {resp_body}")
-                except Exception:
-                    resp_body = resp.text
-                    logger.debug(f"Raw response body: {resp_body}")
-                resp.raise_for_status()
-
-                created_profiles.append({
-                    'profile_name': profile_name,
-                    'status': 'success',
-                    'params_applied': payload,
-                    'user_friendly': {"profile_name": profile_name,
-                                      "action": "report_only" if payload["rsNewTrafficProfileAction"] == "0" else "block_and_report"}
-                })
-                changes_made = True
-                logger.info(f"Successfully created Traffic Filter profile: {profile_name}")
+                if resp.status_code in (200, 201):
+                    created_profiles.append({
+                        'profile_name': name,
+                        'status': 'success',
+                        'params_applied': payload,
+                        'user_friendly': {'profile_name': name, 'action': profile.get('action', 'report_only')}
+                    })
+                    changes_made = True
+                else:
+                    msg = f"HTTP {resp.status_code} - {resp.text}"
+                    errors.append(msg)
+                    logger.error(msg)
             except Exception as e:
-                error_msg = f"Profile {profile_name} creation failed: {str(e)}"
-                errors.append(error_msg)
-                logger.error(error_msg)
+                err = f"Exception during profile {name} creation: {str(e)}"
+                errors.append(err)
+                logger.error(err)
 
-        # --- CREATE PROTECTIONS ---
+        # === CREATE PROTECTIONS ===
         for prot in tf_protections:
-            profile_name = prot.get('profile_name')
-            protection_name = prot.get('protection_name')
-            if not profile_name or not protection_name:
-                error_msg = "Protection requires 'profile_name' and 'protection_name'"
-                errors.append(error_msg)
-                logger.error(f"{error_msg} on device {dp_ip}")
+            p_name = prot.get('profile_name')
+            prot_name = prot.get('protection_name')
+            if not (p_name and prot_name):
+                err = "Protection must include 'profile_name' and 'protection_name'"
+                errors.append(err)
+                logger.error(err)
                 continue
 
+            payload = map_protection_parameters(prot)
+            url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{p_name}/{prot_name}"
+
+            logger.info(f"Creating Traffic Filter protection {prot_name} under profile {p_name}")
+            logger.debug(f"POST URL: {url}")
+            logger.debug(f"POST body: {payload}")
+
             try:
-                payload = map_protection_parameters(prot)
-                url = f"https://{provider['cc_ip']}/mgmt/device/byip/{dp_ip}/config/rsNewTrafficFilterTable/{profile_name}/{protection_name}"
-
-                logger.info(f"Creating Traffic Filter protection: {protection_name} under profile {profile_name} on {dp_ip}")
-                logger.debug(f"Method: POST, URL: {url}")
-                logger.debug(f"Payload: {payload}")
-
                 resp = cc._post(url, json=payload)
-                logger.debug(f"Response code: {resp.status_code}")
-                try:
-                    resp_body = resp.json()
-                    logger.debug(f"Response body: {resp_body}")
-                except Exception:
-                    resp_body = resp.text
-                    logger.debug(f"Raw response body: {resp_body}")
-                resp.raise_for_status()
-
-                created_protections.append({
-                    'profile_name': profile_name,
-                    'protection_name': protection_name,
-                    'status': 'success',
-                    'params_applied': payload,
-                    'user_friendly': map_prot_input_to_user_friendly(prot)
-                })
-                changes_made = True
-                logger.info(f"Successfully created Traffic Filter protection: {protection_name} under profile {profile_name}")
+                if resp.status_code in (200, 201):
+                    created_protections.append({
+                        'profile_name': p_name,
+                        'protection_name': prot_name,
+                        'status': 'success',
+                        'params_applied': payload,
+                        'user_friendly': map_prot_input_to_user_friendly(prot)
+                    })
+                    changes_made = True
+                else:
+                    msg = f"HTTP {resp.status_code} - {resp.text}"
+                    errors.append(msg)
+                    logger.error(msg)
             except Exception as e:
-                error_msg = f"Protection {protection_name} under {profile_name} failed: {str(e)}"
-                errors.append(error_msg)
-                logger.error(error_msg)
+                err = f"Exception during protection {prot_name} creation: {str(e)}"
+                errors.append(err)
+                logger.error(err)
 
         result.update({
             'changed': changes_made,
@@ -276,9 +213,7 @@ def run_module():
                     'total_profiles_attempted': len(tf_profiles),
                     'total_protections_attempted': len(tf_protections),
                     'errors_count': len(errors)
-                },
-                'pretty_profiles': pretty_profiles(created_profiles),
-                'pretty_protections': pretty_protections(created_protections)
+                }
             },
             'debug_info': debug_info
         })
@@ -289,13 +224,15 @@ def run_module():
         module.exit_json(**result)
 
     except Exception as e:
-        error_msg = f"Traffic Filter creation failed: {str(e)}"
-        logger.error(error_msg)
-        debug_info['error'] = error_msg
-        module.fail_json(msg=error_msg, debug_info=debug_info, **result)
+        err = f"Traffic Filter creation failed: {str(e)}"
+        logger.error(err)
+        debug_info['error'] = err
+        module.fail_json(msg=err, debug_info=debug_info, **result)
+
 
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
