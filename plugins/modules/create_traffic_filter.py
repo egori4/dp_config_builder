@@ -142,7 +142,6 @@ def run_module():
         created_protections = []
         errors = []
 
-
         # === LOGGING HEADER ===
         logger.info("============== Traffic Filter CREATE ==============")
         logger.info(f"Device: {dp_ip}")
@@ -152,6 +151,8 @@ def run_module():
         # --- CHECK MODE / PREVIEW ---
         if module.check_mode:
             logger.info("CHECK MODE: Previewing Traffic Filter creation operations.")
+
+            # Prepare preview for profiles
             preview_profiles = []
             for profile in tf_profiles:
                 profile_name = profile.get('profile_name', 'unknown')
@@ -161,6 +162,7 @@ def run_module():
                                       "action": profile.get('action', 'report_only')}
                 })
 
+            # Prepare preview for protections
             preview_protections = []
             for prot in tf_protections:
                 profile_name = prot.get('profile_name', 'unknown')
@@ -173,12 +175,15 @@ def run_module():
 
             logger.debug(f"Planned profile creations: {preview_profiles}")
             logger.debug(f"Planned protection creations: {preview_protections}")
+
             module.exit_json(
                 changed=bool(tf_profiles or tf_protections),
-                preview_mode=True,
-                planned_operations={
-                    'profiles': preview_profiles,
-                    'protections': preview_protections
+                response={
+                    'preview_mode': True,
+                    'planned_operations': {
+                        'profiles': preview_profiles,
+                        'protections': preview_protections
+                    }
                 }
             )
 

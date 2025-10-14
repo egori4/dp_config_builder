@@ -35,45 +35,77 @@
           vars:
             response: "{{ item.response | default({}) }}"
             formatted_output: |
-              **Device: {{ item.item }}**
-
-              {% if response.preview_mode | default(false) %}
-              PREVIEW MODE - Operations that would be performed:
-
-              {% set planned_ops = response.planned_operations | default({}) %}
+              Device: {{ item.item }}
+              
+              {% if item.response.preview_mode | default(false) %}
+              PREVIEW MODE - Planned operations:
+              
+              {% set planned_ops = item.response.planned_operations | default({}) %}
 
               {% if planned_ops.profiles | default([]) | length > 0 %}
-              Traffic Filter Profiles to be created ({{ planned_ops.profiles | length }}):
-              {% for p in planned_ops.profiles %}
-                - {{ p.profile_name }}
+              Traffic Filter Profiles ({{ planned_ops.profiles | length }} planned):
+              {% for op in planned_ops.profiles %}
+                - {{ op.profile_name }}
+                  Parameters:
+                  {% for k, v in op.user_friendly.items() %}
+                    - {{ k }}: {{ v }}
+                  {% endfor %}
               {% endfor %}
               {% else %}
-              No profiles to be created.
+              No Traffic Filter profiles configured for creation.
               {% endif %}
 
               {% if planned_ops.protections | default([]) | length > 0 %}
-              Traffic Filter Protections to be created ({{ planned_ops.protections | length }}):
-              {% for t in planned_ops.protections %}
-                - {{ t.protection_name }} (Profile: {{ t.profile_name }})
+              Traffic Filter Protections ({{ planned_ops.protections | length }} planned):
+              {% for op in planned_ops.protections %}
+                - {{ op.protection_name }} (Profile: {{ op.profile_name }})
+                  Parameters:
+                  {% for k, v in op.user_friendly.items() %}
+                    {% if k not in ['profile_name','protection_name'] %}
+                    - {{ k }}: {{ v }}
+                    {% endif %}
+                  {% endfor %}
               {% endfor %}
               {% else %}
-              No protections to be created.
+              No Traffic Filter protections configured for creation.
               {% endif %}
-
+              
               {% else %}
               EXECUTION RESULTS:
 
-              **Traffic Filter Profiles created successfully:**
-              {{ response.pretty_profiles | default('No profiles created') }}
-
-              **Traffic Filter Protections created successfully:**
-              {{ response.pretty_protections | default('No protections created') }}
-
-              **Errors Detected:**
-              {% if response.errors | default([]) | length > 0 %}
-              - {{ response.errors | join('\n- ') }}
+              {% if item.failed | default(false) %}
+              Error occurred during creation:
+                - {{ item.msg | default('Unknown error') }}
               {% else %}
-              No errors detected.
+
+              {% if item.response.created_profiles | default([]) | length > 0 %}
+              Traffic Filter Profiles created successfully:
+              {% for prof in item.response.created_profiles %}
+                - {{ prof.profile_name }}
+                  Parameters:
+                  {% for k, v in prof.user_friendly.items() %}
+                  - {{ k }}: {{ v }}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              No Traffic Filter profiles were created.
+              {% endif %}
+
+              {% if item.response.created_protections | default([]) | length > 0 %}
+              Traffic Filter Protections created successfully:
+              {% for prot in item.response.created_protections %}
+                - {{ prot.protection_name }} (Profile: {{ prot.profile_name }})
+                  Parameters:
+                  {% for k, v in prot.user_friendly.items() %}
+                    {% if k not in ['profile_name','protection_name'] %}
+                    - {{ k }}: {{ v }}
+                    {% endif %}
+                  {% endfor %}
+              {% endfor %}
+              {% else %}
+              No Traffic Filter protections were created.
+              {% endif %}
+              
               {% endif %}
               {% endif %}
           ansible.builtin.debug:
@@ -92,7 +124,7 @@
           when:
             - not (skip_policy_updates | default(false))
             - tf_create_results is defined
-            - tf_create_results.changed | default(false)
+            - tf_create_results.results | selectattr('changed', 'equalto', true) | list | length > 0
 
       always:
         - name: Unlock device(s)
