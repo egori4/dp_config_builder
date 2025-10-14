@@ -33,6 +33,7 @@
 
         - name: Display Traffic Filter creation results
           vars:
+            response: "{{ item.response | default({}) }}"
             formatted_output: |
               Device: {{ item.item }}
               
