@@ -7,32 +7,41 @@
     - ../vars/create_vars.yml
 
   tasks:
-    - name: Traffic Filter creation block
+    - name: Create and apply Traffic Filter configuration
       block:
         - name: Lock device(s)
           dp_lock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+          loop: "{{ dp_ip | default([]) }}"
+          loop_control:
+            label: "Locking device: {{ item }}"
           when: not (skip_device_lock | default(false))
+
         - name: Configure Traffic Filter profiles and protections
           create_traffic_filter:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
             tf_profiles: "{{ create_tf_profiles | default([]) }}"
             tf_protections: "{{ create_tf_protections | default([]) }}"
-          loop: "{{ dp_ip }}"
+          loop: "{{ dp_ip | default([]) }}"
           loop_control:
             label: "Device: {{ item }}"
           register: tf_create_results
+          when: (create_tf_profiles is defined and create_tf_profiles | length > 0) or
+                (create_tf_protections is defined and create_tf_protections | length > 0)
+
         - name: Display Traffic Filter creation results
           vars:
             formatted_output: |
               Device: {{ item.item }}
+              
               {% if item.response.preview_mode | default(false) %}
               PREVIEW MODE - Planned operations:
+              
               {% set planned_ops = item.response.planned_operations | default({}) %}
-              {% if planned_ops.profiles | default([]) %}
+
+              {% if planned_ops.profiles | default([]) | length > 0 %}
               Traffic Filter Profiles ({{ planned_ops.profiles | length }} planned):
               {% for op in planned_ops.profiles %}
                 - {{ op.profile_name }}
@@ -45,7 +54,7 @@
               No Traffic Filter profiles configured for creation.
               {% endif %}
 
-              {% if planned_ops.protections | default([]) %}
+              {% if planned_ops.protections | default([]) | length > 0 %}
               Traffic Filter Protections ({{ planned_ops.protections | length }} planned):
               {% for op in planned_ops.protections %}
                 - {{ op.protection_name }} (Profile: {{ op.profile_name }})
@@ -59,15 +68,16 @@
               {% else %}
               No Traffic Filter protections configured for creation.
               {% endif %}
-              {% endif %}
-
-              {% if not item.response.preview_mode | default(false) %}
+              
+              {% else %}
               EXECUTION RESULTS:
+
               {% if item.failed | default(false) %}
               Error occurred during creation:
                 - {{ item.msg | default('Unknown error') }}
               {% else %}
-              {% if item.response.created_profiles | default([]) %}
+
+              {% if item.response.created_profiles | default([]) | length > 0 %}
               Traffic Filter Profiles created successfully:
               {% for prof in item.response.created_profiles %}
                 - {{ prof.profile_name }}
@@ -80,7 +90,7 @@
               No Traffic Filter profiles were created.
               {% endif %}
 
-              {% if item.response.created_protections | default([]) %}
+              {% if item.response.created_protections | default([]) | length > 0 %}
               Traffic Filter Protections created successfully:
               {% for prot in item.response.created_protections %}
                 - {{ prot.protection_name }} (Profile: {{ prot.profile_name }})
@@ -94,30 +104,34 @@
               {% else %}
               No Traffic Filter protections were created.
               {% endif %}
+              
               {% endif %}
               {% endif %}
           ansible.builtin.debug:
             msg: "{{ formatted_output.split('\n') }}"
-          loop: "{{ tf_create_results.results }}"
+          loop: "{{ tf_create_results.results | default([]) }}"
           loop_control:
             label: "Device: {{ item.item }}"
 
-        - name: Apply policy updates per device
+        - name: Apply Traffic Filter updates per device
           update_policies:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+          loop: "{{ dp_ip | default([]) }}"
           loop_control:
-            label: "Applying policies: {{ item }}"
+            label: "Applying updates: {{ item }}"
           when:
             - not (skip_policy_updates | default(false))
             - tf_create_results is defined
-            - tf_create_results.changed | default(false)
+            - tf_create_results.results | selectattr('changed', 'equalto', true) | list | length > 0
 
       always:
         - name: Unlock device(s)
           dp_unlock:
             provider: "{{ cc }}"
             dp_ip: "{{ item }}"
-          loop: "{{ dp_ip }}"
+          loop: "{{ dp_ip | default([]) }}"
+          loop_control:
+            label: "Unlocking device: {{ item }}"
+          failed_when: false
           when: not (skip_device_lock | default(false))
