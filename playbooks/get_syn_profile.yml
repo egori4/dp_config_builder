@@ -1,0 +1,79 @@
+---
+- name: Get SYN profiles, protections, and parameters (Ordered & Clean)
+  hosts: cc
+  gather_facts: false
+  vars_files:
+    - ../vars/cc.yml
+    - ../vars/get_vars.yml
+
+  tasks:
+    - name: Get SYN profiles, protections, and parameters
+      get_syn_configuration:
+        provider: "{{ cc }}"
+        dp_ip: "{{ item }}"
+        filter_syn_profile_names: "{{ filter_syn_profile_names | default([]) }}"
+      loop: "{{ dp_ip }}"
+      loop_control:
+        label: "Device: {{ item }}"
+      register: syn_profiles_result
+
+    - name: Display SYN profiles, protections, and parameters
+      vars:
+        formatted_output: |
+          Device: {{ item.item }}
+          {% if item.failed | default(false) %}
+            ERROR: Failed to fetch SYN profiles/protections/parameters
+              - {{ item.msg | default('Unknown error') }}
+          {% else %}
+            All SYN Protections ({{ item.protections | default([]) | length }}):
+            {% for prot in item.protections | default([]) | sort(attribute='protection_id') %}
+              - Protection Name: {{ prot.protection_name }}
+                Protection ID: {{ prot.protection_id }}
+                Activation Threshold: {{ prot.activation_threshold }}
+                Termination Threshold: {{ prot.termination_threshold }}
+                App Port Group: {{ prot.app_port_group }}
+            {% else %}
+              No SYN protections found on this device.
+            {% endfor %}
+
+            {% if item.profiles | length == 0 %}
+            No SYN profiles found on this device.
+            {% else %}
+            Profiles, Protections, and Parameters:
+            {% for profile_entry in item.profiles | sort(attribute='profile.profile_name') %}
+              Profile: {{ profile_entry.profile.profile_name }}
+
+              {% if profile_entry.protections | length > 0 %}
+                Protections ({{ profile_entry.protections | length }}):
+                {% for prot in profile_entry.protections | sort(attribute='protection_id') %}
+                  - Protection Name: {{ prot.protection_name }}
+                    Protection ID: {{ prot.protection_id }}
+                    Activation Threshold: {{ prot.activation_threshold }}
+                    Termination Threshold: {{ prot.termination_threshold }}
+                    App Port Group: {{ prot.app_port_group }}
+                {% endfor %}
+              {% else %}
+                No protections attached to this profile.
+              {% endif %}
+
+              {% if profile_entry.parameters %}
+                Parameters:
+                  - Action: {{ profile_entry.parameters.action }}
+                  - Apply Authentication To: {{ profile_entry.parameters.destination_ports }}
+                  - Activation Mode: {{ profile_entry.parameters.activation_mode }}
+                  - Policy Activation Threshold: {{ profile_entry.parameters.activation_threshold }}
+                  - Policy Termination Threshold: {{ profile_entry.parameters.termination_threshold }}
+                  - TCP Reset Status: {{ profile_entry.parameters.tcp_reset_status }}
+                  - Authentication Method: {{ profile_entry.parameters.auth_type }}
+              {% else %}
+                No parameters defined for this profile.
+              {% endif %}
+
+            {% endfor %}
+            {% endif %}
+          {% endif %}
+      ansible.builtin.debug:
+        msg: "{{ formatted_output.split('\n') }}"
+      loop: "{{ syn_profiles_result.results }}"
+      loop_control:
+        label: "Device: {{ item.item }}"

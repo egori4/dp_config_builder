@@ -337,6 +337,104 @@ edit_https_profiles:
 #   packet_report: enable / disable
 #   full_session_decryption: enable / disable
 
+################################## SYN Protections Variables ###############################
+
+# Each entry represents an existing DefensePro SYN Protection that will be updated.
+# The protection is located by `name`; `id` is only used as a fallback when the
+# name cannot be found on the device.
+# Fields with new values will be updated; others will remain unchanged.
+
+edit_syn_protections:
+  - name: "SYN_PROT_1"              # Protection name on DefensePro (max 29 chars)
+    id: 500237                      # Optional fallback protection ID
+    activation_threshold: 4000      # New threshold to trigger SYN protection
+    termination_threshold: 1500     # Threshold to stop SYN protection
+    app_port_group: "http"          # Application port group (e.g., http, https)
+
+  - name: "SYN_PROT_2"
+    id: 500238
+    activation_threshold: 5000
+    termination_threshold: 2000
+    app_port_group: "https"
+
+
+# ------------------------------------------------------
+# 2️⃣ SYN Profiles to Edit (Attach/Detach + Parameters)
+# ------------------------------------------------------
+# Each profile section can:
+#   - Attach one or more SYN protections
+#   - Detach protections (if removed from the list)
+#   - Update behavioral parameters
+#
+# Supported parameters (DefensePro 10.10.1 "SYN Protection Settings Per Policy"):
+#
+#   action, activation_threshold, termination_threshold, destination_ports,
+#   activation_mode, auth_type, tcp_reset_status
+# ------------------------------------------------------
+
+edit_syn_profiles:
+
+  # ======================
+  # Scenario 1
+  # Update the controls shown on the SYN profile parameters screen
+  # ======================
+  - name: "SYN_PROFILE_1"            # Profile name on DefensePro
+    protections:
+      - "SYN_PROT_1"                 # Protection(s) to attach
+    params:
+      action: "report_only"          # report_only or block_and_report
+      activation_threshold: 7500
+      termination_threshold: 2500
+      destination_ports: "all"       # all or syn_profile
+      activation_mode: "continuous"  # continuous or threshold_based
+      auth_type: "safe_reset"        # safe_reset / transparent_proxy
+      tcp_reset_status: "enable"     # enable or disable TCP reset
+
+
+  # ======================
+  # Scenario 2
+  # Second profile example
+  # ======================
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_1"
+    params:
+      action: "report_only"
+      activation_mode: "threshold_based"
+      destination_ports: "all"       # all or syn_profile
+      activation_threshold: 7500
+      termination_threshold: 2500
+      auth_type: "safe_reset"
+      tcp_reset_status: "disable"
+
+
+  # # Scenario 3
+  # - name: "SYN_PROFILE_3"
+  #   protections:
+  #     - "SYN_PROT_1"
+  #     - "SYN_PROT_2"
+  #   params:
+  #     action: "block_and_report"
+  #     activation_mode: "continuous"
+  #     destination_ports: "syn_profile"
+  #     activation_threshold: 7500
+  #     termination_threshold: 2500
+  #     auth_type: "safe_reset"
+  #     tcp_reset_status: "enable"
+
+  # # Scenario 4
+  # - name: "SYN_PROFILE_4"
+  #   protections:
+  #     - "SYN_PROT_2"
+  #   params:
+  #     action: "report_only"
+  #     activation_mode: "continuous"
+  #     destination_ports: "all"
+  #     activation_threshold: 7500
+  #     termination_threshold: 2500
+  #     auth_type: "safe_reset"
+  #     tcp_reset_status: "disable"
+
 ########################## Traffic Filter Profiles & Protections ##########################
 # vars/edit_vars.yml
 # Corrected Traffic Filter edits

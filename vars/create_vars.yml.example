@@ -293,6 +293,90 @@ create_ssl_objects:
 # bk_user_cipher: custom back-end cipher string
 # bk_end_port: back-end TCP port
 
+################## Create SYN Profiles and Protections ########################## 
+
+# ======================================================
+# Variables for SYN Protections and Profiles Creation
+# ======================================================
+# This file defines SYN Flood Protections and their associated Profiles
+# used by the Ansible playbook `create_syn_configuration.yml`.
+# Each protection corresponds to a specific mitigation threshold,
+# and each profile attaches protections with operational parameters.
+# ======================================================
+
+# -----------------------------
+# SYN Protections Definitions
+# -----------------------------
+create_syn_protections:
+  # Protection 1: HTTP-based SYN flood protection
+  - name: "SYN_PROT_1"                      # Unique name for the SYN protection
+    activation_threshold: 2500              # Packets/sec 
+    termination_threshold: 1500             # Packets/sec 
+    app_port_group: "http"                  # http, https, dns, ftp,etc (leave empty for all ports)
+
+  # Protection 2: HTTPS-based SYN flood protection
+  - name: "SYN_PROT_2"
+    activation_threshold: 3000
+    termination_threshold: 2000
+    app_port_group: "https"
+
+# -----------------------------
+# SYN Profiles Definitions
+# -----------------------------
+# Supported parameters (DefensePro 10.10.1 "SYN Protection Settings Per Policy"):
+#
+#   action, activation_threshold, termination_threshold, destination_ports,
+#   activation_mode, auth_type, tcp_reset_status
+# -----------------------------
+create_syn_profiles:
+  # --------------------------------------------------
+  # Profile 1 (SYN_PROFILE_1)
+  # Spoofed SYN attack protection, continuous, TCP reset on
+  # --------------------------------------------------
+  - name: "SYN_PROFILE_1"                   # Unique name for the SYN profile
+    protections:
+      - "SYN_PROT_1"                        # Attaches to the protection created above
+    params:
+      action: "report_only"                 # report_only / block_and_report
+      activation_threshold: 7500             # Policy activation threshold (SYN packets/sec)
+      termination_threshold: 2500            # Policy termination threshold (SYN packets/sec)
+      destination_ports: "all"              # all / syn_profile (Apply Authentication To)
+      activation_mode: "continuous"         # continuous / threshold_based
+      auth_type: "safe_reset"               # safe_reset / transparent_proxy
+      tcp_reset_status: "enable"            # enable, disable
+
+  # --------------------------------------------------
+  # Profile 2 (SYN_PROFILE_2)
+  # Per destination IP tracking with network + application authentication
+  # --------------------------------------------------
+  - name: "SYN_PROFILE_2"
+    protections:
+      - "SYN_PROT_2"
+    params:
+      action: "block_and_report"            # report_only / block_and_report
+      activation_threshold: 7500
+      termination_threshold: 2500
+      destination_ports: "syn_profile"
+      activation_mode: "threshold_based"
+      auth_type: "safe_reset"               # safe_reset / transparent_proxy
+      tcp_reset_status: "enable"            # enable, disable
+
+  # --------------------------------------------------
+  # Profile 3 (example)
+  # --------------------------------------------------
+  # - name: "SYN_PROFILE_3"
+  #   protections:
+  #     - "SYN_PROT_1"
+  #   params:
+  #     action: "block_and_report"
+  #     destination_ports: "all"
+  #     activation_mode: "threshold_based"
+  #     activation_threshold: 7500
+  #     termination_threshold: 2500
+  #     auth_type: "safe_reset"
+  #     tcp_reset_status: "disable"
+
+
 ################################## HTTPS Profile Create Variables ###############################
 # Define HTTPS profiles to create
 # All parameters use user-friendly values that are automatically mapped to API values
