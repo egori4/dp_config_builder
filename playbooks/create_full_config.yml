@@ -2,7 +2,60 @@
 # Security Policy Creation Orchestrator Playbook
 # This playbook creates all prerequisite components then creates security policies with profile bindings
 
-# Device locking at the beginning for orchestrated flows
+#
+# USAGE MODES:
+# 1. Excel Mode: Set excel_mode=true and excel_file variable to use Excel as input source (automatic conversion)
+# 2. YAML Mode: Use traditional vars files (create_vars.yml)
+#
+# Variables can be set in vars files or passed as extra vars:
+#   excel_mode: false (default) - Use YAML mode
+#   excel_file: "" (default) - Excel file path when excel_mode is true
+#
+# Examples:
+#   # Excel Mode - via extra vars (overrides defaults)
+#   ansible-playbook playbooks/create_security_policy.yml -e excel_mode=true -e excel_file=dp_config_template.xlsx
+#
+#   # Excel Mode - via vars file defaults
+#   ansible-playbook playbooks/create_security_policy.yml
+#
+#   # Traditional YAML Mode (default)
+#   ansible-playbook playbooks/create_security_policy.yml
+
+# Pre-processing: Convert Excel to create_vars.yml if Excel mode is enabled
+- name: "Excel to YAML Variable Conversion (if Excel mode enabled)"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    _excel_mode: "{{ excel_mode | default(false) }}"
+    _excel_file: "{{ excel_file | default('') }}"
+    # _excel_mode: true  # Override set to true or false as needed
+    # _excel_file: "dp_config_template.xlsx"  # Override set to the desired Excel file path
+  vars_files:
+    - ../vars/cc.yml
+
+  tasks:
+    - name: "Convert Excel file to vars/create_vars.yml"
+      excel_to_vars:
+        provider: "{{ cc }}"
+        excel_file: "{{ _excel_file }}"
+      when:
+        - _excel_mode | bool
+        - _excel_file != ""
+
+    - name: "Display conversion status"
+      ansible.builtin.debug:
+        msg: |
+          {% if _excel_mode | bool %}
+          {% if _excel_file != "" %}
+          Excel mode: Successfully converted {{ _excel_file }} to vars/create_vars.yml
+          {% else %}
+          Excel mode enabled but no excel_file specified - skipping conversion
+          {% endif %}
+          {% else %}
+          Traditional YAML mode: Using existing vars/create_vars.yml
+          {% endif %}
+
+# Device locking and orchestrated flows
 - name: "Centralized Device Locking for Orchestration"
   hosts: cc
   gather_facts: false
